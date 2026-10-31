@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Press Turn — Prototipo web</title>
+<style>
+:root{--bg:#0f1117;--card:#181b25;--card2:#20242f;--tx:#e8eaf0;--mut:#8a90a2;--ac:#ff7a3d;--ok:#3fb56b;--bad:#e5484d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,sans-serif}
+main{max-width:900px;margin:0 auto;padding:12px 16px 40px}
+h1{font-size:1.25rem;margin:8px 0}h2{font-size:1.05rem;margin:14px 0 6px}
+button{font:inherit;color:#fff;border:0;border-radius:10px;padding:10px 12px;cursor:pointer;background:#4f7cff}
+button:disabled{opacity:.35;cursor:not-allowed}
+button.sec{background:#3a3f4f}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.pj{background:var(--card);border:2px solid transparent;border-radius:12px;padding:8px;text-align:center;cursor:pointer}
+.pj img.r{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#000}
+.pj.on{border-color:var(--ac)}
+.pj b{display:block;margin-top:4px;font-size:.9rem}
+.emo{height:1.1em;vertical-align:-.2em}
+.info{background:var(--card);border-radius:12px;padding:10px;margin-top:10px;font-size:.9rem}
+.info li{margin:3px 0}
+.barra{height:10px;background:#2b3040;border-radius:6px;overflow:hidden}
+.barra i{display:block;height:100%;transition:width .5s}
+.hp i{background:var(--ok)}.ult i{background:#f5b301}.hp.bajo i{background:var(--bad)}
+.eq{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.lu{background:var(--card);border:2px solid transparent;border-radius:12px;padding:6px;font-size:.78rem;position:relative}
+.lu.sel{border-color:var(--ac)}.lu.obj{border-color:var(--bad)}.lu.ali{border-color:var(--ok)}
+.lu img.r{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#000}
+.lu.muerto{opacity:.35;filter:grayscale(1)}
+.lu .n{font-weight:700;margin:4px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lu .t{color:var(--mut);font-size:.72rem;min-height:1.1em}
+.cab{display:flex;justify-content:space-between;align-items:center;margin:10px 0 4px;font-weight:700}
+.cab.act{color:var(--ac)}
+.log{background:var(--card);border-radius:12px;padding:10px;margin:10px 0;white-space:pre-wrap;font-size:.88rem;max-height:210px;overflow:auto}
+.hist{color:var(--mut);font-size:.75rem;margin-top:6px}
+.panel{background:var(--card);border-radius:12px;padding:10px;margin-top:10px}
+.acc{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.acc button{text-align:left;padding:8px;font-size:.82rem;line-height:1.25}
+.acc small{display:block;opacity:.8}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chips button{padding:5px 10px;font-size:.8rem;background:#3a3f4f}
+.chips button.on{background:var(--ac)}
+#anim{position:fixed;inset:0;background:#000d;display:none;align-items:center;justify-content:center;flex-direction:column;z-index:9;padding:16px;text-align:center}
+#anim img{max-width:92vw;max-height:55vh;border-radius:12px}
+#anim h3{margin:12px 0 4px}
+.vic{text-align:center}.vic img{max-width:100%;max-height:50vh;border-radius:12px}
+.fila{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+select{background:#20242f;color:#fff;border:0;border-radius:8px;padding:8px}
+@media(max-width:520px){.acc{grid-template-columns:1fr 1fr}.lu{font-size:.7rem}}
+</style></head>
+<body><main id="app"></main>
+<div id="anim"></div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=t=>String(t).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function fmt(t){
+  t=esc(t||'');
+  t=t.replace(/&lt;(a?):\w+:(\d+)&gt;/g,(m,a,id)=>`<img class="emo" src="https://cdn.discordapp.com/emojis/${id}.${a?'gif':'png'}?size=48">`);
+  return t.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/~~(.+?)~~/g,'<s>$1</s>').replace(/\*(.+?)\*/g,'<i>$1</i>');
+}
+const emo=(p)=>p.emoji_url?`<img class="emo" src="${p.emoji_url}">`:esc(p.emoji||'');
+const medios=m=>'🔷'.repeat(m>>1)+'🔹'.repeat(m&1)||'—';
+const COL={azul:'#4f7cff',verde:'#3fb56b',rojo:'#d9534f',gris:'#6b7280'};
+let PJ=[],elegidos=[],nivel='normal',G=null,S=null,sel=0,tgt=null,tgtAli=null,lock=false;
+
+async function api(ruta,datos){
+  const r=await fetch(ruta,datos?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(datos)}:{});
+  return r.json();
+}
+const dormir=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* ---------- elegir equipo ---------- */
+async function inicio(){
+  if(!PJ.length)PJ=(await api('/api/personajes')).personajes;
+  elegidos=[];dibujarEleccion();
+}
+function dibujarEleccion(foco){
+  const f=foco&&PJ.find(p=>p.key===foco);
+  $('#app').innerHTML=`<h1>⚔️ Press Turn — elige tu equipo de 3</h1>
+  <div class="grid">${PJ.map(p=>`<div class="pj ${elegidos.includes(p.key)?'on':''}" onclick="pick('${p.key}')">
+    ${p.gif?`<img class="r" src="${p.gif}">`:''}<b>${emo(p)} ${esc(p.nombre)}</b></div>`).join('')}</div>
+  ${f?`<div class="info"><b>${emo(f)} ${esc(f.nombre)}</b> · ${f.vida} HP<br>${esc(f.desc)}<ul>${f.movs.map(m=>`<li><b>${esc(m.nombre)}</b> ${esc(m.desc)}</li>`).join('')}</ul></div>`:''}
+  <div class="fila" style="margin-top:12px">
+    <span>Equipo: <b>${elegidos.length}/3</b></span>
+    <select onchange="nivel=this.value"><option value="facil" ${nivel=='facil'?'selected':''}>CPU fácil</option><option value="normal" ${nivel=='normal'?'selected':''}>CPU normal</option><option value="dificil" ${nivel=='dificil'?'selected':''}>CPU difícil</option></select>
+    <button ${elegidos.length==3?'':'disabled'} onclick="empezar()">¡A pelear!</button></div>`;
+}
+function pick(k){
+  const i=elegidos.indexOf(k);
+  if(i>=0)elegidos.splice(i,1);else if(elegidos.length<3)elegidos.push(k);
+  dibujarEleccion(k);
+}
+async function empezar(){
+  const r=await api('/api/nueva',{equipo:elegidos,nivel});
+  if(r.error)return alert(r.error);
+  G=r.id;S=r.estado;sel=0;tgt=null;tgtAli=null;
+  dibujarCombate();
+  if(r.pasos.length)await reproducir(r.pasos);
+}
+
+/* ---------- combate ---------- */
+function actorActual(){
+  const eq=S.equipos[0].luchadores;
+  if(S.turno!==0||S.terminado)return null;
+  let l=eq[sel];
+  if(!l||!l.acciones.length){l=eq.find(x=>x.acciones.length)||null;sel=l?l.i:0}
+  return l;
+}
+function tarjeta(l,lado){
+  const cl=['lu'];
+  if(!l.vivo)cl.push('muerto');
+  if(lado==0&&l.i===sel&&S.turno===0)cl.push('sel');
+  if(lado==1&&l.i===tgt&&!tgtAli&&tgtAli!==0)cl.push('obj');
+  if(lado==0&&tgtAli===l.i)cl.push('ali');
+  const hp=l.forma?l.forma_hp:l.hp,mx=l.forma?90:l.max_hp,pct=Math.max(0,hp/mx*100);
+  const extra=[];
+  if(l.sombras!=null)extra.push('🌑'.repeat(l.sombras));
+  if(l.hojas!=null)extra.push('🍃'.repeat(l.hojas));
+  if(l.pm!=null&&l.sombras==null)extra.push(l.pm+' PM');
+  const nom=l.forma?('👹 '+esc(l.forma)):(emo(l)+' '+esc(l.nombre));
+  return `<div class="${cl.join(' ')}" style="${l.vivo?'':''}" onclick="clic(${lado},${l.i})">
+   ${l.gif?`<img class="r" src="${l.gif}">`:''}
+   <div class="n">${nom}</div>
+   <div class="barra hp ${pct<30?'bajo':''}"><i style="width:${pct}%"></i></div>
+   <div>${l.vivo?hp+'/'+mx:'💀'}</div>
+   <div class="barra ult"><i style="width:${Math.min(100,l.ulti)}%"></i></div>
+   <div class="t">${l.vivo?extra.join(' '):''} ${l.ulti_lista?'💥':''}</div>
+   <div class="t">${l.vivo?l.efectos.map(esc).join(' · ')+(l.guardia?' 🛡️':''):''}</div></div>`;
+}
+function clic(lado,i){
+  if(lock||!S||S.terminado||S.turno!==0)return;
+  if(lado==0){
+    const l=S.equipos[0].luchadores[i];
+    if(l.acciones.length){sel=i;tgtAli=null}
+  }else{
+    if(!S.blancos.includes(i))return;
+    tgt=i;tgtAli=null;
+  }
+  dibujarCombate();
+}
+function elegirAli(i){tgtAli=i;dibujarCombate()}
+function elegirRival(i){tgt=i;tgtAli=null;dibujarCombate()}
+function dibujarCombate(){
+  if(!S)return;
+  if(S.terminado){return dibujarFin()}
+  const a=actorActual();
+  if(tgt==null||!S.blancos.includes(tgt))tgt=S.objetivo;
+  const miTurno=S.turno===0;
+  const soporte=a&&a.acciones.some(x=>x.apoyo||x.dual);
+  const e0=S.equipos[0],e1=S.equipos[1];
+  let h=`<div class="cab ${S.turno===1?'act':''}"><span>${esc(e1.nombre)} ${S.turno===1?'🔔':''}</span><span>${S.turno===1?medios(S.medios[1]):''}</span></div>
+  <div class="eq">${e1.luchadores.map(l=>tarjeta(l,1)).join('')}</div>
+  <div class="log">${fmt(S.log)}${S.historial.length?`<div class="hist">📜 ${S.historial.map(fmt).join('<br>')}</div>`:''}</div>
+  <div class="cab ${miTurno?'act':''}"><span>${esc(e0.nombre)} ${miTurno?'🔔':''}</span><span>${miTurno?'Iconos: '+medios(S.medios[0]):''}</span></div>
+  <div class="eq">${e0.luchadores.map(l=>tarjeta(l,0)).join('')}</div>`;
+  if(miTurno&&a){
+    h+=`<div class="panel"><div><b>${emo(a)} ${esc(a.forma||a.nombre)}</b> — elige objetivo y acción</div>
+    <div class="chips">${S.blancos.map(i=>`<button class="${tgtAli==null&&tgt===i?'on':''}" onclick="elegirRival(${i})">⚔️ ${esc(e1.luchadores[i].forma||e1.luchadores[i].nombre)}</button>`).join('')}
+    ${soporte?S.aliados.map(i=>`<button class="${tgtAli===i?'on':''}" onclick="elegirAli(${i})">💚 ${esc(e0.luchadores[i].nombre)}</button>`).join(''):''}</div>
+    <div class="acc">${a.acciones.map(x=>botonAcc(a,x)).join('')}
+    <button class="sec" onclick="terminar()">⏭️ Terminar turno</button></div>
+    <div class="hist">🔷 = 1 icono · 🔹 = ½ icono. Toca una carta tuya para cambiar de luchador y una rival para atacarla.</div></div>`;
+  }
+  $('#app').innerHTML=h;
+}
+function costeTxt(m){return ({1:'½',2:'1',4:'2'})[m]||(m/2)}
+function botonAcc(a,x){
+  const ic={normal:'⚔️',hab1:'✨',hab2:'💢',defender:'🛡️',ulti:'💥'}[x.k];
+  const nom=x.k==='ulti'&&!a.ulti_lista?`ÚLTI ${a.ulti}%`:x.nombre;
+  const col=x.k==='defender'?'#6b7280':x.k==='ulti'?'#d9534f':COL[a.boton]||COL.azul;
+  const extra=(x.pm?` · ${x.pm}PM`:'')+(x.sombras?` · ${x.sombras}🌑`:'');
+  return `<button style="background:${col}" ${x.ok&&!lock?'':'disabled'} onclick="hacer('${x.k}')" title="${esc(x.desc)}">${ic} ${esc(nom)}<small>${costeTxt(x.coste)} icono${extra}</small></button>`;
+}
+async function hacer(k){
+  if(lock)return;const a=actorActual();if(!a)return;
+  const x=a.acciones.find(y=>y.k===k);
+  const apoyo=tgtAli!=null&&(x.apoyo||x.dual);
+  lock=true;
+  const r=await api('/api/accion',{id:G,actor:a.i,k,objetivo:tgt,aliado:apoyo||x.apoyo?tgtAli:null,apoyo});
+  if(r.error){lock=false;alert(r.error);return}
+  tgtAli=null;
+  await reproducir(r.pasos);
+}
+async function terminar(){
+  if(lock)return;lock=true;
+  const r=await api('/api/terminar',{id:G});
+  if(r.error){lock=false;alert(r.error);return}
+  await reproducir(r.pasos);
+}
+async function reproducir(pasos){
+  lock=true;
+  for(const p of pasos){
+    for(const an of p.anims){
+      $('#anim').style.display='flex';
+      $('#anim').innerHTML=`${an.gif?`<img src="${an.gif}">`:''}<h3 style="color:${an.color}">${fmt(an.titulo)}</h3><div>${fmt(an.desc)}</div>`;
+      await dormir(Math.min(4500,an.seg*1000));
+    }
+    $('#anim').style.display='none';
+    S=p.estado;
+    dibujarCombate();
+    if(p.estado.turno===1&&!p.estado.terminado)await dormir(1300);
+  }
+  lock=false;
+  dibujarCombate();
+}
+function dibujarFin(){
+  const gane=S.ganador===0;
+  $('#app').innerHTML=`<div class="vic"><h1>${gane?'🏆 ¡Ganaste!':'💀 Perdiste'}</h1>
+  ${S.victoria_img?`<img src="${S.victoria_img}">`:''}
+  <div class="log" style="text-align:left">${fmt(S.log)}</div>
+  <button onclick="inicio()">Otra pelea</button></div>`;
+}
+inicio();
+</script></body></html>
