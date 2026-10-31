@@ -21,6 +21,12 @@ DISCORD_API = os.environ.get("DISCORD_API", "https://discord.com/api")          
 SEGURA = PUBLIC_URL.startswith("https")
 SESION_DIAS = 30
 MAX_PARTIDAS = 200
+# Monedas del Alma por ganar (la web paga más que el bot porque las peleas son más largas)
+REC_CPU = {"facil": 8, "normal": 20, "dificil": 30}
+REC_PVP = 60
+TIMEOUT_TURNO = 150      # segundos por turno en PvP; si se pasa, pierde por abandono
+SALA_VIDA = 1800         # una sala sin actividad se borra a los 30 min
+SALAS = {}               # código -> sala PvP
 PARTIDAS = {}          # id -> {"c": Combate, "t": hora, "uid": dueño o None, "pagado": bool}
 DB = None
 
@@ -79,9 +85,9 @@ def _mov(l, k):
             "desc": m.get("desc", ""), "tipo": m["tipo"]}
 
 
-def _luchador(c, eq, i, l):
+def _luchador(c, eq, i, l, mio=True):
     acc = []
-    if eq is c.actual and not eq.es_cpu and not c.terminado() and l in c.disponibles():
+    if mio and eq is c.actual and not eq.es_cpu and not c.terminado() and l in c.disponibles():
         ks = ("hab1", "hab2") if l.forma else ("normal", "hab1", "hab2", "defender", "ulti")
         for k in ks:
             if k == "defender":
@@ -106,27 +112,32 @@ def _luchador(c, eq, i, l):
     }
 
 
-def estado(c, p=None):
+def estado(c, p=None, yo=0):
+    """Estado visto por el equipo `yo` (0 o 1): siempre sale primero 'mi' equipo y el turno 0 = mi turno."""
+    orden = [yo, 1 - yo]
+    mi_turno = (c.turno == yo) and not c.terminado()
     d = {
-        "turno": c.turno, "terminado": c.terminado(), "log": c.log, "historial": list(c.historial),
-        "medios": [e.medios for e in c.equipos],
-        "equipos": [{"nombre": e.nombre, "cpu": e.es_cpu,
-                     "luchadores": [_luchador(c, e, i, l) for i, l in enumerate(e.luchadores)]} for e in c.equipos],
+        "turno": 0 if c.turno == yo else 1, "terminado": c.terminado(), "log": c.log, "historial": list(c.historial),
+        "medios": [c.equipos[i].medios for i in orden],
+        "equipos": [{"nombre": c.equipos[i].nombre, "cpu": c.equipos[i].es_cpu,
+                     "luchadores": [_luchador(c, c.equipos[i], j, l, mio=(i == yo)) for j, l in enumerate(c.equipos[i].luchadores)]}
+                    for i in orden],
         "objetivo": None,
-        "blancos": [c.rival.luchadores.index(l) for l in c.rival.blancos] if not c.terminado() else [],
-        "aliados": [c.actual.luchadores.index(l) for l in c.actual.vivos] if not c.terminado() else [],
+        "blancos": [c.rival.luchadores.index(l) for l in c.rival.blancos] if mi_turno else [],
+        "aliados": [c.actual.luchadores.index(l) for l in c.actual.vivos] if mi_turno else [],
     }
-    if not c.terminado():
+    if mi_turno:
         o = c.objetivo_por_defecto()
         d["objetivo"] = c.rival.luchadores.index(o) if o else None
-    else:
+    if c.terminado():
         g = c.ganador()
-        d["ganador"] = c.equipos.index(g)
+        gi = c.equipos.index(g)
+        d["ganador"] = orden.index(gi)
         lider = g.vivos[0]
-        d["victoria_img"] = (p or {}).get("img_victoria") or lider.d.get("victoria_img") or lider.d.get("gif")
-        if p and p.get("premio") is not None:
-            d["recompensa"] = p["premio"]
-            d["monedas"] = p.get("monedas")
+        d["victoria_img"] = lider.d.get("victoria_img") or lider.d.get("gif")
+        pr = (p or {}).get("premios", {}).get(yo)
+        if pr:
+            d["recompensa"], d["monedas"] = pr
     return d
 
 
@@ -142,14 +153,14 @@ def _pagar(p):
         return
     p["pagado"] = True
     if p["uid"] and c.equipos.index(c.ganador()) == 0:
-        premio = M.RECOMPENSA_CPU.get(c.nivel, 8)
+        premio = REC_CPU.get(c.nivel, 20)
 
         def f(d):
             d["monedas"] += premio
             return d["monedas"]
         try:
-            p["monedas"] = db().transaccion(p["uid"], f)
-            p["premio"] = premio
+            total = db().transaccion(p["uid"], f)
+            p.setdefault("premios", {})[0] = (premio, total)
             c.log += f"\n💀 **{c.equipos[0].nombre}** gana **{premio}** Monedas del Alma."
         except Exception as e:
             print("Error guardando monedas:", repr(e))
@@ -301,6 +312,164 @@ def api_accion(b, ses):
     if err:
         return err
     c = p["c"]
+    err = _ejecutar_accion(c, b)
+    if err:
+        return err
+    pasos = [_paso(p)]
+    _turnos_cpu(p, pasos)
+    return {"pasos": pasos}
+
+
+def api_terminar(b, ses):
+    p, err = _partida(b, ses)
+    if err:
+        return err
+    p["c"].terminar_turno()
+    pasos = [_paso(p)]
+    _turnos_cpu(p, pasos)
+    return {"pasos": pasos}
+
+
+# ------------------------------------------------------------------ PvP por link
+LETRAS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+
+def _limpiar_salas():
+    ahora = time.time()
+    for k in [k for k, s in SALAS.items() if ahora - s["t"] > SALA_VIDA]:
+        SALAS.pop(k, None)
+
+
+def _evento(s, anims):
+    s["seq"] += 1
+    s["eventos"].append({"seq": s["seq"], "anims": anims, "v": [estado(s["c"], s, 0), estado(s["c"], s, 1)]})
+    s["eventos"] = s["eventos"][-60:]
+    s["ult"] = time.time()
+
+
+def _pagar_pvp(s):
+    c = s["c"]
+    if s["pagado"] or not c.terminado():
+        return
+    s["pagado"] = True
+    gi = c.equipos.index(c.ganador())
+    for i, uid in enumerate(s["uids"]):
+        def f(d, i=i):
+            if i == gi:
+                d["monedas"] += REC_PVP
+                d["pvp_victorias"] = d.get("pvp_victorias", 0) + 1
+            else:
+                d["pvp_derrotas"] = d.get("pvp_derrotas", 0) + 1
+            return d["monedas"]
+        try:
+            total = db().transaccion(uid, f)
+            if i == gi:
+                s["premios"][i] = (REC_PVP, total)
+        except Exception as e:
+            print("Error guardando PvP:", repr(e))
+    c.log += f"\n💀 **{c.equipos[gi].nombre}** gana **{REC_PVP}** Monedas del Alma."
+
+
+def _revisar_tiempo(s):
+    c = s["c"]
+    if c and not c.terminado() and time.time() - s["ult"] > TIMEOUT_TURNO:
+        eq = c.actual
+        c.log = f"⌛ **{eq.nombre}** tardó demasiado. ¡Pierde por abandono!"
+        c.anim = c.trans = None
+        c.abandonar(eq)
+        _pagar_pvp(s)
+        _evento(s, [])
+
+
+def _vista(s, yo, desde):
+    _revisar_tiempo(s)
+    return {"sala": "jugando", "codigo": s["codigo"], "yo": yo, "seq": s["seq"],
+            "eventos": [{"seq": e["seq"], "estado": e["v"][yo], "anims": e["anims"]} for e in s["eventos"] if e["seq"] > desde],
+            "actual": estado(s["c"], s, yo), "nombres": [e.nombre for e in s["c"].equipos]}
+
+
+def _sala(q_id, ses):
+    s = SALAS.get(str(q_id or "").upper())
+    if not s:
+        return None, None, {"error": "Esa partida ya no existe."}
+    if not ses or ses["id"] not in s["uids"]:
+        return None, None, {"error": "No eres parte de esta partida."}
+    s["t"] = time.time()
+    return s, s["uids"].index(ses["id"]), None
+
+
+def _equipo_valido(keys):
+    return isinstance(keys, list) and len(keys) == 3 and all(k in M.PERSONAJES for k in keys)
+
+
+def api_pvp_crear(b, ses):
+    if not ses:
+        return {"error": "Inicia sesión con Discord para jugar contra amigos."}
+    if not _equipo_valido(b.get("equipo")):
+        return {"error": "Elige 3 luchadores."}
+    _limpiar_salas()
+    codigo = "".join(random.choice(LETRAS) for _ in range(6))
+    SALAS[codigo] = {"codigo": codigo, "t": time.time(), "ult": time.time(), "uids": [ses["id"], None],
+                     "nombres": [ses["n"], None], "equipos": [b["equipo"], None], "c": None, "eventos": [], "seq": 0,
+                     "pagado": False, "premios": {}}
+    return {"codigo": codigo, "link": f"{PUBLIC_URL}/?sala={codigo}"}
+
+
+def api_pvp_info(q, ses):
+    s = SALAS.get(str(q.get("codigo", "")).upper())
+    if not s:
+        return {"existe": False}
+    return {"existe": True, "creador": s["nombres"][0], "libre": s["uids"][1] is None,
+            "mia": bool(ses and ses["id"] in s["uids"])}
+
+
+def api_pvp_unirse(b, ses):
+    if not ses:
+        return {"error": "Inicia sesión con Discord para unirte."}
+    s = SALAS.get(str(b.get("codigo", "")).upper())
+    if not s:
+        return {"error": "Esa partida ya no existe."}
+    if ses["id"] in s["uids"]:
+        return {"error": "Esa es tu propia partida: pásale el link a tu amigo."}
+    if s["uids"][1] is not None:
+        return {"error": "Esa partida ya está llena."}
+    if not _equipo_valido(b.get("equipo")):
+        return {"error": "Elige 3 luchadores."}
+    s["uids"][1], s["nombres"][1], s["equipos"][1] = ses["id"], ses["n"], b["equipo"]
+    s["c"] = M.Combate(M.Equipo(Jugador(s["nombres"][0]), s["equipos"][0]), M.Equipo(Jugador(s["nombres"][1]), s["equipos"][1]))
+    s["t"] = s["ult"] = time.time()
+    _evento(s, [])
+    return _vista(s, 1, 0)
+
+
+def api_pvp_estado(q, ses):
+    s, yo, err = _sala(q.get("id"), ses)
+    if err:
+        return err
+    if s["c"] is None:
+        return {"sala": "esperando", "codigo": s["codigo"]}
+    return _vista(s, yo, int(q.get("desde", 0) or 0))
+
+
+def _pvp_actuar(b, ses, f):
+    s, yo, err = _sala(b.get("id"), ses)
+    if err:
+        return err
+    c = s["c"]
+    if c is None:
+        return {"error": "Todavía falta un rival."}
+    _revisar_tiempo(s)
+    if c.terminado() or c.turno != yo:
+        return {"error": "No es tu turno."}
+    r = f(c, s, yo)
+    if r:
+        return r
+    _pagar_pvp(s)
+    _evento(s, _anim(c))
+    return _vista(s, yo, int(b.get("desde", 0) or 0))
+
+
+def _ejecutar_accion(c, b):
     try:
         a = c.actual.luchadores[int(b["actor"])]
         k = b["k"]
@@ -319,24 +488,40 @@ def api_accion(b, ses):
         c.ejecutar(a, k, obj)
     except (KeyError, ValueError, IndexError, TypeError):
         return {"error": "Acción inválida."}
-    pasos = [_paso(p)]
-    _turnos_cpu(p, pasos)
-    return {"pasos": pasos}
+    return None
 
 
-def api_terminar(b, ses):
-    p, err = _partida(b, ses)
+def api_pvp_accion(b, ses):
+    return _pvp_actuar(b, ses, lambda c, s, yo: _ejecutar_accion(c, b))
+
+
+def api_pvp_terminar(b, ses):
+    def f(c, s, yo):
+        c.terminar_turno()
+    return _pvp_actuar(b, ses, f)
+
+
+def api_pvp_rendirse(b, ses):
+    s, yo, err = _sala(b.get("id"), ses)
     if err:
         return err
-    p["c"].terminar_turno()
-    pasos = [_paso(p)]
-    _turnos_cpu(p, pasos)
-    return {"pasos": pasos}
+    c = s["c"]
+    if c is None or c.terminado():
+        return {"error": "No hay partida en curso."}
+    c.log = f"🏳️ **{c.equipos[yo].nombre}** se rinde."
+    c.anim = c.trans = None
+    c.abandonar(c.equipos[yo])
+    _pagar_pvp(s)
+    _evento(s, [])
+    return _vista(s, yo, int(b.get("desde", 0) or 0))
 
 
-GETS = {"/api/personajes": api_personajes, "/api/yo": api_yo, "/api/bazar": api_bazar}
+GETS = {"/api/personajes": api_personajes, "/api/yo": api_yo, "/api/bazar": api_bazar,
+        "/api/pvp/info": api_pvp_info, "/api/pvp/estado": api_pvp_estado}
 POSTS = {"/api/nueva": api_nueva, "/api/accion": api_accion, "/api/terminar": api_terminar,
-         "/api/comprar": api_comprar, "/api/equipar": api_equipar}
+         "/api/comprar": api_comprar, "/api/equipar": api_equipar,
+         "/api/pvp/crear": api_pvp_crear, "/api/pvp/unirse": api_pvp_unirse, "/api/pvp/accion": api_pvp_accion,
+         "/api/pvp/terminar": api_pvp_terminar, "/api/pvp/rendirse": api_pvp_rendirse}
 
 
 # ------------------------------------------------------------------ HTTP
@@ -383,7 +568,7 @@ class H(BaseHTTPRequestHandler):
         ruta, q = u.path, urllib.parse.parse_qs(u.query)
         try:
             if ruta in GETS:
-                return self._json(GETS[ruta](None, self._sesion()))
+                return self._json(GETS[ruta]({k: v[0] for k, v in q.items()}, self._sesion()))
             if ruta in ("/", "/index.html"):
                 raw = (AQUI / "index.html").read_bytes()
                 self.send_response(200)
