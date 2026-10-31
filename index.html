@@ -73,7 +73,8 @@ function fmt(t){
 const emo=(p)=>p.emoji_url?`<img class="emo" src="${p.emoji_url}">`:esc(p.emoji||'');
 const medios=m=>'🔷'.repeat(m>>1)+'🔹'.repeat(m&1)||'—';
 const COL={azul:'#4f7cff',verde:'#3fb56b',rojo:'#d9534f',gris:'#6b7280'};
-let PJ=[],elegidos=[],nivel='normal',G=null,S=null,sel=0,tgt=null,tgtAli=null,lock=false;
+let PJ=[],elegidos=[],nivel='normal',G=null,S=null,sel=0,tgt=null,tgtAli=null,lock=false,MODO='cpu',SEQ=0,SALA=null,reto=null;
+const LS={g:k=>{try{return localStorage.getItem(k)}catch(e){return null}},s:(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
 
 async function api(ruta,datos){
   const r=await fetch(ruta,datos?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(datos)}:{});
@@ -154,7 +155,21 @@ async function equipar(k,quitar){
 async function inicio(){
   if(!PJ.length)PJ=(await api('/api/personajes')).personajes;
   await cargarYo();
-  elegidos=[];dibujarEleccion();
+  MODO='cpu';SEQ=0;SALA=null;
+  elegidos=[];
+  if(!reto){
+    const u=new URLSearchParams(location.search).get('sala')||LS.g('sala_pendiente');
+    if(u){const i=await api('/api/pvp/info?codigo='+encodeURIComponent(u));
+      if(i.existe&&i.libre&&!i.mia){reto={codigo:u.toUpperCase(),creador:i.creador};if(!YO.logueado)LS.s('sala_pendiente',u)}
+      else{LS.s('sala_pendiente',null);if(i.mia)reto=null}
+      history.replaceState(null,'','/')}
+  }
+  const viejo=LS.g('pvp_sala');
+  if(viejo&&YO.logueado){const r=await api('/api/pvp/estado?id='+viejo+'&desde=0');
+    if(r.sala==='esperando')return mostrarEspera(viejo,location.origin+'/?sala='+viejo);
+    if(r.sala==='jugando'&&!r.actual.terminado)return entrarPvP(viejo,r);
+    LS.s('pvp_sala',null)}
+  dibujarEleccion();
 }
 function dibujarEleccion(foco){
   const f=foco&&PJ.find(p=>p.key===foco);
@@ -165,7 +180,10 @@ function dibujarEleccion(foco){
   <div class="fila" style="margin-top:12px">
     <span>Equipo: <b>${elegidos.length}/3</b></span>
     <select onchange="nivel=this.value"><option value="facil" ${nivel=='facil'?'selected':''}>CPU fácil</option><option value="normal" ${nivel=='normal'?'selected':''}>CPU normal</option><option value="dificil" ${nivel=='dificil'?'selected':''}>CPU difícil</option></select>
-    <button ${elegidos.length==3?'':'disabled'} onclick="empezar()">¡A pelear!</button></div>`;
+    <button ${elegidos.length==3?'':'disabled'} onclick="empezar()">¡A pelear! (CPU)</button>
+    ${reto?`<button class="btn-burnice" ${elegidos.length==3&&YO.logueado?'':'disabled'} onclick="unirse()">⚔️ Aceptar el reto de ${esc(reto.creador)}</button>`
+      :(YO.logueado?`<button class="btn-discord" ${elegidos.length==3?'':'disabled'} onclick="crearSala()">👥 Retar a un amigo</button>`:'')}</div>
+  ${reto?(YO.logueado?`<div class="info">🔥 <b>${esc(reto.creador)}</b> te retó. Elige tu equipo y acepta.</div>`:`<div class="info">🔥 <b>${esc(reto.creador)}</b> te retó. Inicia sesión con Discord para aceptar.</div>`):''}`;
 }
 function pick(k){
   const i=elegidos.indexOf(k);
@@ -178,6 +196,55 @@ async function empezar(){
   G=r.id;S=r.estado;sel=0;tgt=null;tgtAli=null;
   dibujarCombate();
   if(r.pasos.length)await reproducir(r.pasos);
+}
+
+/* ---------- PvP por link ---------- */
+async function crearSala(){
+  const r=await api('/api/pvp/crear',{equipo:elegidos});
+  if(r.error)return alert(r.error);
+  SALA=r.codigo;LS.s('pvp_sala',r.codigo);
+  mostrarEspera(r.codigo,r.link);
+}
+function mostrarEspera(cod,link){
+  SALA=cod;
+  $('#app').innerHTML=barra()+`<h1>👥 Reta a un amigo</h1><div class="info">Pásale este link a tu amigo. Cuando entre y elija su equipo, empieza la pelea.<br><br>
+   <input id="lnk" readonly value="${esc(link)}" style="width:100%;padding:10px;border-radius:8px;border:0;background:#20242f;color:#fff">
+   <div class="fila" style="margin-top:8px"><button onclick="copiar()">📋 Copiar link</button><button class="sec" onclick="cancelarSala()">Cancelar</button></div>
+   <div class="hist" style="margin-top:8px">⏳ Esperando al rival… (la sala dura 30 min)</div></div>`;
+  esperarRival(cod);
+}
+function copiar(){const i=$('#lnk');i.select();try{navigator.clipboard.writeText(i.value)}catch(e){document.execCommand('copy')}}
+function cancelarSala(){SALA=null;LS.s('pvp_sala',null);inicio()}
+async function esperarRival(cod){
+  while(SALA===cod&&MODO==='cpu'){
+    await dormir(2000);
+    if(SALA!==cod)return;
+    const r=await api('/api/pvp/estado?id='+cod+'&desde=0');
+    if(r.error){SALA=null;LS.s('pvp_sala',null);alert(r.error);return inicio()}
+    if(r.sala==='jugando')return entrarPvP(cod,r);
+  }
+}
+async function unirse(){
+  const r=await api('/api/pvp/unirse',{codigo:reto.codigo,equipo:elegidos});
+  if(r.error){reto=null;LS.s('sala_pendiente',null);alert(r.error);return inicio()}
+  LS.s('sala_pendiente',null);reto=null;LS.s('pvp_sala',r.codigo);entrarPvP(r.codigo,r);
+}
+function entrarPvP(cod,r){
+  MODO='pvp';G=cod;SALA=cod;SEQ=r.seq;S=r.actual;sel=0;tgt=null;tgtAli=null;lock=false;
+  dibujarCombate();
+}
+function aPasos(evs){return evs.filter(e=>e.seq>SEQ).map(e=>{SEQ=Math.max(SEQ,e.seq);return{estado:e.estado,anims:e.anims}})}
+setInterval(async()=>{
+  if(MODO!=='pvp'||!S||S.terminado||lock)return;
+  const r=await api('/api/pvp/estado?id='+G+'&desde='+SEQ);
+  if(lock||MODO!=='pvp'||r.error)return;
+  const p=aPasos(r.eventos||[]);if(p.length)reproducir(p);
+},1500);
+async function rendirse(){
+  if(lock||!confirm('¿Seguro que quieres rendirte?'))return;lock=true;
+  const r=await api('/api/pvp/rendirse',{id:G,desde:SEQ});
+  if(r.error){lock=false;return alert(r.error)}
+  await reproducir(aPasos(r.eventos));
 }
 
 /* ---------- combate ---------- */
@@ -240,9 +307,10 @@ function dibujarCombate(){
     <div class="chips">${S.blancos.map(i=>`<button class="${tgtAli==null&&tgt===i?'on':''}" onclick="elegirRival(${i})">⚔️ ${esc(e1.luchadores[i].forma||e1.luchadores[i].nombre)}</button>`).join('')}
     ${soporte?S.aliados.map(i=>`<button class="${tgtAli===i?'on':''}" onclick="elegirAli(${i})">💚 ${esc(e0.luchadores[i].nombre)}</button>`).join(''):''}</div>
     <div class="acc">${a.acciones.map(x=>botonAcc(a,x)).join('')}
-    <button class="sec" onclick="terminar()">⏭️ Terminar turno</button></div>
+    <button class="sec" onclick="terminar()">⏭️ Terminar turno</button>${MODO==='pvp'?'<button class="sec" onclick="rendirse()">🏳️ Rendirse</button>':''}</div>
     <div class="hist">🔷 = 1 icono · 🔹 = ½ icono. Toca una carta tuya para cambiar de luchador y una rival para atacarla.</div></div>`;
   }
+  if(MODO==='pvp'&&!miTurno)h+=`<div class="panel">⏳ Turno de <b>${esc(e1.nombre)}</b>… tienes 150 s en tu turno o pierdes por abandono. <button class="sec" onclick="rendirse()">🏳️ Rendirse</button></div>`;
   $('#app').innerHTML=h;
 }
 function costeTxt(m){return ({1:'½',2:'1',4:'2'})[m]||(m/2)}
@@ -258,16 +326,16 @@ async function hacer(k){
   const x=a.acciones.find(y=>y.k===k);
   const apoyo=tgtAli!=null&&(x.apoyo||x.dual);
   lock=true;
-  const r=await api('/api/accion',{id:G,actor:a.i,k,objetivo:tgt,aliado:apoyo||x.apoyo?tgtAli:null,apoyo});
+  const r=await api(MODO==='pvp'?'/api/pvp/accion':'/api/accion',{id:G,desde:SEQ,actor:a.i,k,objetivo:tgt,aliado:apoyo||x.apoyo?tgtAli:null,apoyo});
   if(r.error){lock=false;alert(r.error);return}
   tgtAli=null;
-  await reproducir(r.pasos);
+  await reproducir(MODO==='pvp'?aPasos(r.eventos):r.pasos);
 }
 async function terminar(){
   if(lock)return;lock=true;
-  const r=await api('/api/terminar',{id:G});
+  const r=await api(MODO==='pvp'?'/api/pvp/terminar':'/api/terminar',{id:G,desde:SEQ});
   if(r.error){lock=false;alert(r.error);return}
-  await reproducir(r.pasos);
+  await reproducir(MODO==='pvp'?aPasos(r.eventos):r.pasos);
 }
 async function reproducir(pasos){
   lock=true;
@@ -280,13 +348,14 @@ async function reproducir(pasos){
     $('#anim').style.display='none';
     S=p.estado;
     dibujarCombate();
-    if(p.estado.turno===1&&!p.estado.terminado)await dormir(1300);
+    if(MODO==='cpu'&&p.estado.turno===1&&!p.estado.terminado)await dormir(1300);
   }
   lock=false;
   dibujarCombate();
 }
 function dibujarFin(){
   const gane=S.ganador===0;
+  if(MODO==='pvp'){LS.s('pvp_sala',null)}
   $('#app').innerHTML=`<div class="vic"><h1>${gane?'🏆 ¡Ganaste!':'💀 Perdiste'}</h1>
   ${S.victoria_img?`<img src="${S.victoria_img}">`:''}
   ${S.recompensa?`<h2>+${S.recompensa} 💀 Monedas del Alma (total ${S.monedas})</h2>`:(gane&&!YO.logueado&&YO.login_disponible?'<div class="info">Inicia sesión con Discord para ganar monedas.</div>':'')}
