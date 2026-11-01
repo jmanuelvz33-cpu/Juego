@@ -562,6 +562,56 @@ class H(BaseHTTPRequestHandler):
             self._cookie(*c)
         self.send_header("Content-Length", "0")
         self.end_headers()
+    
+    def _estatico(self, ruta):
+        tipos = {".js": "application/javascript; charset=utf-8", ".mp3": "audio/mpeg", ".ogg": "audio/ogg",
+                 ".m4a": "audio/mp4", ".wav": "audio/wav", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+                 ".png": "image/png", ".webp": "image/webp"}
+        if ruta.startswith("/musica/"):
+            nombre = urllib.parse.unquote(ruta[len("/musica/"):])
+            arc = (AQUI / "musica" / Path(nombre).name)          # Path.name evita salirse de la carpeta
+        else:
+            arc = AQUI / ruta.lstrip("/")
+        tipo = tipos.get(arc.suffix.lower())
+        if not tipo or not arc.is_file():
+            return self.send_error(404)
+        total = arc.stat().st_size
+        ini, fin, cod = 0, total - 1, 200
+        rg = self.headers.get("Range", "")
+        mt = re.match(r"bytes=(\d*)-(\d*)$", rg)
+        if mt and (mt.group(1) or mt.group(2)):
+            if mt.group(1):
+                ini = int(mt.group(1))
+                fin = int(mt.group(2)) if mt.group(2) else total - 1
+            else:
+                ini = max(0, total - int(mt.group(2)))
+            fin = min(fin, total - 1)
+            if ini > fin:
+                self.send_response(416)
+                self.send_header("Content-Range", f"bytes */{total}")
+                self.send_header("Content-Length", "0")
+                return self.end_headers()
+            cod = 206
+        self.send_response(cod)
+        self.send_header("Content-Type", tipo)
+        self.send_header("Accept-Ranges", "bytes")
+        self.send_header("Cache-Control", "no-cache" if arc.suffix == ".js" else "public, max-age=86400")
+        if cod == 206:
+            self.send_header("Content-Range", f"bytes {ini}-{fin}/{total}")
+        self.send_header("Content-Length", str(fin - ini + 1))
+        self.end_headers()
+        try:
+            with open(arc, "rb") as fh:
+                fh.seek(ini)
+                resto = fin - ini + 1
+                while resto > 0:
+                    d = fh.read(min(65536, resto))
+                    if not d:
+                        break
+                    self.wfile.write(d)
+                    resto -= len(d)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
 
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)
