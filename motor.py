@@ -54,6 +54,10 @@ TRANSICION_GIF = "https://i.imgur.com/iP8z0NW.gif"     # <- GIF que aparece cuan
 TRANSICION_SEG = 2.5    # segundos que se ve la transición
 VERSUS_SEG = 3.5        # segundos de la pantalla de VERSUS
 HISTORIAL = 2           # turnos anteriores que se muestran
+CPU_EFECTO_MULT = 1.4     # la CPU valora más las habilidades que dan efecto (quemadura, parálisis...)
+CPU_HAB_BONO = 2.0        # pequeño extra por usar habilidades en vez de solo el ataque normal
+CPU_ULTI_MULT = 1.8       # cuando la ÚLTI está lista, la CPU la usa
+CPU_REPITE = 0.85         # repetir el mismo ataque que acaba de usar vale menos (variedad)
 CPU_NIVELES = {"facil": 0.55, "normal": 0.85, "dificil": 1.0}   # 1.0 = CPU perfecta
 RECOMPENSA_CPU = {"facil": 3, "normal": 8, "dificil": 12}       # Monedas del Alma por ganarle a la CPU
 RECOMPENSA_PVP = 25                                              # Monedas del Alma por ganarle a un jugador
@@ -275,7 +279,7 @@ PERSONAJES = {
         "emoji": "<:emoji_24:1565078822708060160>",     # <- pon aquí tu emoji de Josuke: <:nombre:ID>
         "color": 0xFF8FB1,
         "boton": "gris",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
-        "vida": 130,
+        "vida": 135,
         "curador": True,   # sus ataques también pueden curar a un compañero (se elige en el menú de objetivos)
         "desc": "Crazy Diamond (JoJo, parte 4). Apoyo: sus golpes dañan al rival o curan a un compañero.",
         "gif": "https://i.imgur.com/5fj0rt7.jpeg",            # <- retrato de Josuke
@@ -283,8 +287,8 @@ PERSONAJES = {
         "victoria_img": "https://i.imgur.com/RhtwAcj.jpeg",   # <- imagen de victoria
         "mov": {
             "normal": {"nombre": "Golpe de Crazy Diamond", "tipo": "normal", "coste": COSTE_NORMAL,
-                       "dmg": (6, 10), "prec": 0.95, "sana": 8,
-                       "desc": "Elige un rival: lo golpea. Elige un compañero: lo cura 8 (no falla)."},
+                       "dmg": (7, 11), "prec": 0.95, "sana": 9,
+                       "desc": "Elige un rival: lo golpea. Elige un compañero: lo cura 9 (no falla)."},
             "hab1": {"nombre": "¡Dora, dora, dora!", "tipo": "estado", "coste": 3, "pm": 2,
                      "dmg": (2, 4), "golpes": 3, "prec": 0.95, "efecto": ("fusion", 2, 0.90), "regen": ("regen", 3),
                      "desc": "Rival: 3 golpes que lo dejan 🧵 Fusionado con su ropa (falla 15% más, 2 turnos). Compañero: 💚 Regeneración (cura 5 al inicio de su turno, 2 turnos)."},
@@ -329,7 +333,7 @@ PERSONAJES = {
         "emoji": "<:emoji_23:1564807292795224146>",     # <- pon aquí tu emoji de Mantis: <:nombre:ID>
         "color": 0x27AE60,
         "boton": "verde",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
-        "vida": 120,        # menos vida que el resto (130): hay que protegerla
+        "vida": 125,        # menos vida que el resto (130): hay que protegerla
         "hojas": True,      # usa 🍃 hojas (las gana con el ataque normal)
         "desc": "Guardianes de la Galaxia (Marvel). Apoyo: junta hojas para curar y su ÚLTI duerme al rival.",
         "gif": "https://i.imgur.com/arZOwk3.jpeg",            # <- retrato de Mantis
@@ -337,7 +341,7 @@ PERSONAJES = {
         "victoria_img": "https://i.imgur.com/pD8UBHP.jpeg",   # <- imagen de victoria
         "mov": {
             "normal": {"nombre": "Golpe de antena", "tipo": "normal", "coste": COSTE_NORMAL,
-                       "dmg": (5, 8), "prec": 0.97, "hoja": 1,
+                       "dmg": (6, 9), "prec": 0.97, "hoja": 1,
                        "desc": "Poco daño. Si acierta, gana 1 🍃 hoja (máximo 3)."},
             "hab1": {"nombre": "Sanar", "tipo": "cura", "coste": COSTE_HABILIDAD,
                      "desc": "Gasta todas sus 🍃 hojas. Elige a quién curar en el menú de objetivos. 1 hoja: cura 16 · 2 hojas: cura 30 · 3 hojas: cura 14 a todo el equipo."},
@@ -1075,7 +1079,7 @@ class Combate:
         if ex and ex[0] not in t.efectos:
             v += 5 * ex[2]              # bajar la defensa ayuda a los demás
         if ef and ef[0] not in t.efectos:
-            v += {"paralisis": 10, "quemadura": 8, "debilidad": 7, "guardia_rota": 9, "veneno": 8, "sueno": 10, "fusion": 8, "sangrado": 10, "enredado": 11}[ef[0]] * ef[2]
+            v += {"paralisis": 10, "quemadura": 8, "debilidad": 7, "guardia_rota": 9, "veneno": 8, "sueno": 10, "fusion": 8, "sangrado": 10, "enredado": 11}[ef[0]] * ef[2] * CPU_EFECTO_MULT
         v += 8 * (1 - t.hp / t.max_hp)
         v -= (1 - self._prec(l, m)) * max(0, eq.medios - m["coste"]) * 3
         if m.get("pm") and prom < t.hp:
@@ -1098,9 +1102,24 @@ class Combate:
             return None
         if random.random() > self.inteligencia:
             return random.choice(ops)
-        pts = [max(0.1, self.valor(*o)) for o in ops]
+        ult = getattr(self, "_ult_cpu", None)
+        if ult is None:
+            ult = self._ult_cpu = {}
+        pts = []
+        for o in ops:
+            p = max(0.1, self.valor(*o))
+            if o[1] == "ulti":
+                p *= CPU_ULTI_MULT
+            elif o[1] in ("hab1", "hab2"):
+                p += CPU_HAB_BONO
+            if ult.get(o[0].key) == o[1] and o[1] != "defender":
+                p *= CPU_REPITE
+            pts.append(p)
         if self.inteligencia >= 1.0:
-            return ops[pts.index(max(pts))]
-        return random.choices(ops, [p ** 3 for p in pts])[0]
+            j = ops[pts.index(max(pts))]
+        else:
+            j = random.choices(ops, [p ** 3 for p in pts])[0]
+        ult[j[0].key] = j[1]
+        return j
 
 
