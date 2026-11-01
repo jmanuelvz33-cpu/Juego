@@ -53,12 +53,42 @@
   #panel .conf{flex:1;background:#ffd400;color:#1a1500;font-weight:800;letter-spacing:.04em}
   #panel .est{width:44px;background:#2b3040}
   #panel .vacio{color:var(--mut);font-size:.9rem;padding:30px 6px;text-align:center}
+  #fondo{position:fixed;inset:0;z-index:-1;background-size:cover;background-position:center;background-repeat:no-repeat;transition:opacity .35s}
+  .ranura .ord{position:absolute;top:0;left:0;background:var(--ac);color:#fff;font-size:.68rem;padding:0 5px;border-radius:0 0 8px 0;z-index:2}
+  .ordtxt{color:var(--mut);font-size:.75rem;margin:2px 0 4px}
+  #panel .mv{display:flex;align-items:center;gap:6px;margin:6px 0}
+  #panel .mv span{flex:1;text-align:center;font-size:.8rem;color:var(--mut)}
+  #panel .mv button{padding:6px 14px;background:#3a3f4f}
+  .guard{margin:8px 0}
+  .guard .tt{color:var(--mut);font-size:.75rem;margin-bottom:4px}
+  .guard .fl{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .gs{background:var(--card);border-radius:10px;padding:5px}
+  .gs .gm{display:flex;gap:2px;justify-content:center;align-items:center;height:34px;cursor:pointer;font-size:.75rem;color:var(--mut)}
+  .gs .gm img{width:32%;height:34px;object-fit:cover;border-radius:5px}
+  .gs .gb{display:flex;gap:4px;margin-top:4px}
+  .gs .gb button{flex:1;padding:3px;font-size:.8rem}
+  .lu .num{position:absolute;top:2px;left:2px;z-index:2;background:#000b;color:#fff;font-weight:800;font-size:.72rem;min-width:1.4em;text-align:center;border-radius:8px;padding:0 4px}
+  .lu.ya{border-color:#ffd400;box-shadow:0 0 12px #ffd40088}
+  .lu.ya .num{background:#ffd400;color:#1a1500}
+  .orden{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:.76rem;color:var(--mut);margin:0 0 4px}
+  .orden b{color:var(--tx)}.orden .on{color:#ffd400;font-weight:800}.orden .x{text-decoration:line-through;opacity:.5}
   .tienda .item{border:1px solid #2b3040;transition:transform .15s,box-shadow .15s}
   .tienda .item:hover{transform:translateY(-3px);box-shadow:0 6px 18px rgba(255,90,31,.25)}
   `;
   document.head.appendChild(css);
 
   const U=window.UI={filtro:'todos',frase:'',sel:null};
+  /* ---------- fondos a pantalla completa ---------- */
+  const FO=I.FONDOS||{};
+  U.fondo=function(n){
+    let d=document.getElementById('fondo');
+    if(!d){d=document.createElement('div');d.id='fondo';document.body.prepend(d)}
+    let img=FO[n]||'';if(!img&&n==='inicio')img=I.FONDO_IMG||'';
+    const o=I.FONDO_OSCURO==null?.55:I.FONDO_OSCURO;
+    const nuevo=img?`linear-gradient(rgba(10,12,18,${o}),rgba(10,12,18,${o})),url("${img.replace(/"/g,'%22')}")`:'none';
+    if(d.dataset.v!==nuevo){d.dataset.v=nuevo;d.style.backgroundImage=nuevo}
+  };
+  U.fondoDe=function(m){U.fondo({menu:'inicio',bazar:'bazar',pelea:'combate',fin:'combate'}[m]||'inicio')};
   const rolDe=k=>(I.ROL||{})[k]||'';
   const lista=()=>PJ.filter(p=>U.filtro==='todos'||rolDe(p.key)===U.filtro);
   const nombre=()=>(typeof YO!=='undefined'&&YO.logueado)?YO.nombre:'viajero';
@@ -66,14 +96,14 @@
   /* ---------- inicio ---------- */
   U.portada=function(){
     musica('menu');
-    const fondo=I.FONDO_IMG?`style="background:url('${esc(I.FONDO_IMG)}') center/cover;border-radius:16px;padding:8px"`:'';
+    U.fondo('inicio');
     const perfil=YO.logueado
      ?`<div class="perfil">${YO.avatar?`<img class="av" src="${esc(YO.avatar)}">`:''}<div><div class="nom">${esc(YO.nombre)}</div>
         <div class="sub">💀 ${YO.monedas} · 🏆 ${YO.victorias||0} · 💔 ${YO.derrotas||0}</div></div>
         ${YO.mascota_url?`<img class="mas" src="${esc(YO.mascota_url)}">`:''}<a href="/auth/logout" style="color:var(--mut);font-size:.75rem">salir</a></div>`
      :(YO.login_disponible?`<a class="btn-discord" style="display:block;padding:10px;border-radius:12px;color:#fff;text-decoration:none" href="/auth/login">Iniciar sesión con Discord</a>`:`<div class="perfil"><span style="color:var(--mut)">Modo invitado</span></div>`);
     const frase=azar(I.BIENVENIDAS&&I.BIENVENIDAS.length?I.BIENVENIDAS:['¡Hola!']).replace(/\{nombre\}/g,nombre());
-    $('#app').innerHTML=`<div class="portada" ${fondo}>${perfil}
+    $('#app').innerHTML=`<div class="portada">${perfil}
       ${I.BIENVENIDA_IMG?`<img class="bur" src="${esc(I.BIENVENIDA_IMG)}">`:`<div class="bur0">🔥</div>`}
       <div class="burnice" style="text-align:left"><b>🔥 Burnice:</b> ${fmt(frase)}</div>
       ${I.AVISO?`<div class="dia">📣 ${fmt(I.AVISO)}</div>`:''}
@@ -95,7 +125,7 @@
   }
   function ranuraH(i){
     const k=elegidos[i],p=k&&PJ.find(x=>x.key===k);
-    return p?`<div class="ranura llena ${U.sel===k?'ver':''}" onclick="UI.tocar('${p.key}')">${p.gif?`<img src="${esc(p.gif)}">`:''}<div class="nm">${esc(p.nombre)}</div></div>`
+    return p?`<div class="ranura llena ${U.sel===k?'ver':''}" onclick="UI.tocar('${p.key}')">${p.gif?`<img src="${esc(p.gif)}">`:''}<b class="ord">${i+1}º</b><div class="nm">${esc(p.nombre)}</div></div>`
             :`<div class="ranura">${i+1}</div>`;
   }
   function panelH(){
@@ -104,6 +134,7 @@
     const R=ROLES[rolDe(p.key)],en=elegidos.includes(p.key),lleno=elegidos.length>=3&&!en;
     return `<div class="ret">${p.gif?`<img src="${esc(p.gif)}">`:''}</div>
       <div class="nom">${esc(p.nombre)}</div><div class="rl">${R?esc(R.nombre):''}</div>
+      ${en?`<div class="mv"><button onclick="UI.mover(-1)" ${elegidos.indexOf(p.key)==0?'disabled':''}>◀</button><span>Actúa ${elegidos.indexOf(p.key)+1}º</span><button onclick="UI.mover(1)" ${elegidos.indexOf(p.key)>=elegidos.length-1?'disabled':''}>▶</button></div>`:''}
       <div class="fr">${U.frase?`«${esc(U.frase)}»`:'…'}</div>
       <div class="bt"><button class="est" title="Favorito" onclick="UI.fav('${p.key}')">${favs().includes(p.key)?'⭐':'☆'}</button>
       <button class="conf" ${lleno?'disabled':''} onclick="UI.confirmar()">${en?'QUITAR':(lleno?'EQUIPO LLENO':'CONFIRMAR')}</button></div>`;
@@ -130,11 +161,21 @@
   U.refrescar=function(){
     const r=$('#ranuras');if(!r)return;
     r.innerHTML=[0,1,2].map(ranuraH).join('');
+    const g=$('#guard');if(g)g.innerHTML=guardH();
     $('#panel').innerHTML=panelH();
     const h=$('#hubn');if(h)h.textContent=elegidos.length+'/3';
     marcar();
     const c=$('#ctrl');if(c)c.innerHTML=ctrlH();
   };
+  /* equipos guardados (se quedan en este dispositivo) */
+  const guardados=()=>{try{const a=JSON.parse(LS.g('equipos')||'[]');return [a[0]||null,a[1]||null,a[2]||null]}catch(e){return[null,null,null]}};
+  function guardH(){
+    const g=guardados();
+    return `<div class="tt">💾 Mis equipos — toca uno para cargarlo, 💾 para guardar el actual</div><div class="fl">`+g.map((e,i)=>{
+      const ok=e&&e.filter(k=>PJ.find(x=>x.key===k));
+      return `<div class="gs"><div class="gm" onclick="UI.cargar(${i})">${ok&&ok.length?ok.map(k=>{const p=PJ.find(x=>x.key===k);return p.gif?`<img src="${esc(p.gif)}">`:'?'}).join(''):'Vacío'}</div>
+      <div class="gb"><button class="sec" ${elegidos.length==3?'':'disabled'} onclick="UI.guardar(${i})">💾</button>${ok&&ok.length?`<button class="sec" onclick="UI.borrar(${i})">🗑</button>`:''}</div></div>`}).join('')+`</div>`;
+  }
   function ctrlH(){
     return `<div class="fila"><span>Equipo: <b>${elegidos.length}/3</b></span>
       <select onchange="nivel=this.value"><option value="facil" ${nivel=='facil'?'selected':''}>CPU fácil</option><option value="normal" ${nivel=='normal'?'selected':''}>CPU normal</option><option value="dificil" ${nivel=='dificil'?'selected':''}>CPU difícil</option></select>
@@ -144,7 +185,7 @@
     ${reto?(YO.logueado?`<div class="info">🔥 <b>${esc(reto.creador)}</b> te retó. Elige tu equipo y acepta.</div>`:`<div class="info">🔥 <b>${esc(reto.creador)}</b> te retó. Inicia sesión con Discord para aceptar.</div>`):''}`;
   }
   U.eleccion=function(foco){
-    musica('menu');
+    musica('menu');U.fondo('seleccion');
     if(foco&&PJ.find(x=>x.key===foco)){U.sel=foco;U.fraseDe(foco)}
     const bl=[...['todos',...Object.keys(ROLES)].map(r=>{
       const R=ROLES[r]||{nombre:'Todos',icono:'✨',img:''};
@@ -155,6 +196,8 @@
     `<h1 style="font-size:1.1rem">⚔️ Elige tu equipo de 3</h1>
     <div class="roles">${bl}</div>
     <div class="fila3"><div id="ranuras" style="display:contents"></div><button class="sec azar" onclick="UI.azar()">🎲 Al azar</button></div>
+    <div class="ordtxt">El orden de las ranuras (1º → 2º → 3º) es el orden en que actúan. Elige un personaje de tu equipo y muévelo con ◀ ▶.</div>
+    <div class="guard" id="guard"></div>
     <div class="sel2"><div id="rueda" style="height:${w.H}px">${w.h}</div><div id="panel"></div></div>
     <div id="ctrl" style="margin-top:12px"></div>`;
     U.refrescar();
@@ -165,6 +208,18 @@
     const k=U.sel;if(!k)return;const i=elegidos.indexOf(k);
     if(i>=0)elegidos.splice(i,1);else if(elegidos.length<3)elegidos.push(k);
     U.refrescar();
+  };
+  U.mover=function(d){
+    const k=U.sel,i=elegidos.indexOf(k),j=i+d;
+    if(i<0||j<0||j>=elegidos.length)return;
+    [elegidos[i],elegidos[j]]=[elegidos[j],elegidos[i]];U.refrescar();
+  };
+  U.guardar=function(i){if(elegidos.length!==3)return;const g=guardados();g[i]=[...elegidos];LS.s('equipos',JSON.stringify(g));U.refrescar()};
+  U.borrar=function(i){const g=guardados();g[i]=null;LS.s('equipos',JSON.stringify(g));U.refrescar()};
+  U.cargar=function(i){
+    const e=guardados()[i];if(!e)return;
+    const ok=e.filter(k=>PJ.find(x=>x.key===k));if(!ok.length)return;
+    elegidos.length=0;ok.forEach(k=>elegidos.push(k));U.tocar(ok[0]);
   };
   U.fav=function(k){const f=favs(),i=f.indexOf(k);if(i>=0)f.splice(i,1);else f.push(k);setFavs(f);U.eleccion()};
   U.filtrar=function(r){U.filtro=r;U.eleccion()};
