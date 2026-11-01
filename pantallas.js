@@ -72,6 +72,37 @@
   .lu.ya .num{background:#ffd400;color:#1a1500}
   .orden{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:.76rem;color:var(--mut);margin:0 0 4px}
   .orden b{color:var(--tx)}.orden .on{color:#ffd400;font-weight:800}.orden .x{text-decoration:line-through;opacity:.5}
+  .mc{display:inline-flex;padding:3px;border-radius:50%;background:var(--m,transparent);flex:none}
+  .mc img{display:block;border-radius:50%}
+  .perfil .tit{color:#ffd400;font-size:.72rem}
+  .confeti{position:fixed;left:0;right:0;top:0;height:0;z-index:30;pointer-events:none}
+  .confeti i{position:absolute;top:-30px;font-style:normal;animation:cae 1.9s ease-in forwards}
+  @keyframes cae{to{transform:translateY(105vh) rotate(540deg);opacity:.2}}
+  .tabs{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;margin:4px 0;scrollbar-width:thin}
+  .tabs button{flex:none;background:#2a2f44;padding:8px 12px;font-size:.85rem;border:2px solid transparent}
+  .tabs button.on{border-color:#ff7a3d;background:#3a2a1a}
+  .of{background:linear-gradient(135deg,#3a1a10,#1a1d28);border:1px solid #ff5a1f;border-radius:12px;padding:10px;margin:8px 0;display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:.9rem}
+  .of b{color:#ffd400}.of button{flex:none}
+  .vit{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-top:8px}
+  .cartx{background:var(--card);border:1px solid #2b3040;border-radius:14px;padding:10px;text-align:center;position:relative;display:flex;flex-direction:column;gap:6px;transition:transform .15s,box-shadow .15s}
+  .cartx:hover{transform:translateY(-3px);box-shadow:0 6px 18px rgba(255,90,31,.25)}
+  .cartx .vis{height:92px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#12141d;overflow:hidden}
+  .cartx .vis img.gi{height:76px;max-width:90%;object-fit:contain}
+  .cartx .vis .foto{width:100%;height:100%;background-size:cover;background-position:center}
+  .cartx .vis .tt{font-weight:800;color:#ffd400;padding:4px;font-size:.95rem}
+  .cartx .vis .ring{width:62px;height:62px;border-radius:50%;padding:5px;display:flex}.cartx .vis .ring i{flex:1;border-radius:50%;background:#12141d}
+  .cartx .nm{font-weight:700;font-size:.92rem}
+  .cartx .pr{color:#f5b301;font-weight:700}.cartx .pr s{color:var(--mut);font-weight:400;font-size:.8rem;margin-right:4px}
+  .cartx .bd{position:absolute;top:6px;left:6px;font-size:.68rem;background:#ff5a1f;color:#fff;border-radius:8px;padding:1px 7px;z-index:2}
+  .cartx .bd.ok{background:#3fb56b}
+  .cartx .bt2{display:flex;gap:6px}.cartx .bt2 button{flex:1;padding:7px 4px;font-size:.82rem}.cartx .bt2 button.ver{flex:none;width:38px;background:#3a3f4f}
+  .cartx.bloq{opacity:.45;filter:grayscale(1)}
+  .cartx.bloq .vis::after{content:"🔒";position:absolute;font-size:1.6rem}
+  .cartx .vis{position:relative}
+  .col{color:var(--mut);font-size:.85rem;margin:6px 0}
+  #prev{position:fixed;inset:0;background:#000c;z-index:20;display:flex;align-items:center;justify-content:center;padding:16px}
+  #prev .caja2{background:var(--card);border:2px solid #ff7a3d;border-radius:16px;padding:14px;max-width:360px;width:100%;text-align:center}
+  #prev img.big{max-width:100%;max-height:50vh;border-radius:10px}
   .tienda .item{border:1px solid #2b3040;transition:transform .15s,box-shadow .15s}
   .tienda .item:hover{transform:translateY(-3px);box-shadow:0 6px 18px rgba(255,90,31,.25)}
   `;
@@ -84,11 +115,37 @@
     let d=document.getElementById('fondo');
     if(!d){d=document.createElement('div');d.id='fondo';document.body.prepend(d)}
     let img=FO[n]||'';if(!img&&n==='inicio')img=I.FONDO_IMG||'';
+    if(!img&&n==='novela')img=FO.bazar||'';
+    if(n==='combate'&&typeof YO!=='undefined'&&YO.fondo_img)img=YO.fondo_img;
     const o=I.FONDO_OSCURO==null?.55:I.FONDO_OSCURO;
     const nuevo=img?`linear-gradient(rgba(10,12,18,${o}),rgba(10,12,18,${o})),url("${img.replace(/"/g,'%22')}")`:'none';
     if(d.dataset.v!==nuevo){d.dataset.v=nuevo;d.style.backgroundImage=nuevo}
   };
   U.fondoDe=function(m){U.fondo({menu:'inicio',bazar:'bazar',pelea:'combate',fin:'combate'}[m]||'inicio')};
+  /* avatar con marco comprado */
+  U.av=function(y,px){
+    px=px||44;
+    const im=y.avatar?`<img src="${esc(y.avatar)}" style="width:${px}px;height:${px}px;border-radius:50%">`:`<span style="display:flex;width:${px}px;height:${px}px;align-items:center;justify-content:center;font-size:${px*.6}px">👤</span>`;
+    return y.marco?`<span class="mc" style="--m:${y.marco}">${im}</span>`:im;
+  };
+  /* imagen del personaje (con skin si la compraste) */
+  const gifDe=p=>(typeof YO!=='undefined'&&YO.skins&&YO.skins[p.key])||p.gif;
+  U.gif=gifDe;
+  /* confeti + sonidito al comprar */
+  U.fx=function(){
+    const c=document.createElement('div');c.className='confeti';
+    const em=['💀','✨','🔥','⭐','💥'];
+    for(let i=0;i<34;i++){const e=document.createElement('i');e.textContent=em[i%em.length];e.style.left=(Math.random()*100)+'%';e.style.fontSize=(14+Math.random()*16)+'px';e.style.animationDelay=(Math.random()*.5)+'s';c.appendChild(e)}
+    document.body.appendChild(c);setTimeout(()=>c.remove(),2600);
+    try{
+      if(LS.g('mus_mute')==='1')return;
+      const A=new (window.AudioContext||window.webkitAudioContext)(),t=A.currentTime;
+      [523,659,784,1047].forEach((f,i)=>{const o=A.createOscillator(),g=A.createGain();o.type='triangle';o.frequency.value=f;
+        g.gain.setValueAtTime(.0001,t+i*.09);g.gain.exponentialRampToValueAtTime(.18,t+i*.09+.02);g.gain.exponentialRampToValueAtTime(.0001,t+i*.09+.25);
+        o.connect(g);g.connect(A.destination);o.start(t+i*.09);o.stop(t+i*.09+.3)});
+      setTimeout(()=>A.close(),1200);
+    }catch(e){}
+  };
   const rolDe=k=>(I.ROL||{})[k]||'';
   const lista=()=>PJ.filter(p=>U.filtro==='todos'||rolDe(p.key)===U.filtro);
   const nombre=()=>(typeof YO!=='undefined'&&YO.logueado)?YO.nombre:'viajero';
@@ -98,7 +155,7 @@
     musica('menu');
     U.fondo('inicio');
     const perfil=YO.logueado
-     ?`<div class="perfil">${YO.avatar?`<img class="av" src="${esc(YO.avatar)}">`:''}<div><div class="nom">${esc(YO.nombre)}</div>
+     ?`<div class="perfil">${U.av(YO,44)}<div><div class="nom">${esc(YO.nombre)}</div>${YO.titulo?`<div class="tit">«${esc(YO.titulo)}»</div>`:''}
         <div class="sub">💀 ${YO.monedas} · 🏆 ${YO.victorias||0} · 💔 ${YO.derrotas||0}</div></div>
         ${YO.mascota_url?`<img class="mas" src="${esc(YO.mascota_url)}">`:''}<a href="/auth/logout" style="color:var(--mut);font-size:.75rem">salir</a></div>`
      :(YO.login_disponible?`<a class="btn-discord" style="display:block;padding:10px;border-radius:12px;color:#fff;text-decoration:none" href="/auth/login">Iniciar sesión con Discord</a>`:`<div class="perfil"><span style="color:var(--mut)">Modo invitado</span></div>`);
@@ -125,14 +182,14 @@
   }
   function ranuraH(i){
     const k=elegidos[i],p=k&&PJ.find(x=>x.key===k);
-    return p?`<div class="ranura llena ${U.sel===k?'ver':''}" onclick="UI.tocar('${p.key}')">${p.gif?`<img src="${esc(p.gif)}">`:''}<b class="ord">${i+1}º</b><div class="nm">${esc(p.nombre)}</div></div>`
+    return p?`<div class="ranura llena ${U.sel===k?'ver':''}" onclick="UI.tocar('${p.key}')">${gifDe(p)?`<img src="${esc(gifDe(p))}">`:''}<b class="ord">${i+1}º</b><div class="nm">${esc(p.nombre)}</div></div>`
             :`<div class="ranura">${i+1}</div>`;
   }
   function panelH(){
     const p=PJ.find(x=>x.key===U.sel);
     if(!p)return `<div class="vacio">Toca una carta del círculo para verla.</div>`;
     const R=ROLES[rolDe(p.key)],en=elegidos.includes(p.key),lleno=elegidos.length>=3&&!en;
-    return `<div class="ret">${p.gif?`<img src="${esc(p.gif)}">`:''}</div>
+    return `<div class="ret">${gifDe(p)?`<img src="${esc(gifDe(p))}">`:''}</div>
       <div class="nom">${esc(p.nombre)}</div><div class="rl">${R?esc(R.nombre):''}</div>
       ${en?`<div class="mv"><button onclick="UI.mover(-1)" ${elegidos.indexOf(p.key)==0?'disabled':''}>◀</button><span>Actúa ${elegidos.indexOf(p.key)+1}º</span><button onclick="UI.mover(1)" ${elegidos.indexOf(p.key)>=elegidos.length-1?'disabled':''}>▶</button></div>`:''}
       <div class="fr">${U.frase?`«${esc(U.frase)}»`:'…'}</div>
@@ -147,7 +204,7 @@
       for(let j=0;j<o.k;j++){
         const p=l[idx++],a=o.k===1?0:-o.am+j*(2*o.am/(o.k-1));
         const x=o.R*Math.cos(a),y=H/2+o.R*Math.sin(a);
-        h+=`<div class="t" data-k="${p.key}" style="left:${x}px;top:${y}px" onclick="UI.tocar('${p.key}')">${p.gif?`<img src="${esc(p.gif)}">`:''}${favs().includes(p.key)?'<span class="fv">⭐</span>':''}</div>`;
+        h+=`<div class="t" data-k="${p.key}" style="left:${x}px;top:${y}px" onclick="UI.tocar('${p.key}')">${gifDe(p)?`<img src="${esc(gifDe(p))}">`:''}${favs().includes(p.key)?'<span class="fv">⭐</span>':''}</div>`;
       }
     });
     return {h,H};
