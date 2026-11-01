@@ -5,6 +5,16 @@
 // ============================================================
 window.INTERFAZ = {
 
+  // Fondos a pantalla completa (uno por pantalla). Vacío "" = sin fondo. Si "inicio" está vacío usa FONDO_IMG.
+  FONDOS: {
+    inicio: "https://i.imgur.com/SZvt2Fk.jpeg",
+    seleccion: "https://i.imgur.com/gmS72KD.jpeg",
+    combate: "https://i.imgur.com/DHdNjDE.jpeg",
+    bazar: "https://i.imgur.com/Q0HOKWw.jpeg",
+  },
+  // Qué tan oscuro se pone el fondo para que se lea (0 = nada, 0.9 = muy oscuro)
+  FONDO_OSCURO: 0.55,
+
   // Imagen de Burnice dándote la bienvenida (pantalla de inicio)
   BIENVENIDA_IMG: "https://i.imgur.com/6mv1T6q.jpeg",
   // Fondo opcional de la pantalla de inicio
