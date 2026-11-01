@@ -619,6 +619,8 @@ class H(BaseHTTPRequestHandler):
         try:
             if ruta in GETS:
                 return self._json(GETS[ruta]({k: v[0] for k, v in q.items()}, self._sesion()))
+            if ruta in ("/musica.js", "/reproductor.js") or ruta.startswith("/musica/"):
+                return self._estatico(ruta)
             if ruta in ("/", "/index.html"):
                 raw = (AQUI / "index.html").read_bytes()
                 self.send_response(200)
