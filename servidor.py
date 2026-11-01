@@ -215,11 +215,11 @@ def api_personajes(_, ses):
 
 def api_yo(_, ses):
     if not ses:
-        return {"logueado": False, "login_disponible": bool(CLIENT_ID)}
-    d = db().obtener(ses["id"])
+        mi = C.COSMETICOS["mascotas"].get(d["equipado"].get("mascota"))
     return {"logueado": True, "id": ses["id"], "nombre": ses["n"], "avatar": ses.get("av"),
             "monedas": d["monedas"], "mascotas": d["mascotas"], "mascota": d["equipado"].get("mascota"),
-            "imagen": d["equipado"].get("imagen")}
+            "imagen": d["equipado"].get("imagen"), "victorias": d.get("pvp_victorias", 0),
+            "derrotas": d.get("pvp_derrotas", 0), "mascota_url": _emoji_url(mi["normal"]) if mi else None}
 
 
 def api_bazar(_, ses):
@@ -618,8 +618,8 @@ class H(BaseHTTPRequestHandler):
         ruta, q = u.path, urllib.parse.parse_qs(u.query)
         try:
             if ruta in GETS:
-                return self._json(GETS[ruta]({k: v[0] for k, v in q.items()}, self._sesion()))
-            if ruta in ("/musica.js", "/reproductor.js") or ruta.startswith("/musica/"):
+                return self._json(GETS[ruta]({k: v[0] for k, v in q.items()}, self._sesion())
+            if ruta in ("/musica.js", "/reproductor.js", "/interfaz.js", "/pantallas.js") or ruta.startswith("/musica/"):
                 return self._estatico(ruta)
             if ruta in ("/", "/index.html"):
                 raw = (AQUI / "index.html").read_bytes()
