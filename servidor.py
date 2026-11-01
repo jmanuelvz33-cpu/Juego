@@ -122,6 +122,7 @@ def estado(c, p=None, yo=0):
         "equipos": [{"nombre": c.equipos[i].nombre, "cpu": c.equipos[i].es_cpu,
                      "luchadores": [_luchador(c, c.equipos[i], j, l, mio=(i == yo)) for j, l in enumerate(c.equipos[i].luchadores)]}
                     for i in orden],
+        "actor": (c.actual.luchadores.index(c.actor()) if (not c.terminado() and c.actor()) else None),
         "objetivo": None,
         "blancos": [c.rival.luchadores.index(l) for l in c.rival.blancos] if mi_turno else [],
         "aliados": [c.actual.luchadores.index(l) for l in c.actual.vivos] if mi_turno else [],
