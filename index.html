@@ -177,9 +177,10 @@ async function inicio(conPortada){
     if(r.sala==='esperando')return mostrarEspera(viejo,location.origin+'/?sala='+viejo);
     if(r.sala==='jugando'&&!r.actual.terminado)return entrarPvP(viejo,r);
     LS.s('pvp_sala',null)}
-  dibujarEleccion();
-}
+  if(conPortada&&!reto)UI.portada();else dibujarEleccion();
+ }
 function dibujarEleccion(foco){
+  return UI.eleccion(foco);
   const f=foco&&PJ.find(p=>p.key===foco);
   $('#app').innerHTML=barra(`<button class="btn-burnice" onclick="bazar('inicio')">🔥 Bazar</button>`)+`<h1>⚔️ Press Turn — elige tu equipo de 3</h1>
   <div class="grid">${PJ.map(p=>`<div class="pj ${elegidos.includes(p.key)?'on':''}" onclick="pick('${p.key}')">
@@ -372,5 +373,5 @@ function dibujarFin(){
   <div class="log" style="text-align:left">${fmt(S.log)}</div>
   <button onclick="inicio()">Otra pelea</button> <button class="btn-burnice" onclick="bazar('inicio')">🔥 Bazar</button></div>`;
 }
-inicio();
+inicio(true);
 </script></body></html>
