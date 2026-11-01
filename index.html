@@ -58,11 +58,6 @@ select{background:#20242f;color:#fff;border:0;border-radius:8px;padding:8px}
 .item button{width:100%;margin-top:4px;padding:6px;font-size:.85rem}
 .ficha{background:var(--card2);border-radius:10px;padding:10px;font-size:.85rem;margin-top:8px}
 .ficha li{margin:4px 0}
-.orden{font-size:.78rem;color:var(--mut);margin:2px 0 6px;display:flex;flex-wrap:wrap;gap:4px 8px}
-.orden .on{color:#ffd400;font-weight:700}
-.orden .x{opacity:.4;text-decoration:line-through}
-.lu .num{position:absolute;top:4px;left:6px;background:rgba(0,0,0,.65);border-radius:6px;padding:1px 5px;font-size:.7rem;font-weight:700;z-index:1}
-.lu.ya{border-color:#ffd400;box-shadow:0 0 0 1px #ffd40055}
 @media(max-width:520px){.acc{grid-template-columns:1fr 1fr}.lu{font-size:.7rem}}
 </style></head>
 <body><main id="app"></main>
@@ -72,6 +67,8 @@ select{background:#20242f;color:#fff;border:0;border-radius:8px;padding:8px}
 <script src="/reproductor.js"></script>
 <script src="/interfaz.js"></script>
 <script src="/pantallas.js"></script>
+<script src="/dialogos.js"></script>
+<script src="/novela.js"></script>
 <script>
 function musica(m){try{window.MUS&&window.MUS.modo(m)}catch(e){}try{window.UI&&UI.fondoDe(m)}catch(e){}}
 const $=s=>document.querySelector(s);
@@ -98,47 +95,97 @@ let YO={logueado:false},BZ=null;
 async function cargarYo(){try{YO=await api('/api/yo')}catch(e){YO={logueado:false}}}
 function barra(extra){
   const cuenta=YO.logueado
-   ?`<div class="yo">${YO.avatar?`<img src="${esc(YO.avatar)}">`:''}<span><b>${esc(YO.nombre)}</b> · 💀 ${YO.monedas}</span><a href="/auth/logout" style="color:var(--mut);font-size:.8rem">salir</a></div>`
+   ?`<div class="yo">${UI.av(YO,32)}<span><b>${esc(YO.nombre)}</b> · 💀 ${YO.monedas}</span><a href="/auth/logout" style="color:var(--mut);font-size:.8rem">salir</a></div>`
    :(YO.login_disponible?`<a class="btn-discord" style="padding:8px 12px;border-radius:10px;color:#fff;text-decoration:none" href="/auth/login">Iniciar sesión con Discord</a>`:`<span style="color:var(--mut)">Modo invitado</span>`);
   return `<div class="top">${cuenta}${extra||''}</div>`;
 }
 const azar=a=>a[Math.floor(Math.random()*a.length)];
 
 /* ---------- Bazar de Burnice ---------- */
+const CATN={mascotas:['🐾','Mascotas'],marcos:['🖼️','Marcos'],titulos:['🏷️','Títulos'],fondos:['🌄','Fondos'],victorias:['🏆','Victorias'],skins:['👗','Skins']};
+function tarjetaTienda(cat,it,modo){
+  const of=BZ.oferta&&BZ.oferta.cat===cat&&BZ.oferta.key===it.key;
+  let vis='';
+  if(cat==='mascotas')vis=it.emoji_url?`<img class="gi" src="${it.emoji_url}">`:'🐾';
+  else if(cat==='marcos')vis=`<div class="ring" style="background:${it.css}"><i></i></div>`;
+  else if(cat==='titulos')vis=`<div class="tt">«${esc(it.nombre)}»</div>`;
+  else vis=it.img?`<div class="foto" style="background-image:url('${esc(it.img)}')"></div>`:'<span style="font-size:1.8rem">🖼️</span>';
+  const bd=!it.disponible?'<span class="bd" style="background:#555">Pronto</span>':it.puesta?'<span class="bd ok">Puesto</span>':it.tiene?'<span class="bd ok">Tuyo</span>'
+    :of?`<span class="bd">-${BZ.oferta.pct}%</span>`:it.precio_base===0?'<span class="bd ok">Gratis</span>':'';
+  const precio=it.tiene?'':`<div class="pr">${it.precio_base===0?'Gratis 🎁':(it.precio<it.precio_base?`<s>${it.precio_base}</s>`:'')+it.precio+' 💀'}</div>`;
+  const sub=cat==='skins'?`<div style="color:var(--mut);font-size:.74rem">de ${esc((PJ.find(p=>p.key===it.pj)||{}).nombre||it.pj)}</div>`:'';
+  let b;
+  if(!it.disponible)b=`<button disabled>Próximamente</button>`;
+  else if(it.tiene)b=`<button class="${it.puesta?'sec':''}" onclick="equipar('${cat}','${it.key}',${it.puesta},'${it.pj||''}')">${it.puesta?'Quitar':'Ponerme'}</button>`;
+  else b=`<button class="btn-burnice" ${YO.logueado?'':'disabled'} onclick="comprar('${cat}','${it.key}')">Comprar</button>`;
+  const ver=it.disponible?`<button class="ver" title="Vista previa" onclick="previa('${cat}','${it.key}')">👁️</button>`:'';
+  return `<div class="cartx ${modo==='bloq'&&!it.tiene?'bloq':''}">${bd}<div class="vis">${vis}</div><div class="nm">${esc(it.nombre)}</div>${sub}${precio}<div class="bt2">${b}${ver}</div></div>`;
+}
+function buscarItem(cat,key){return (BZ.cats[cat]||[]).find(x=>x.key===key)}
+function previa(cat,key){
+  const it=buscarItem(cat,key);if(!it)return;
+  const y=Object.assign({},YO);
+  let cuerpo='';
+  if(cat==='marcos')y.marco=it.css;
+  if(cat==='titulos')y.titulo=it.nombre;
+  const masc=cat==='mascotas'?it.emoji_url:YO.mascota_url;
+  if(['marcos','titulos','mascotas'].includes(cat)){
+    cuerpo=`<div class="perfil" style="margin:8px 0">${UI.av(y,52)}<div><div class="nom">${esc(YO.logueado?YO.nombre:'Tu nombre')}</div>${y.titulo?`<div class="tit">«${esc(y.titulo)}»</div>`:''}<div class="sub">💀 ${YO.monedas||0}</div></div>${masc?`<img class="mas" src="${masc}">`:''}</div>`;
+  }else if(cat==='fondos'){cuerpo=`<div style="height:200px;border-radius:12px;background:linear-gradient(rgba(10,12,18,.5),rgba(10,12,18,.5)),url('${esc(it.img)}') center/cover;display:flex;align-items:center;justify-content:center;color:#fff">⚔️ Así se vería tu combate</div>`}
+  else cuerpo=`<img class="big" src="${esc(it.img)}">`;
+  const d=document.createElement('div');d.id='prev';d.onclick=e=>{if(e.target===d||e.target.dataset.x)d.remove()};
+  d.innerHTML=`<div class="caja2"><b>👁️ ${esc(it.nombre)}</b>${cuerpo}<button class="sec" data-x="1" style="margin-top:6px;width:100%">Cerrar</button></div>`;
+  document.body.appendChild(d);
+}
+const ANIMO=()=>{
+  const A=(window.DIALOGOS&&window.DIALOGOS.ANIMO)||{};if(!YO.logueado)return '';
+  const v=YO.victorias||0,dr=YO.derrotas||0,tot=Object.values(YO.vic_pj||{}).reduce((a,b)=>a+b,0);
+  let g=null;
+  if(YO.monedas>=400)g='ricos';else if(dr>v+2)g='perdedor';else if(tot>=30)g='ganador';else if(tot===0)g='nuevo';
+  return g&&A[g]&&A[g].length?'\n\n'+azar(A[g]):'';
+};
 async function bazar(pantalla,datos){
   musica('bazar');
-  if(!BZ||pantalla==='inicio'){BZ=await api('/api/bazar');await cargarYo()}
+  if(!BZ||pantalla==='inicio'){BZ=await api('/api/bazar');await cargarYo();BZ.animo=ANIMO()}
   const t=BZ.textos,im=BZ.imgs;
   const banner=u=>u?`<img class="banner" src="${esc(u)}">`:'';
   const volver=`<button class="sec" onclick="bazar('inicio')">⬅️ Bazar</button>`;
   let h=barra(`<button class="sec" onclick="inicio()">⚔️ Pelear</button>`);
+  const of=BZ.oferta&&buscarItem(BZ.oferta.cat,BZ.oferta.key);
+  const bofer=of?`<div class="of"><div>🏷️ <b>Oferta del día:</b> ${esc(of.nombre)} (${CATN[BZ.oferta.cat][1]}) <b>-${BZ.oferta.pct}%</b> → ${of.tiene?'ya lo tienes':of.precio+' 💀'}</div><button class="btn-burnice" onclick="bazar('comprar',{tab:'${BZ.oferta.cat}'})">Ver</button></div>`:'';
   if(pantalla==='inicio'){
     BZ.saludo=BZ.saludo||azar(t.saludos);
-    h+=`${banner(im.burnice)}<h1>🔥 El Bazar de Burnice</h1><div class="burnice">${fmt(BZ.saludo)}</div>
+    h+=`${banner(im.burnice)}<h1>🔥 El Bazar de Burnice</h1><div class="burnice">${fmt(BZ.saludo+(BZ.animo||''))}</div>${bofer}
     <div class="fila"><button class="btn-burnice" onclick="bazar('comprar')">🛒 Comprar</button>
+    <button class="btn-burnice" onclick="bazar('cosas')">🎒 Mis cosas</button>
     <button class="btn-burnice" onclick="bazar('mesa')">🪑 La mesa</button>
     <button class="sec" onclick="bazar('salir')">👋 Salir</button></div>`;
-  }else if(pantalla==='comprar'){
+  }else if(pantalla==='comprar'||pantalla==='cosas'){
+    const tab=(datos&&datos.tab)||BZ.tab||'mascotas';BZ.tab=tab;
     const msg=datos&&datos.msg||t.comprar;
-    h+=`${banner(im.comprar)}<h1>🛒 Comprar</h1><div class="burnice">${fmt(msg)}</div>
-    ${YO.logueado?'':'<div class="info">Inicia sesión con Discord para comprar.</div>'}
-    <div class="tienda">${BZ.mascotas.map(m=>`<div class="item">${m.emoji_url?`<img src="${m.emoji_url}">`:'🐾'}<div><b>${esc(m.nombre)}</b></div>
-      <div class="p">${m.precio==0?'Gratis 🎁':m.precio+' 💀'}</div>
-      ${m.tiene?`<button class="${m.puesta?'sec':''}" onclick="equipar('${m.key}',${m.puesta})">${m.puesta?'Quitar':'Ponerme'}</button>`
-      :`<button class="btn-burnice" ${YO.logueado?'':'disabled'} onclick="comprar('${m.key}')">Comprar</button>`}</div>`).join('')}</div>
-    <div class="fila" style="margin-top:12px">${volver}</div>`;
+    const tabs=`<div class="tabs">${Object.keys(CATN).map(c=>`<button class="${pantalla==='comprar'&&tab===c?'on':''}" onclick="bazar('comprar',{tab:'${c}'})">${CATN[c][0]} ${CATN[c][1]}</button>`).join('')}</div>`;
+    if(pantalla==='comprar'){
+      h+=`${banner(im.comprar)}<h1>🛒 Comprar</h1><div class="burnice">${fmt(msg)}</div>
+      ${YO.logueado?'':'<div class="info">Inicia sesión con Discord para comprar.</div>'}${bofer}${tabs}
+      <div class="vit">${(BZ.cats[tab]||[]).map(it=>tarjetaTienda(tab,it)).join('')}</div>
+      <div class="fila" style="margin-top:12px">${volver}</div>`;
+    }else{
+      let tot=0,mis=0;Object.values(BZ.cats).forEach(l=>l.forEach(x=>{tot++;if(x.tiene)mis++}));
+      h+=`<h1>🎒 Mis cosas</h1><div class="col">Colección: <b>${mis}/${tot}</b> · lo gris con 🔒 es lo que te falta (tócalo en Comprar).</div>
+      ${Object.keys(CATN).map(c=>`<h2>${CATN[c][0]} ${CATN[c][1]}</h2><div class="vit">${BZ.cats[c].map(it=>tarjetaTienda(c,it,'bloq')).join('')}</div>`).join('')}
+      <div class="fila" style="margin-top:12px">${volver}</div>`;
+    }
   }else if(pantalla==='mesa'){
     h+=`${banner(im.mesa)}<h1>🪑 La mesa</h1><div class="burnice">${fmt(t.mesa)}</div>
-    <div class="grid">${PJ.map(p=>`<div class="pj" onclick="bazar('personaje',{k:'${p.key}'})">${p.gif?`<img class="r" src="${p.gif}">`:''}<b>${emo(p)} ${esc(p.nombre)}</b></div>`).join('')}
+    <div class="grid"><div class="pj" onclick="UI.novela('burnice')">${im.burnice?`<img class="r" src="${esc(im.burnice)}">`:''}<b>🔥 Burnice</b></div>
+    ${PJ.map(p=>`<div class="pj" onclick="bazar('personaje',{k:'${p.key}'})">${p.gif?`<img class="r" src="${UI.gif(p)}">`:''}<b>${emo(p)} ${esc(p.nombre)}${(YO.nuevo_pj||{})[p.key]?' 💬':''}</b></div>`).join('')}
     <div class="pj" onclick="bazar('niko',{n:0})">${im.niko?`<img class="r" src="${esc(im.niko)}">`:''}<b>☀️ Niko</b></div></div>
     <div class="fila" style="margin-top:12px">${volver}</div>`;
   }else if(pantalla==='personaje'){
-    const p=PJ.find(x=>x.key===datos.k),ch=BZ.charlas[p.key]||{burnice:'',lineas:[]},f=p.ficha;
-    const i=datos.i??-1,linea=i<0?ch.burnice:ch.lineas[i%Math.max(1,ch.lineas.length)];
-    const hablante=i<0?'🔥 Burnice':`${emo(p)} ${esc(p.nombre)}`;
-    h+=`${p.gif?`<img class="banner" style="max-height:260px;object-fit:contain" src="${p.gif}">`:''}<h1>${emo(p)} ${esc(p.nombre)}</h1>
-    <div class="burnice"><b>${hablante}:</b> ${fmt(linea||'…')}</div>
-    <div class="fila"><button class="btn-burnice" onclick="bazar('personaje',{k:'${p.key}',i:${i+1}})">💬 Hablar</button>
+    const p=PJ.find(x=>x.key===datos.k),f=p.ficha;
+    h+=`${p.gif?`<img class="banner" style="max-height:260px;object-fit:contain" src="${UI.gif(p)}">`:''}<h1>${emo(p)} ${esc(p.nombre)}</h1>
+    <div class="burnice"><b>🔥 Burnice:</b> ${fmt((BZ.charlas[p.key]||{burnice:'…'}).burnice||'…')}</div>
+    <div class="fila"><button class="btn-burnice" onclick="UI.novela('${p.key}')">💬 Hablar${(YO.nuevo_pj||{})[p.key]?' (¡tiene algo que decirte!)':''}</button>
     <button class="sec" onclick="bazar('mesa')">⬅️ Mesa</button></div>
     <div class="ficha"><b>Vida</b> ${f.vida} · ${esc(f.recurso)}<ul>${f.movs.map(m=>`<li><b>${esc(m.nombre)}</b> (${costeTxt(m.coste)} icono${m.pm?`, ${m.pm} PM`:''}${m.sombras?`, ${m.sombras}🌑`:''})${m.dmg?` — ${m.dmg[0]}-${m.dmg[1]} de daño, ${Math.round(m.prec*100)}% de acierto`:''}${m.desc?`<br>${esc(m.desc)}`:''}</li>`).join('')}
     <li>💥 <b>ÚLTI: ${esc(f.ulti.nombre)}</b> (${costeTxt(f.ulti.coste)} iconos) — ${esc(f.ulti.desc)}</li>
@@ -152,15 +199,16 @@ async function bazar(pantalla,datos){
   }
   $('#app').innerHTML=h;
 }
-async function comprar(k){
-  const r=await api('/api/comprar',{key:k});
-  BZ=await api('/api/bazar');await cargarYo();
-  bazar('comprar',{msg:r.error||r.msg});
+async function comprar(cat,k){
+  const r=await api('/api/comprar',{cat,key:k});
+  BZ=await api('/api/bazar');await cargarYo();BZ.tab=cat;
+  if(r.ok)UI.fx();
+  bazar('comprar',{tab:cat,msg:r.error||r.msg});
 }
-async function equipar(k,quitar){
-  await api('/api/equipar',{key:quitar?null:k});
-  BZ=await api('/api/bazar');
-  bazar('comprar',{msg:quitar?'Listo, sin mascota. Cuando quieras te la vuelves a poner, cielo.':'¡Te queda genial! Ya la llevas contigo.'});
+async function equipar(cat,k,quitar,pj){
+  await api('/api/equipar',{cat,key:quitar?null:k,pj});
+  BZ=await api('/api/bazar');await cargarYo();BZ.tab=cat;
+  bazar('comprar',{tab:cat,msg:quitar?'Listo, sin eso. Cuando quieras te lo vuelves a poner, cielo.':'¡Te queda genial! Ya lo llevas contigo.'});
 }
 
 /* ---------- elegir equipo ---------- */
@@ -283,7 +331,7 @@ function tarjeta(l,lado){
   if(l.pm!=null&&l.sombras==null)extra.push(l.pm+' PM');
   const nom=l.forma?('👹 '+esc(l.forma)):(emo(l)+' '+esc(l.nombre));
   return `<div class="${cl.join(' ')}" style="${l.vivo?'':''}" onclick="clic(${lado},${l.i})">
-   <span class="num">${l.i+1}</span>${l.gif?`<img class="r" src="${l.gif}">`:''}
+   <span class="num">${l.i+1}</span>${l.gif?`<img class="r" src="${(lado==0&&YO.skins&&YO.skins[l.key])||l.gif}">`:''}
    <div class="n">${nom}</div>
    <div class="barra hp ${pct<30?'bajo':''}"><i style="width:${pct}%"></i></div>
    <div>${l.vivo?hp+'/'+mx:'💀'}</div>
@@ -378,7 +426,7 @@ function dibujarFin(){
   const gane=S.ganador===0;
   if(MODO==='pvp'){LS.s('pvp_sala',null)}
   $('#app').innerHTML=`<div class="vic"><h1>${gane?'🏆 ¡Ganaste!':'💀 Perdiste'}</h1>
-  ${S.victoria_img?`<img src="${S.victoria_img}">`:''}
+  ${(gane&&YO.victoria_img)||S.victoria_img?`<img src="${(gane&&YO.victoria_img)||S.victoria_img}">`:''}
   ${S.recompensa?`<h2>+${S.recompensa} 💀 Monedas del Alma (total ${S.monedas})</h2>`:(gane&&!YO.logueado&&YO.login_disponible?'<div class="info">Inicia sesión con Discord para ganar monedas.</div>':'')}
   <div class="log" style="text-align:left">${fmt(S.log)}</div>
   <button onclick="inicio()">Otra pelea</button> <button class="btn-burnice" onclick="bazar('inicio')">🔥 Bazar</button></div>`;
