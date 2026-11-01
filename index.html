@@ -65,6 +65,8 @@ select{background:#20242f;color:#fff;border:0;border-radius:8px;padding:8px}
 <div id="anim"></div>
 <script src="/musica.js"></script>
 <script src="/reproductor.js"></script>
+<script src="/interfaz.js"></script>
+<script src="/pantallas.js"></script>
 <script>
 function musica(m){try{window.MUS&&window.MUS.modo(m)}catch(e){}}
 const $=s=>document.querySelector(s);
@@ -157,7 +159,7 @@ async function equipar(k,quitar){
 }
 
 /* ---------- elegir equipo ---------- */
-async function inicio(){
+async function inicio(conPortada){
   musica('menu');
   if(!PJ.length)PJ=(await api('/api/personajes')).personajes;
   await cargarYo();
