@@ -1,0 +1,51 @@
+// ============================================================
+//  AJUSTES DE LAS PANTALLAS  (aquí editas imágenes, textos, roles y frases)
+//  Las imágenes son links (https://...) o archivos subidos, por ejemplo "/musica/burnice.png"
+//  Cualquier texto o imagen vacío ("") simplemente no se muestra.
+// ============================================================
+window.INTERFAZ = {
+
+  // Imagen de Burnice dándote la bienvenida (pantalla de inicio)
+  BIENVENIDA_IMG: "https://i.imgur.com/oJtpOxr.jpeg",
+  // Fondo opcional de la pantalla de inicio
+  FONDO_IMG: "https://i.imgur.com/A1K80Ul.jpeg",
+
+  // Frases de bienvenida de Burnice (sale una al azar). {nombre} = nombre del jugador
+  BIENVENIDAS: [
+    "¡Ey, {nombre}! Qué bueno verte, cielo. ¿Pelea o compritas hoy?",
+    "¡Mira quién llegó! Pasa, pasa, que aquí todo está calentito.",
+    "¡Compa! Hoy huele a victoria... o a quemado. Igual me gusta.",
+    "¡{nombre}! Elige: o peleas, o me ayudas a prenderle fuego a algo. Jeje.",
+  ],
+
+  // Aviso del día (un cartel debajo de Burnice). Déjalo "" para ocultarlo.
+  AVISO: "Se acerca navidad",
+
+  // Los bloques de rol. img = imagen del bloque (opcional), icono = lo que se ve si no hay imagen
+  ROLES: {
+    embestidor: {nombre: "Embestidor", icono: "⚔️", img: ""},
+    amparo:     {nombre: "Amparo",     icono: "🛡️", img: ""},
+    control:    {nombre: "Control",    icono: "🌀", img: ""},
+  },
+
+  // A qué rol pertenece cada personaje (embestidor / amparo / control)
+  ROL: {
+    reze: "embestidor", yuki: "embestidor", yoruichi: "embestidor", megumi: "embestidor",
+    josuke: "amparo", mantis: "amparo", storm: "amparo",
+    jolyne: "control", ochako: "control", denji: "control",
+  },
+
+  // Frases cortas al elegir a un personaje (sale una al azar). Personaje nuevo: agrega una línea igual.
+  FRASES: {
+    jolyne:   ["Mis hilos ya te tienen. No te muevas.", "No pienso rendirme, aunque me cueste todo."],
+    reze:     ["¡Boom! Esto va a ser divertido.", "Cuidado, todo lo que toco explota."],
+    storm:    ["Que el cielo decida quién cae.", "Se acerca una tormenta."],
+    ochako:   ["¡Plus Ultra! Flota un ratito, ¿sí?", "Voy a darlo todo, ¡cuenten conmigo!"],
+    yuki:     ["Cuando golpeo, nada se queda en pie.", "Prepárate: esto va a doler."],
+    yoruichi: ["Demasiado lento. ¿Ya me viste?", "No alcanzarás a parpadear."],
+    megumi:   ["Mejor que no despierte lo que llevo dentro.", "Si voy a caer, no caeré solo."],
+    josuke:   ["¡Nadie se burla de mi peinado!", "Tranquilo, yo te arreglo eso."],
+    denji:    ["¡Solo quiero comer algo rico y ganar!", "¡Voy a cortarlos a todos!"],
+    mantis:   ["Siento su dolor… déjenme ayudar.", "Yo cuido al equipo, ustedes ganen."],
+  },
+};
