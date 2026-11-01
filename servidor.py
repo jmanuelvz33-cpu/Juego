@@ -215,12 +215,13 @@ def api_personajes(_, ses):
 
 def api_yo(_, ses):
     if not ses:
-        mi = C.COSMETICOS["mascotas"].get(d["equipado"].get("mascota"))
+        return {"logueado": False, "login_disponible": bool(CLIENT_ID)}
+    d = db().obtener(ses["id"])
+    mi = C.COSMETICOS["mascotas"].get(d["equipado"].get("mascota"))
     return {"logueado": True, "id": ses["id"], "nombre": ses["n"], "avatar": ses.get("av"),
             "monedas": d["monedas"], "mascotas": d["mascotas"], "mascota": d["equipado"].get("mascota"),
             "imagen": d["equipado"].get("imagen"), "victorias": d.get("pvp_victorias", 0),
             "derrotas": d.get("pvp_derrotas", 0), "mascota_url": _emoji_url(mi["normal"]) if mi else None}
-
 
 def api_bazar(_, ses):
     d = db().obtener(ses["id"]) if ses else None
