@@ -17,16 +17,16 @@
 // ============================================================
 window.MUSICA = {
   menu: [
-    // {t:"Nombre de la canción", a:"Autor", f:"menu1.mp3"},
+     {t:"beneath the mask", a:"lyn", f:"menu1.mp3"},
   ],
   bazar: [
-    // {t:"Nombre", a:"Autor", f:"bazar1.mp3"},
+     {t:"hip shop", a:"toby fox", f:"bazar1.mp3"},
   ],
   pelea: [
-    // {t:"Nombre", a:"Autor", f:"pelea1.mp3"},
-    // {t:"Otra pelea", a:"Autor", f:"pelea2.mp3", c:"portada2.jpg"},
+     {t:"Mass destruction", a:"lotus juice", f:"pelea1.mp3"},
+     {t:"Last surprise", a:"lyn", f:"pelea2.mp3", c:"portada2.jpg"},
   ],
   fin: [
-    // {t:"Nombre", a:"Autor", f:"fin1.mp3"},
+     {t:"victory fanfare", a:"Masashi Hamauzu", f:"fin1.mp3"},
   ],
 };
