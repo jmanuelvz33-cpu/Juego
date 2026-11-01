@@ -6,9 +6,9 @@
 window.INTERFAZ = {
 
   // Imagen de Burnice dándote la bienvenida (pantalla de inicio)
-  BIENVENIDA_IMG: "https://i.imgur.com/oJtpOxr.jpeg",
+  BIENVENIDA_IMG: "https://i.imgur.com/6mv1T6q.jpeg",
   // Fondo opcional de la pantalla de inicio
-  FONDO_IMG: "https://i.imgur.com/A1K80Ul.jpeg",
+  FONDO_IMG: "https://i.imgur.com/SZvt2Fk.jpeg",
 
   // Frases de bienvenida de Burnice (sale una al azar). {nombre} = nombre del jugador
   BIENVENIDAS: [
@@ -23,9 +23,9 @@ window.INTERFAZ = {
 
   // Los bloques de rol. img = imagen del bloque (opcional), icono = lo que se ve si no hay imagen
   ROLES: {
-    embestidor: {nombre: "Embestidor", icono: "⚔️", img: ""},
-    amparo:     {nombre: "Amparo",     icono: "🛡️", img: ""},
-    control:    {nombre: "Control",    icono: "🌀", img: ""},
+    embestidor: {nombre: "Embestidor", icono: "⚔️", img: "https://i.imgur.com/a35JOVC.jpeg"},
+    amparo:     {nombre: "Amparo",     icono: "🛡️", img: "https://i.imgur.com/PrbhqGn.jpeg"},
+    control:    {nombre: "Control",    icono: "🌀", img: "https://i.imgur.com/0WwaXAe.jpeg"},
   },
 
   // A qué rol pertenece cada personaje (embestidor / amparo / control)
