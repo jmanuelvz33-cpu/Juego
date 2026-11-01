@@ -9,6 +9,7 @@ from http.cookies import SimpleCookie
 from pathlib import Path
 import motor as M
 import contenido as C
+import tienda_extra as X
 from db import Almacen
 
 AQUI = Path(__file__).parent
@@ -147,6 +148,15 @@ def _anim(c):
              "color": "#%06x" % a.get("color", 0x333333)} for a in (c.anim, c.trans) if a]
 
 
+def _sumar_vic_pj(d, keys):
+    """Suma 1 victoria a cada personaje del equipo ganador y marca que tiene algo nuevo que decir en la mesa."""
+    vp = d.setdefault("vic_pj", {})
+    nv = d.setdefault("nuevo_pj", {})
+    for k in keys:
+        vp[k] = vp.get(k, 0) + 1
+        nv[k] = True
+
+
 def _pagar(p):
     """Si el jugador (con cuenta) ganó contra la CPU, le da sus monedas, una sola vez por pelea."""
     c = p["c"]
@@ -158,6 +168,7 @@ def _pagar(p):
 
         def f(d):
             d["monedas"] += premio
+            _sumar_vic_pj(d, [l.key for l in c.equipos[0].luchadores])
             return d["monedas"]
         try:
             total = db().transaccion(p["uid"], f)
@@ -214,25 +225,82 @@ def api_personajes(_, ses):
     return {"personajes": out}
 
 
+# categoría -> (catálogo, lista en la base de datos, clave de "equipado")
+CATS = {
+    "mascotas": (C.COSMETICOS["mascotas"], "mascotas", "mascota"),
+    "marcos":   (X.MARCOS, "colores", "color"),
+    "titulos":  (X.TITULOS, "titulos", "titulo"),
+    "fondos":   (X.FONDOS, "fondos", "fondo"),
+    "victorias": (X.VICTORIAS, "imagenes", "imagen"),
+    "skins":    (X.SKINS, "skins", "skins"),
+}
+
+
+def _oferta():
+    return X.oferta({c: v[0] for c, v in CATS.items()})
+
+
+def _precio(cat, key):
+    it = CATS[cat][0][key]
+    of = _oferta()
+    if of and of["cat"] == cat and of["key"] == key:
+        return max(1, round(it["precio"] * (100 - of["pct"]) / 100))
+    return it["precio"]
+
+
+def _disponible(it):
+    return ("img" not in it) or bool(it["img"])
+
+
 def api_yo(_, ses):
     if not ses:
         return {"logueado": False, "login_disponible": bool(CLIENT_ID)}
     d = db().obtener(ses["id"])
-    mi = C.COSMETICOS["mascotas"].get(d["equipado"].get("mascota"))
+    eq = d["equipado"]
+    mi = C.COSMETICOS["mascotas"].get(eq.get("mascota"))
+    marco = X.MARCOS.get(eq.get("color"))
+    tit = X.TITULOS.get(eq.get("titulo"))
+    fon = X.FONDOS.get(eq.get("fondo"))
+    vic = X.VICTORIAS.get(eq.get("imagen"))
+    skins = {}
+    for pj, k in (eq.get("skins") or {}).items():
+        it = X.SKINS.get(k)
+        if it and it["img"] and k in d.get("skins", []):
+            skins[pj] = it["img"]
     return {"logueado": True, "id": ses["id"], "nombre": ses["n"], "avatar": ses.get("av"),
-            "monedas": d["monedas"], "mascotas": d["mascotas"], "mascota": d["equipado"].get("mascota"),
-            "imagen": d["equipado"].get("imagen"), "victorias": d.get("pvp_victorias", 0),
-            "derrotas": d.get("pvp_derrotas", 0), "mascota_url": _emoji_url(mi["normal"]) if mi else None}
+            "monedas": d["monedas"], "mascotas": d["mascotas"], "mascota": eq.get("mascota"),
+            "imagen": eq.get("imagen"), "victorias": d.get("pvp_victorias", 0),
+            "derrotas": d.get("pvp_derrotas", 0), "mascota_url": _emoji_url(mi["normal"]) if mi else None,
+            "marco": marco["css"] if marco else None, "titulo": tit["nombre"] if tit else None,
+            "fondo_img": fon["img"] if fon and fon["img"] else None,
+            "victoria_img": vic["img"] if vic and vic["img"] else None, "skins": skins,
+            "vic_pj": d.get("vic_pj", {}), "nuevo_pj": d.get("nuevo_pj", {})}
+
 
 def api_bazar(_, ses):
     d = db().obtener(ses["id"]) if ses else None
-    mas = []
-    for k, it in C.COSMETICOS["mascotas"].items():
-        mas.append({"key": k, "nombre": it["nombre"], "precio": it["precio"], "emoji_url": _emoji_url(it["normal"]),
-                    "victoria_url": _emoji_url(it["victoria"]),
-                    "tiene": bool(d and k in d["mascotas"]), "puesta": bool(d and d["equipado"].get("mascota") == k)})
+    of = _oferta()
+    cats = {}
+    for cat, (cat_, lista, ceq) in CATS.items():
+        out = []
+        for k, it in cat_.items():
+            if cat == "mascotas":
+                extra = {"emoji_url": _emoji_url(it["normal"]), "victoria_url": _emoji_url(it["victoria"])}
+            else:
+                extra = {k2: it[k2] for k2 in ("css", "img", "pj") if k2 in it}
+            if d is None:
+                puesta = False
+            elif cat == "skins":
+                puesta = (d["equipado"].get("skins") or {}).get(it["pj"]) == k
+            else:
+                puesta = d["equipado"].get(ceq) == k
+            out.append({"key": k, "nombre": it["nombre"], "precio": _precio(cat, k), "precio_base": it["precio"],
+                        "tiene": bool(d and k in d.get(lista, [])), "puesta": puesta,
+                        "disponible": _disponible(it), **extra})
+        cats[cat] = out
     return {
-        "monedas": d["monedas"] if d else None, "mascotas": mas,
+        "monedas": d["monedas"] if d else None, "mascotas": cats["mascotas"], "cats": cats,
+        "oferta": of,
         "imgs": {"burnice": C.BURNICE_IMG, "comprar": C.COMPRAR_IMG, "mesa": C.MESA_IMG, "niko": C.NIKO_IMG},
         "textos": {"saludos": C.BURNICE_SALUDOS, "comprar": C.BURNICE_COMPRAR, "mesa": C.BURNICE_MESA,
                    "salidas": C.BURNICE_SALIDAS, "niko": C.NIKO_OPINION},
@@ -243,19 +311,25 @@ def api_bazar(_, ses):
 def api_comprar(b, ses):
     if not ses:
         return {"error": "Inicia sesión con Discord para comprar."}
+    cat = b.get("cat") or "mascotas"
     key = b.get("key")
-    it = C.COSMETICOS["mascotas"].get(key)
-    if not it:
+    if cat not in CATS or key not in CATS[cat][0]:
         return {"error": "Burnice mira alrededor: \"¿Eso? Hmm… no lo tengo en el Bazar. A lo mejor se me quemó, jeje.\""}
+    it = CATS[cat][0][key]
+    lista = CATS[cat][1]
+    if not _disponible(it):
+        return {"error": "Eso todavía no está listo, cielo. ¡Pronto!"}
+    precio = _precio(cat, key)
 
     def f(d):
-        if key in d["mascotas"]:
+        mis = d.setdefault(lista, [])
+        if key in mis:
             return {"msg": "¡Eso ya lo tienes, cielo! Dos veces no se puede… a menos que lo quemes y lo compres otra vez. No lo recomiendo."}
-        if d["monedas"] < it["precio"]:
-            return {"msg": f"Uy, te faltan **{it['precio'] - d['monedas']}** Monedas del Alma. Gana unas peleas y vuelve, ¡yo no me muevo!"}
-        d["monedas"] -= it["precio"]
-        d["mascotas"].append(key)
-        return {"msg": f"¡Vendido! **{it['nombre']}** es tuya. Cuídala bien, ¿sí? Ya puedes ponértela desde aquí mismo.", "ok": True}
+        if d["monedas"] < precio:
+            return {"msg": f"Uy, te faltan **{precio - d['monedas']}** Monedas del Alma. Gana unas peleas y vuelve, ¡yo no me muevo!"}
+        d["monedas"] -= precio
+        mis.append(key)
+        return {"msg": f"¡Vendido! **{it['nombre']}** es tuyo. Ya puedes ponértelo desde aquí mismo.", "ok": True}
     r = db().transaccion(ses["id"], f)
     r["monedas"] = db().obtener(ses["id"])["monedas"]
     return r
@@ -264,14 +338,38 @@ def api_comprar(b, ses):
 def api_equipar(b, ses):
     if not ses:
         return {"error": "Inicia sesión con Discord."}
+    cat = b.get("cat") or "mascotas"
     key = b.get("key")
-    if key is not None and key not in C.COSMETICOS["mascotas"]:
-        return {"error": "Esa mascota no existe."}
+    if cat not in CATS:
+        return {"error": "Eso no existe."}
+    cat_, lista, ceq = CATS[cat]
+    if key is not None and key not in cat_:
+        return {"error": "Eso no existe."}
 
     def f(d):
-        if key is not None and key not in d["mascotas"]:
-            return {"error": "Primero tienes que comprarla."}
-        d["equipado"]["mascota"] = key
+        if key is not None and key not in d.setdefault(lista, []):
+            return {"error": "Primero tienes que comprarlo."}
+        if cat == "skins":
+            pj = cat_[key]["pj"] if key is not None else b.get("pj")
+            sk = d["equipado"].setdefault("skins", {})
+            if key is None:
+                sk.pop(pj, None)
+            else:
+                sk[pj] = key
+        else:
+            d["equipado"][ceq] = key
+        return {"ok": True}
+    return db().transaccion(ses["id"], f)
+
+
+def api_visto(b, ses):
+    """El jugador ya vio lo que su personaje dijo tras ganar."""
+    if not ses:
+        return {"ok": True}
+    k = b.get("key")
+
+    def f(d):
+        d.setdefault("nuevo_pj", {}).pop(k, None)
         return {"ok": True}
     return db().transaccion(ses["id"], f)
 
@@ -360,6 +458,7 @@ def _pagar_pvp(s):
             if i == gi:
                 d["monedas"] += REC_PVP
                 d["pvp_victorias"] = d.get("pvp_victorias", 0) + 1
+                _sumar_vic_pj(d, [l.key for l in c.equipos[gi].luchadores])
             else:
                 d["pvp_derrotas"] = d.get("pvp_derrotas", 0) + 1
             return d["monedas"]
@@ -521,7 +620,7 @@ def api_pvp_rendirse(b, ses):
 GETS = {"/api/personajes": api_personajes, "/api/yo": api_yo, "/api/bazar": api_bazar,
         "/api/pvp/info": api_pvp_info, "/api/pvp/estado": api_pvp_estado}
 POSTS = {"/api/nueva": api_nueva, "/api/accion": api_accion, "/api/terminar": api_terminar,
-         "/api/comprar": api_comprar, "/api/equipar": api_equipar,
+         "/api/comprar": api_comprar, "/api/equipar": api_equipar, "/api/visto": api_visto,
          "/api/pvp/crear": api_pvp_crear, "/api/pvp/unirse": api_pvp_unirse, "/api/pvp/accion": api_pvp_accion,
          "/api/pvp/terminar": api_pvp_terminar, "/api/pvp/rendirse": api_pvp_rendirse}
 
@@ -569,9 +668,10 @@ class H(BaseHTTPRequestHandler):
         tipos = {".js": "application/javascript; charset=utf-8", ".mp3": "audio/mpeg", ".ogg": "audio/ogg",
                  ".m4a": "audio/mp4", ".wav": "audio/wav", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
                  ".png": "image/png", ".webp": "image/webp"}
-        if ruta.startswith("/musica/"):
-            nombre = urllib.parse.unquote(ruta[len("/musica/"):])
-            arc = (AQUI / "musica" / Path(nombre).name)          # Path.name evita salirse de la carpeta
+        if ruta.startswith("/musica/") or ruta.startswith("/img/"):
+            carpeta = "musica" if ruta.startswith("/musica/") else "img"
+            nombre = urllib.parse.unquote(ruta.split("/", 2)[2])
+            arc = (AQUI / carpeta / Path(nombre).name)          # Path.name evita salirse de la carpeta
         else:
             arc = AQUI / ruta.lstrip("/")
         tipo = tipos.get(arc.suffix.lower())
@@ -597,7 +697,7 @@ class H(BaseHTTPRequestHandler):
         self.send_response(cod)
         self.send_header("Content-Type", tipo)
         self.send_header("Accept-Ranges", "bytes")
-        self.send_header("Cache-Control", "no-cache" if arc.suffix == ".js" else "public, max-age=86400")
+        self.send_header("Cache-Control", "no-cache" if arc.suffix == ".js" else ("public, max-age=300" if ruta.startswith("/img/") else "public, max-age=86400"))
         if cod == 206:
             self.send_header("Content-Range", f"bytes {ini}-{fin}/{total}")
         self.send_header("Content-Length", str(fin - ini + 1))
@@ -621,7 +721,7 @@ class H(BaseHTTPRequestHandler):
         try:
             if ruta in GETS:
                 return self._json(GETS[ruta]({k: v[0] for k, v in q.items()}, self._sesion()))
-            if ruta in ("/musica.js", "/reproductor.js", "/interfaz.js", "/pantallas.js") or ruta.startswith("/musica/"):
+            if ruta in ("/musica.js", "/reproductor.js", "/interfaz.js", "/pantallas.js", "/dialogos.js", "/novela.js") or ruta.startswith(("/musica/", "/img/")):
                 return self._estatico(ruta)
             if ruta in ("/", "/index.html"):
                 raw = (AQUI / "index.html").read_bytes()
