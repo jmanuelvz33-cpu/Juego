@@ -418,6 +418,7 @@ class Equipo:
         self.es_cpu = es_cpu
         self.luchadores = [Luchador(k) for k in keys]
         self.medios = 0
+        self.cursor = 0       # a quién le toca actuar (el orden del equipo es fijo: 1 → 2 → 3)
 
     @property
     def vivos(self):
@@ -464,16 +465,33 @@ class Combate:
     def ganador(self):
         return next(e for e in self.equipos if e.vivos)
 
-    def disponibles(self):
-        """Luchadores del equipo actual que pueden actuar (vivos y sin parálisis)."""
-        vivos = [l for l in self.actual.vivos if not l.incapaz]
+    def _tiene_jugada(self, l):
+        return any(self._puede_base(l, k) for k in ("normal", "hab1", "hab2", "defender", "ulti"))
+
+    def actor(self):
+        """Quien juega ahora. El orden del equipo es fijo (1 → 2 → 3): cada acción pasa el turno al siguiente."""
+        eq = self.actual
+        vivos = [l for l in eq.vivos if not l.incapaz]
         muro = [l for l in vivos if l.forma]
-        return muro or vivos        # con Mahoraga fuera, solo él actúa
+        if muro:                    # con Mahoraga fuera, solo él actúa
+            return muro[0] if self._tiene_jugada(muro[0]) else None
+        n = len(eq.luchadores)
+        for d in range(n):
+            l = eq.luchadores[(eq.cursor + d) % n]
+            if l in vivos and self._tiene_jugada(l):    # si le toca a alguien que no puede, se salta
+                return l
+        return None
+
+    def disponibles(self):
+        """El luchador al que le toca actuar (lista de 0 o 1)."""
+        a = self.actor()
+        return [a] if a else []
 
     # ----- inicio y fin de turno -----
     def _iniciar_turno(self):
         for _ in range(6):   # por seguridad: nunca queda en bucle
             eq = self.actual
+            eq.cursor = 0           # cada turno empieza con el luchador 1
             for l in eq.vivos:
                 l.guardia = False
             lineas = self._ticks(eq)
@@ -583,6 +601,9 @@ class Combate:
     def puede(self, l, k):
         if self.terminado() or not l.vivo or l not in self.disponibles() or l not in self.actual.luchadores:
             return False
+        return self._puede_base(l, k)
+
+    def _puede_base(self, l, k):
         if k == "defender":
             return self.actual.medios >= COSTE_DEFENDER and not l.guardia and not l.forma
         m = l.mov(k)
@@ -708,6 +729,8 @@ class Combate:
         self._volcar_avisos()
         if self.terminado():
             return True
+        if l in eq.luchadores:
+            eq.cursor = (eq.luchadores.index(l) + 1) % len(eq.luchadores)    # el turno pasa al siguiente del equipo
         if eq.medios <= 0 or not self.disponibles():
             self._cerrar_turno()
         return True
