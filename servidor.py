@@ -618,7 +618,7 @@ class H(BaseHTTPRequestHandler):
         ruta, q = u.path, urllib.parse.parse_qs(u.query)
         try:
             if ruta in GETS:
-                return self._json(GETS[ruta]({k: v[0] for k, v in q.items()}, self._sesion())
+                return self._json(GETS[ruta]({k: v[0] for k, v in q.items()}, self._sesion()))
             if ruta in ("/musica.js", "/reproductor.js", "/interfaz.js", "/pantallas.js") or ruta.startswith("/musica/"):
                 return self._estatico(ruta)
             if ruta in ("/", "/index.html"):
