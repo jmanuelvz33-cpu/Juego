@@ -332,7 +332,7 @@ function tarjeta(l,lado){
   if(l.pm!=null&&l.sombras==null)extra.push(l.pm+' PM');
   const nom=l.forma?('👹 '+esc(l.forma)):(emo(l)+' '+esc(l.nombre));
   return `<div class="${cl.join(' ')}" data-l="${lado}" data-i="${l.i}" onclick="clic(${lado},${l.i})">
-   <span class="num">${l.i+1}</span>${l.gif?`<img class="r" src="${(lado==0&&YO.skins&&YO.skins[l.key])||l.gif}">`:''}
+   <span class="num">${l.i+1}</span>${l.gif?`<img class="r" ${(l.vivo&&!l.forma&&pct<30&&!(lado==0&&YO.skins&&YO.skins[l.key]))?CBT.cara(l.key,'herido',l.gif):`src="${(lado==0&&YO.skins&&YO.skins[l.key])||l.gif}"`}>`:''}
    <div class="n">${nom}</div>
    ${CBT.barra('hp',lado,l.i,pct)}
    <div>${l.vivo?CBT.num(lado,l.i,hp,mx):'💀'}</div>
@@ -413,7 +413,7 @@ async function reproducir(pasos){
     const prev=S;let cine=false;
     for(const an of p.anims){
       if(!/Cambio de turno/.test(an.titulo))cine=true;
-      CBT.cine(an);
+      CBT.cine(an,CBT.quien(prev));
       await CBT.esperar(Math.min(4500,an.seg*1000));
     }
     CBT.cerrar();
@@ -432,9 +432,10 @@ function dibujarFin(){
   musica('fin');
   const gane=S.ganador===0;
   if(MODO==='pvp'){LS.s('pvp_sala',null)}
+  const lid=((S.equipos[S.ganador]||{luchadores:[]}).luchadores.find(l=>l.vivo)||{}).key;
   if(gane&&!S._fx){S._fx=1;try{UI.fx()}catch(e){}}
   $('#app').innerHTML=`<div class="vic ${gane?'gano':'perdio'}"><h1>${gane?'🏆 ¡Ganaste!':'💀 Perdiste'}</h1>
-  ${(gane&&YO.victoria_img)||S.victoria_img?`<img src="${(gane&&YO.victoria_img)||S.victoria_img}">`:''}
+  ${(gane&&YO.victoria_img)?`<img src="${YO.victoria_img}">`:(lid?`<img ${CBT.cara(lid,'victoria',S.victoria_img||'')}>`:(S.victoria_img?`<img src="${S.victoria_img}">`:''))}
   ${S.recompensa?`<h2>+${S.recompensa} 💀 Monedas del Alma (total ${S.monedas})</h2>`:(gane&&!YO.logueado&&YO.login_disponible?'<div class="info">Inicia sesión con Discord para ganar monedas.</div>':'')}
   <div class="log" style="text-align:left">${fmt(S.log)}</div>
   <button onclick="inicio()">Otra pelea</button> <button class="btn-burnice" onclick="bazar('inicio')">🔥 Bazar</button></div>`;
