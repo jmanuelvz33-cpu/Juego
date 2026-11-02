@@ -179,7 +179,7 @@ async function bazar(pantalla,datos){
     h+=`${banner(im.mesa)}<h1>🪑 La mesa</h1><div class="burnice">${fmt(t.mesa)}</div>
     <div class="grid"><div class="pj" onclick="UI.novela('burnice')">${im.burnice?`<img class="r" src="${esc(im.burnice)}">`:''}<b>🔥 Burnice</b></div>
     ${PJ.map(p=>`<div class="pj" onclick="bazar('personaje',{k:'${p.key}'})">${p.gif?`<img class="r" src="${UI.gif(p)}">`:''}<b>${emo(p)} ${esc(p.nombre)}${(YO.nuevo_pj||{})[p.key]?' 💬':''}</b></div>`).join('')}
-    <div class="pj" onclick="bazar('niko',{n:0})">${im.niko?`<img class="r" src="${esc(im.niko)}">`:''}<b>☀️ Niko</b></div></div>
+    <div class="pj" onclick="UI.novela('niko')">${im.niko?`<img class="r" src="${esc(im.niko)}">`:''}<b>☀️ Niko</b></div></div>
     <div class="fila" style="margin-top:12px">${volver}</div>`;
   }else if(pantalla==='personaje'){
     const p=PJ.find(x=>x.key===datos.k),f=p.ficha;
