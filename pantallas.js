@@ -393,14 +393,20 @@
     const L=(I.ARENAS||[]).filter(Boolean);
     if(L.length){let n;do{n=L[Math.floor(Math.random()*L.length)]}while(L.length>1&&n===U.arena);U.arena=n}else U.arena='';
   };
-  /* imagen por personaje con respaldo: /img/<clave>_<tipo>.png; si no existe usa la normal */
+  /* imagen por personaje con respaldo: /img/<clave>_<tipo>.png (o .jpg, .jpeg, .webp); si no existe usa la normal */
+  const EXT=['png','jpg','jpeg','webp'];
+  const lista=(key,tipo)=>EXT.map(e=>`/img/${key}_${tipo}.${e}`).filter(u=>!faltan.has(u));
   C.cara=function(key,tipo,base){
-    const u=`/img/${key}_${tipo}.png`;
-    if(faltan.has(u))return base?`src="${base}"`:'style="display:none"';
-    return `src="${u}" data-o="${base||''}" onerror="CBT.fb(this)"`;
+    const l=lista(key,tipo);
+    if(!l.length)return base?`src="${base}"`:'style="display:none"';
+    return `src="${l[0]}" data-c="${l.slice(1).join('|')}" data-o="${base||''}" onerror="CBT.fb(this)"`;
   };
+  /* si una imagen no existe, prueba la siguiente extensión y al final la de respaldo */
   C.fb=function(im){
-    faltan.add(im.getAttribute('src'));im.onerror=null;
+    faltan.add(im.getAttribute('src'));
+    const c=(im.dataset.c||'').split('|').filter(Boolean);
+    if(c.length){im.dataset.c=c.slice(1).join('|');im.src=c[0];return}
+    im.onerror=null;im.classList.remove('cn-ult');
     if(im.dataset.o)im.src=im.dataset.o;else im.style.display='none';
   };
   /* quién está actuando en este paso (para la imagen de la ulti) */
@@ -458,12 +464,8 @@
     a.className=ulti?'cn-u':crit?'cn-c':trans?'cn-t':'cn-h';
     a.style.setProperty('--c',an.color||'#888');
     a.style.display='flex';
-    a.innerHTML=`<div class="cn-rayos"></div>${ulti||crit?`<div class="cn-cinta">${ulti?'¡ÚLTI!':'¡CRÍTICO!'}</div>`:''}${ulti&&key&&!faltan.has('/img/'+key+'_ulti.png')?`<img class="cn-img cn-ult" src="/img/${key}_ulti.png" data-o="${an.gif||''}" onerror="CBT.fbU(this)">`:(an.gif?`<img class="cn-img" src="${an.gif}">`:'')}`+
+    a.innerHTML=`<div class="cn-rayos"></div>${ulti||crit?`<div class="cn-cinta">${ulti?'¡ÚLTI!':'¡CRÍTICO!'}</div>`:''}${ulti&&key&&lista(key,'ulti').length?`<img class="cn-img cn-ult" ${C.cara(key,'ulti',an.gif)}>`:(an.gif?`<img class="cn-img" src="${an.gif}">`:'')}`+
       `<div class="cn-tit">${fmt(an.titulo)}</div><div class="cn-desc">${fmt(an.desc)}</div><div class="cn-skip">toca para saltar</div>`;
-  };
-  C.fbU=function(im){
-    faltan.add(im.getAttribute('src'));im.onerror=null;im.classList.remove('cn-ult');
-    if(im.dataset.o)im.src=im.dataset.o;else im.style.display='none';
   };
   C.cerrar=function(){const a=document.getElementById('anim');a.style.display='none';a.className='';a.innerHTML=''};
   C.esperar=ms=>new Promise(r=>{
