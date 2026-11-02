@@ -111,7 +111,7 @@ function tarjetaTienda(cat,it,modo){
   else if(cat==='titulos')vis=`<div class="tt">«${esc(it.nombre)}»</div>`;
   else vis=it.img?`<div class="foto" style="background-image:url('${esc(it.img)}')"></div>`:'<span style="font-size:1.8rem">🖼️</span>';
   const bd=!it.disponible?'<span class="bd" style="background:#555">Pronto</span>':it.puesta?'<span class="bd ok">Puesto</span>':it.tiene?'<span class="bd ok">Tuyo</span>'
-    :of?`<span class="bd">-${BZ.oferta.pct}%</span>`:it.precio_base===0?'<span class="bd ok">Gratis</span>':'';
+    :of?`<span class="bd">-${BZ.oferta.pct}%</span>`:(it.precio<it.precio_base&&it.precio_base>0)?`<span class="bd">-${Math.round(100-it.precio*100/it.precio_base)}%</span>`:it.precio_base===0
   const precio=it.tiene?'':`<div class="pr">${it.precio_base===0?'Gratis 🎁':(it.precio<it.precio_base?`<s>${it.precio_base}</s>`:'')+it.precio+' 💀'}</div>`;
   const sub=cat==='skins'?`<div style="color:var(--mut);font-size:.74rem">de ${esc((PJ.find(p=>p.key===it.pj)||{}).nombre||it.pj)}</div>`:'';
   let b;
