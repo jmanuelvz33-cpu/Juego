@@ -410,10 +410,13 @@
     if(im.dataset.o)im.src=im.dataset.o;else im.style.display='none';
   };
   /* quién está actuando en este paso (para la imagen de la ulti) */
+  C.actor=function(prev){
+    const lado=prev.turno===0?0:1,i=(ATK&&ATK.lado===lado)?ATK.i:prev.actor;
+    return {lado,i};
+  };
   C.quien=function(prev){
     if(!prev)return null;
-    const lado=prev.turno===0?0:1,i=(ATK&&ATK.lado===lado)?ATK.i:prev.actor;
-    const l=i==null?null:prev.equipos[lado].luchadores[i];return l?l.key:null;
+    const a=C.actor(prev),l=a.i==null?null:prev.equipos[a.lado].luchadores[a.i];return l?l.key:null;
   };
   C.atk=function(lado,i){ATK={lado,i}};
 
@@ -534,5 +537,206 @@
     if(fuerte){const a=document.getElementById('app');a.classList.remove('sacude');void a.offsetWidth;a.classList.add('sacude');setTimeout(()=>a.classList.remove('sacude'),550)}
     if(prev.turno!==S.turno&&!S.terminado&&!(opc&&opc.trans))
       C.aviso(S.turno===0?'⚔️ ¡Tu turno!':'🔔 Turno de '+S.equipos[1].nombre,S.turno===0?'#4aa3ff':'#d9534f');
+  };
+})();
+
+
+/* =====================================================================
+   REGISTRO, ICONOS DE EFECTOS, ESTADÍSTICAS Y SONIDOS DE COMBATE
+   ===================================================================== */
+(function(){
+  const C=window.CBT;
+  const css=document.createElement('style');
+  css.textContent=`
+  .reg{background:var(--card);border-radius:12px;padding:8px 10px;margin:10px 0}
+  .reg summary{cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .reg summary::-webkit-details-marker{display:none}
+  .reg summary:before{content:'▾';margin-right:4px;color:var(--mut)}
+  .reg:not([open]) summary:before{content:'▸'}
+  .reg summary span{flex:1}
+  .sfxb{padding:3px 9px;font-size:.74rem;background:#2b3040;border-radius:8px}
+  .regc{max-height:210px;overflow:auto;margin-top:6px}
+  .lg{padding:2px 7px;margin:3px 0;border-left:3px solid #555;border-radius:5px;background:#ffffff08;font-size:.85rem;line-height:1.35;text-align:left}
+  .lg-dano{border-color:#e5484d;background:#e5484d16}
+  .lg-crit{border-color:#ffd400;background:#ffd40020;font-weight:700}
+  .lg-ulti{border-color:#ff7a3d;background:#ff7a3d22;font-weight:700}
+  .lg-cura{border-color:#3fb56b;background:#3fb56b16}
+  .lg-muerte{border-color:#c1121f;background:#c1121f30;font-weight:700}
+  .lg-falla{border-color:#8a90a2;color:#aab3c5}
+  .lg-efecto{border-color:#a970ff;background:#a970ff16}
+  .lg-aviso{border-color:#4aa3ff;background:#4aa3ff14}
+  .lgold{opacity:.62;font-size:.78rem;margin-top:8px;padding-top:4px;border-top:1px dashed #3a4052}
+  .lgold .lg{font-size:.78rem}.lgsep{height:6px}
+  .efs{display:flex;flex-wrap:wrap;gap:3px;min-height:1.4em;margin-top:2px}
+  .ef{font-size:.95rem;line-height:1;background:#0007;border-radius:8px;padding:2px 4px;cursor:pointer}
+  .ef sub{font-size:.58rem;color:#ffd400;margin-left:1px}
+  #efinfo{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:25;max-width:92vw;width:340px;background:#10131c;border:2px solid var(--ac);border-radius:12px;
+    padding:10px 12px;font-size:.88rem;box-shadow:0 6px 24px #000a;animation:cb-fade .2s}
+  .lu.obj:after{content:'🎯';position:absolute;top:2px;right:3px;font-size:1rem;z-index:3;animation:cb-resp 1.2s ease-in-out infinite}
+  .lu.nob{opacity:.62}
+  .resu{background:var(--card);border-radius:12px;padding:10px;margin:12px 0;text-align:left}
+  .resu h3{margin:0 0 8px;font-size:1rem;text-align:center}
+  .resu .fl{display:grid;grid-template-columns:1fr 54px 54px;gap:4px;align-items:center;padding:4px 2px;border-bottom:1px solid #ffffff10;font-size:.88rem}
+  .resu .fl.ca{color:var(--mut);font-size:.74rem;border:0}
+  .resu .fl b{text-align:center}.resu .fl .r{color:#ff9b9b}
+  .mvp{display:flex;align-items:center;gap:10px;margin-top:10px;padding:8px;border-radius:10px;background:#ffd40014;border:1px solid #ffd40055}
+  .mvp img{width:56px;height:56px;border-radius:10px;object-fit:cover;background:#000}
+  .mvp small{display:block;color:var(--mut)}
+  `;
+  document.head.appendChild(css);
+
+  /* ---------- sonidos (sintetizados, sin archivos) ---------- */
+  let ctx=null;
+  const mute=()=>LS.g('sfx_mute')==='1';
+  const audio=()=>{
+    if(!ctx){try{ctx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){return null}}
+    if(ctx.state==='suspended')ctx.resume().catch(()=>{});
+    return ctx;
+  };
+  document.addEventListener('pointerdown',audio,{passive:true});
+  const ruido=(a,d)=>{const n=Math.floor(a.sampleRate*d),b=a.createBuffer(1,n,a.sampleRate),x=b.getChannelData(0);for(let i=0;i<n;i++)x[i]=Math.random()*2-1;const s=a.createBufferSource();s.buffer=b;return s};
+  const env=(g,t,at,pk,dec)=>{g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(pk,t+at);g.gain.exponentialRampToValueAtTime(.0001,t+at+dec)};
+  function tono(a,t,tipo,f0,f1,dur,vol){
+    const o=a.createOscillator(),g=a.createGain();o.type=tipo;o.frequency.setValueAtTime(f0,t);
+    if(f1)o.frequency.exponentialRampToValueAtTime(f1,t+dur);
+    env(g,t,.01,vol,dur);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+dur+.05);
+  }
+  function golpe(a,t,f){
+    const s=ruido(a,.22),fl=a.createBiquadFilter(),g=a.createGain();
+    fl.type='lowpass';fl.frequency.setValueAtTime(2600*f,t);fl.frequency.exponentialRampToValueAtTime(250,t+.18);
+    env(g,t,.005,.45*f,.17);s.connect(fl);fl.connect(g);g.connect(a.destination);s.start(t);s.stop(t+.22);
+    tono(a,t,'sine',150*f,45,.17,.6*f);
+  }
+  function soplo(a,t,f0,f1,dur,vol){
+    const s=ruido(a,dur+.05),fl=a.createBiquadFilter(),g=a.createGain();
+    fl.type='bandpass';fl.Q.value=1.1;fl.frequency.setValueAtTime(f0,t);fl.frequency.exponentialRampToValueAtTime(f1,t+dur);
+    env(g,t,dur*.2,vol,dur*.8);s.connect(fl);fl.connect(g);g.connect(a.destination);s.start(t);s.stop(t+dur+.05);
+  }
+  const SON={
+    golpe:a=>golpe(a,a.currentTime,1),
+    fuerte:a=>golpe(a,a.currentTime,1.5),
+    crit:a=>{const t=a.currentTime;golpe(a,t,1.7);[1319,1760,2349].forEach((f,i)=>tono(a,t+.05+i*.06,'square',f,f*1.01,.18,.1))},
+    cura:a=>{const t=a.currentTime;[523,659,784,1047].forEach((f,i)=>tono(a,t+i*.08,'triangle',f,0,.25,.2))},
+    falla:a=>soplo(a,a.currentTime,2600,400,.25,.22),
+    habilidad:a=>{const t=a.currentTime;soplo(a,t,300,2400,.35,.25);tono(a,t,'sawtooth',180,700,.3,.07)},
+    ulti:a=>{const t=a.currentTime;tono(a,t,'sawtooth',50,200,.95,.28);tono(a,t,'square',100,420,.95,.06);soplo(a,t,200,3000,.9,.3);golpe(a,t+.9,2)},
+    muerte:a=>{const t=a.currentTime;tono(a,t,'sine',420,45,.6,.35);golpe(a,t+.04,1.2)},
+    turno:a=>{const t=a.currentTime;tono(a,t,'sine',784,0,.14,.16);tono(a,t+.09,'sine',1047,0,.2,.16)},
+    rival:a=>{const t=a.currentTime;tono(a,t,'sine',392,0,.14,.15);tono(a,t+.09,'sine',330,0,.22,.15)},
+    derrota:a=>{const t=a.currentTime;[392,370,330,262].forEach((f,i)=>tono(a,t+i*.22,'triangle',f,f*.97,.4,.22))},
+  };
+  C.sfx=function(n){
+    if(mute())return;const a=audio();if(!a||a.state!=='running')return;
+    try{SON[n]&&SON[n](a)}catch(e){}
+  };
+  C.mute=function(b){
+    LS.s('sfx_mute',mute()?'0':'1');
+    if(b)b.textContent=(mute()?'🔇':'🔊')+' Efectos';
+    if(!mute())C.sfx('turno');
+  };
+
+  /* ---------- registro ---------- */
+  let REG=true;
+  C.reg=function(v){REG=v};
+  const tipo=l=>{
+    const t=l.replace(/<a?:\w+:\d+>/g,'').trim();
+    if(/¡Crítico!/.test(t))return 'lg-crit';
+    if(/^💥/.test(t))return 'lg-ulti';
+    if(/💀/.test(t))return 'lg-muerte';
+    if(/pero falla/.test(t))return 'lg-falla';
+    if(/^💚|Cura:|regenera/.test(t)&&!/de daño/.test(t))return 'lg-cura';
+    if(/🔄|Muerte súbita|⚠️|no puede actuar|pierde el turno/.test(t))return 'lg-aviso';
+    if(/de daño|💢/.test(t))return 'lg-dano';
+    if(/[🩸🔥☠🛡💫🪢💤🧵🔺✨👹⚡💨]/u.test(t))return 'lg-efecto';
+    return '';
+  };
+  C.lineas=txt=>(txt||'').split('\n').filter(x=>x.trim()).map(l=>`<div class="lg ${tipo(l)}">${fmt(l)}</div>`).join('');
+  C.registro=function(S){
+    const hist=(S.historial||[]).map(h=>`<div>${C.lineas(h)}</div>`).join('<div class="lgsep"></div>');
+    return `<details class="reg" ${REG?'open':''} ontoggle="CBT.reg(this.open)"><summary><span>📜 Registro</span>`+
+      `<button class="sfxb" onclick="event.preventDefault();event.stopPropagation();CBT.mute(this)">${mute()?'🔇':'🔊'} Efectos</button></summary>`+
+      `<div class="regc"><div>${C.lineas(S.log)}</div>${hist?`<div class="lgold">📜 Turnos anteriores${hist}</div>`:''}</div></details>`;
+  };
+
+  /* ---------- iconos de efectos con explicación ---------- */
+  const INFO=[
+    ['Quemadura','Recibe 6 de daño al inicio de cada turno de su equipo.'],
+    ['Veneno','Recibe 5 de daño al inicio de cada turno de su equipo.'],
+    ['Parálisis','No puede actuar mientras dure.'],
+    ['Debilidad','Hace 25% menos de daño.'],
+    ['Guardia rota','Recibe 30% más de daño y su guardia no sirve.'],
+    ['Enredado','No puede actuar y, al soltarse, queda debilitado.'],
+    ['Sangrado','Recibe 4 de daño al inicio de cada turno de su equipo. Si Denji tiene Frenesí, le pega más fuerte.'],
+    ['Sueño','No puede actuar mientras dure.'],
+    ['Fusionado','Falla 15% más sus ataques.'],
+    ['Regeneración','Se cura 5 de vida al inicio de cada turno de su equipo.'],
+    ['Furia','Hace 25% más de daño.'],
+    ['Velocidad','+25% de probabilidad de crítico.'],
+    ['Frenesí','+20% de daño contra rivales que sangran y recupera vida al golpearlos.'],
+    ['En guardia','Recibe la mitad del daño y quien lo golpea pierde 1 icono.'],
+  ];
+  const descDe=t=>{const n=t.replace(/^\S+\s/,'');const r=INFO.find(x=>n.startsWith(x[0]));return r?r[1]:''};
+  C.chips=function(l){
+    const det=(l.efectos_det||(l.efectos||[]).map(t=>({t,n:0}))).slice();
+    if(l.guardia)det.push({t:'🛡️ En guardia',n:0});
+    return `<div class="efs">`+det.map(e=>`<span class="ef" title="${esc(e.t)}" data-t="${esc(e.t)}" data-n="${e.n||0}" onclick="event.stopPropagation();CBT.info(this)">${esc(e.t.split(' ')[0])}${e.n?`<sub>${e.n}</sub>`:''}</span>`).join('')+`</div>`;
+  };
+  let tmi=null;
+  C.info=function(el){
+    let d=document.getElementById('efinfo');if(!d){d=document.createElement('div');d.id='efinfo';d.onclick=()=>d.remove();document.body.appendChild(d)}
+    const t=el.dataset.t,n=+el.dataset.n,desc=descDe(t);
+    d.innerHTML=`<b>${esc(t)}</b>${desc?`<br>${esc(desc)}`:''}${n?`<br><span style="color:var(--mut)">Le quedan ${n} turno${n==1?'':'s'} de su equipo.</span>`:''}`;
+    clearTimeout(tmi);tmi=setTimeout(()=>{const x=document.getElementById('efinfo');x&&x.remove()},4500);
+  };
+
+  /* ---------- estadísticas ---------- */
+  let ST=null;
+  const nuevoST=()=>{ST={dano:[0,0],cura:[0,0],bajas:[0,0],crit:[0,0],turnos:0,pj:{}}};
+  nuevoST();
+  const r0=C.reset;C.reset=function(){r0();nuevoST()};
+  const hpDe=l=>l.forma?l.forma_hp:l.hp,mxDe=l=>l.forma?90:l.max_hp;
+  function calc(prev,S){
+    const ac=C.actor(prev),lado=ac.lado,rival=1-lado,log=S.log||'';
+    const r={lado,ai:ac.i,dano:0,cura:[0,0],muertes:[],crit:/¡Crítico!/.test(log),falla:/pero falla/.test(log),ulti:/💥 \*\*/.test(log),fuerte:false};
+    [0,1].forEach(s=>S.equipos[s].luchadores.forEach(l=>{
+      const p=prev.equipos[s].luchadores[l.i];if(!p)return;
+      const d=(l.forma!==p.forma)?0:hpDe(l)-hpDe(p);
+      if(d<0&&s===rival){r.dano+=-d;if(-d>=mxDe(l)*.3)r.fuerte=true}
+      if(d>0)r.cura[s]+=d;
+      if(p.vivo&&!l.vivo)r.muertes.push(s);
+    }));
+    return r;
+  }
+  function acumula(r,prev,S){
+    ST.dano[r.lado]+=r.dano;r.cura.forEach((v,s)=>ST.cura[s]+=v);r.muertes.forEach(s=>ST.bajas[1-s]++);
+    if(r.crit)ST.crit[r.lado]++;if(prev.turno!==S.turno)ST.turnos++;
+    if(r.dano>0&&r.ai!=null){const k=r.lado+':'+r.ai;ST.pj[k]=(ST.pj[k]||0)+r.dano}
+  }
+  function suena(r,prev,S){
+    if(r.dano>0)C.sfx(r.crit?'crit':(r.fuerte||r.ulti)?'fuerte':'golpe');else if(r.falla)C.sfx('falla');
+    if(r.cura[0]+r.cura[1]>0)setTimeout(()=>C.sfx('cura'),r.dano>0?230:0);
+    if(r.muertes.length)setTimeout(()=>C.sfx('muerte'),r.dano>0?280:0);
+    if(prev.turno!==S.turno&&!S.terminado)setTimeout(()=>C.sfx(S.turno===0?'turno':'rival'),650);
+  }
+  const e0=C.efectos;
+  C.efectos=function(prev,S,opc){
+    try{if(prev&&S){const r=calc(prev,S);acumula(r,prev,S);suena(r,prev,S)}}catch(e){}
+    e0(prev,S,opc);
+  };
+  const c0=C.cine;
+  C.cine=function(an,key){
+    c0(an,key);
+    const t=an.titulo||'';
+    if(/^💥/.test(t))C.sfx('ulti');else if(!/Cambio de turno/.test(t))C.sfx('habilidad');
+  };
+  C.resumen=function(S){
+    let mvp=null;Object.keys(ST.pj).forEach(k=>{if(k[0]==='0'&&(!mvp||ST.pj[k]>mvp.v))mvp={i:+k.slice(2),v:ST.pj[k]}});
+    const l=mvp&&S.equipos[0].luchadores[mvp.i];
+    const fila=(n,a,b)=>`<div class="fl"><span>${n}</span><b>${a}</b><b class="r">${b}</b></div>`;
+    return `<div class="resu"><h3>📊 Resumen de la pelea</h3>
+      <div class="fl ca"><span>${ST.turnos} cambios de turno</span><b>Tú</b><b>Rival</b></div>
+      ${fila('⚔️ Daño causado',ST.dano[0],ST.dano[1])}${fila('💥 Críticos',ST.crit[0],ST.crit[1])}
+      ${fila('💚 Curación',ST.cura[0],ST.cura[1])}${fila('💀 Bajas causadas',ST.bajas[0],ST.bajas[1])}
+      ${l?`<div class="mvp"><img src="${esc((YO.skins&&YO.skins[l.key])||l.gif||'')}"><div><b>⭐ MVP: ${esc(l.nombre)}</b><small>${mvp.v} de daño causado</small></div></div>`:''}</div>`;
   };
 })();
