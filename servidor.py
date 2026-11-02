@@ -240,7 +240,8 @@ def _oferta():
     return X.oferta({c: v[0] for c, v in CATS.items()})
 
 
-it = CATS[cat][0][key]
+def _precio(cat, key):
+    it = CATS[cat][0][key]
     of = _oferta()
     pct = X.REBAJAS.get(key, 0)
     if of and of["cat"] == cat and of["key"] == key:
