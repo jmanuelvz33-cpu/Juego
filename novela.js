@@ -27,12 +27,13 @@
   `;
   document.head.appendChild(css);
   const U=window.UI=window.UI||{};
+  const ESP=k=>k==='burnice'||k==='niko';
   const mal=new Set();let N={},tm=null;
-  const nombre=k=>k==='burnice'?'🔥 Burnice':((typeof PJ!=='undefined'&&PJ.find(x=>x.key===k)||{}).nombre||k);
+  const nombre=k=>k==='burnice'?'🔥 Burnice':k==='niko'?'☀️ Niko':((typeof PJ!=='undefined'&&PJ.find(x=>x.key===k)||{}).nombre||k);
   function cand(k,exp){
     const l=[`/img/${k}_${exp}.png`];if(exp!=='normal')l.push(`/img/${k}_normal.png`);
     const p=(typeof PJ!=='undefined')&&PJ.find(x=>x.key===k);
-    if(k==='burnice'&&I.BIENVENIDA_IMG)l.push(I.BIENVENIDA_IMG);else if(p&&p.gif)l.push(p.gif);
+    if(k==='burnice'&&I.BIENVENIDA_IMG)l.push(I.BIENVENIDA_IMG);else if(k==='niko'&&typeof BZ!=='undefined'&&BZ&&BZ.imgs&&BZ.imgs.niko)l.push(BZ.imgs.niko);else if(p&&p.gif)l.push(p.gif);
     return l.filter(u=>!mal.has(u));
   }
   U.nvFb=function(im){
@@ -49,11 +50,11 @@
     im.src=l[0];
   }
   function nivel(){
-    const w=N.k==='burnice'?0:(typeof YO!=='undefined'&&YO.vic_pj&&YO.vic_pj[N.k])||0;
+    const w=ESP(N.k)?0:(typeof YO!=='undefined'&&YO.vic_pj&&YO.vic_pj[N.k])||0;
     N.w=w;return w>=NIV[1]?2:w>=NIV[0]?1:0;
   }
   function confH(){
-    if(N.k==='burnice')return '<div class="conf">Siempre tiene algo que contar 🔥</div>';
+    if(ESP(N.k))return '<div class="conf">'+(N.k==='niko'?'Siempre tiene algo que contar ☀️':'Siempre tiene algo que contar 🔥')+'</div>';
     const l=N.nv,h='❤️'.repeat(l+1)+'🤍'.repeat(2-l);
     const falta=l<2?` · ${NIV[l]-N.w} victoria${NIV[l]-N.w==1?'':'s'} más para subir`:'';
     return `<div class="conf">${h} <b>${NN[l]}</b><br>${N.w} victoria${N.w==1?'':'s'} con él/ella${falta}</div>`;
@@ -69,13 +70,13 @@
   function opciones(){
     const d=N.d,o=$('#nvopc');if(!o)return;
     let h=N.lista.map(i=>`<button class="${N.hechas.has(i)?'hecha':''}" onclick="UI.nvPreg(${i})">${N.hechas.has(i)?'✓ ':'💬 '}${esc(d.preguntas[i].q)}</button>`).join('');
-    if(N.k==='burnice')h+=`<button class="otra" onclick="UI.nvOtras()">🎲 Otras preguntas</button>`;
+    if(ESP(N.k))h+=`<button class="otra" onclick="UI.nvOtras()">🎲 Otras preguntas</button>`;
     h+=`<button class="sal" onclick="UI.nvSalir()">👋 Despedirse</button>`;
     o.innerHTML=h;
   }
   function sacar(){
     const d=N.d,n=d.preguntas.length;
-    if(N.k!=='burnice'){N.lista=[...Array(n).keys()];return}
+    if(!ESP(N.k)){N.lista=[...Array(n).keys()];return}
     const rest=[...Array(n).keys()].filter(i=>!(N.lista||[]).includes(i));
     const base=rest.length>=5?rest:[...Array(n).keys()];
     N.lista=base.sort(()=>Math.random()-.5).slice(0,5);
@@ -89,7 +90,7 @@
   U.nvOtras=function(){if(N.fin)return;sacar();opciones()};
   U.nvSalir=function(){
     if(tm){clearInterval(tm);tm=null}
-    if(N.k==='burnice')bazar('mesa');else bazar('personaje',{k:N.k});
+    if(ESP(N.k))bazar('mesa');else bazar('personaje',{k:N.k});
   };
   U.novela=function(k){
     musica('bazar');U.fondo&&U.fondo('novela');
@@ -113,3 +114,4 @@
   U.nvHola=function(){decir(N.hola,opciones)};
   window.N_tap=function(){if(N.fin)N.fin()};
 })();
+
