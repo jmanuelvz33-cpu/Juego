@@ -326,6 +326,7 @@ function tarjeta(l,lado){
   if(S.actor===l.i&&l.vivo&&((S.turno===0)===(lado==0)))cl.push('ya');
   const hp=l.forma?l.forma_hp:l.hp,mx=l.forma?90:l.max_hp,pct=Math.max(0,hp/mx*100);
   if(l.vivo&&pct<30)cl.push('critico');
+  if(lado==1&&S.turno===0&&!S.terminado&&l.vivo&&!(S.blancos||[]).includes(l.i))cl.push('nob');
   const extra=[];
   if(l.sombras!=null)extra.push('🌑'.repeat(l.sombras));
   if(l.hojas!=null)extra.push('🍃'.repeat(l.hojas));
@@ -338,7 +339,7 @@ function tarjeta(l,lado){
    <div>${l.vivo?CBT.num(lado,l.i,hp,mx):'💀'}</div>
    ${CBT.barra('ult',lado,l.i,Math.min(100,l.ulti))}
    <div class="t">${l.vivo?extra.join(' '):''} ${l.ulti_lista?'💥':''}</div>
-   <div class="t">${l.vivo?l.efectos.map(esc).join(' · ')+(l.guardia?' 🛡️':''):''}</div></div>`;
+   ${l.vivo?CBT.chips(l):'<div class="efs"></div>'}</div>`;
 }
 function clic(lado,i){
   if(lock||!S||S.terminado||S.turno!==0)return;
@@ -368,7 +369,7 @@ function dibujarCombate(forzar){
   const e0=S.equipos[0],e1=S.equipos[1];
   let h=`<div class="cab ${S.turno===1?'act':''}"><span>${esc(e1.nombre)} ${S.turno===1?'🔔':''}</span><span>${CBT.iconos(1,S.medios[1],S.turno===1)}</span></div>
   ${ordenH(e1,1)}<div class="eq">${e1.luchadores.map(l=>tarjeta(l,1)).join('')}</div>
-  <div class="log">${fmt(S.log)}${S.historial.length?`<div class="hist">📜 ${S.historial.map(fmt).join('<br>')}</div>`:''}</div>
+  ${CBT.registro(S)}
   <div class="cab ${miTurno?'act':''}"><span>${esc(e0.nombre)} ${miTurno?'🔔':''}</span><span>${miTurno?'Iconos: ':''}${CBT.iconos(0,S.medios[0],miTurno)}</span></div>
   ${ordenH(e0,0)}<div class="eq">${e0.luchadores.map(l=>tarjeta(l,0)).join('')}</div>`;
   if(miTurno&&a){
@@ -433,11 +434,13 @@ function dibujarFin(){
   const gane=S.ganador===0;
   if(MODO==='pvp'){LS.s('pvp_sala',null)}
   const lid=((S.equipos[S.ganador]||{luchadores:[]}).luchadores.find(l=>l.vivo)||{}).key;
+  if(!gane&&!S._fx){S._fx=1;CBT.sfx('derrota')}
   if(gane&&!S._fx){S._fx=1;try{UI.fx()}catch(e){}}
   $('#app').innerHTML=`<div class="vic ${gane?'gano':'perdio'}"><h1>${gane?'🏆 ¡Ganaste!':'💀 Perdiste'}</h1>
   ${(gane&&YO.victoria_img)?`<img src="${YO.victoria_img}">`:(lid?`<img ${CBT.cara(lid,'victoria',S.victoria_img||'')}>`:(S.victoria_img?`<img src="${S.victoria_img}">`:''))}
   ${S.recompensa?`<h2>+${S.recompensa} 💀 Monedas del Alma (total ${S.monedas})</h2>`:(gane&&!YO.logueado&&YO.login_disponible?'<div class="info">Inicia sesión con Discord para ganar monedas.</div>':'')}
-  <div class="log" style="text-align:left">${fmt(S.log)}</div>
+  ${CBT.resumen(S)}
+  <div class="reg" style="padding:6px 10px"><div>${CBT.lineas(S.log)}</div></div>
   <button onclick="inicio()">Otra pelea</button> <button class="btn-burnice" onclick="bazar('inicio')">🔥 Bazar</button></div>`;
 }
 inicio(true);
