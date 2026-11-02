@@ -111,7 +111,7 @@ function tarjetaTienda(cat,it,modo){
   else if(cat==='titulos')vis=`<div class="tt">«${esc(it.nombre)}»</div>`;
   else vis=it.img?`<div class="foto" style="background-image:url('${esc(it.img)}')"></div>`:'<span style="font-size:1.8rem">🖼️</span>';
   const bd=!it.disponible?'<span class="bd" style="background:#555">Pronto</span>':it.puesta?'<span class="bd ok">Puesto</span>':it.tiene?'<span class="bd ok">Tuyo</span>'
-    :of?`<span class="bd">-${BZ.oferta.pct}%</span>`:(it.precio<it.precio_base&&it.precio_base>0)?`<span class="bd">-${Math.round(100-it.precio*100/it.precio_base)}%</span>`:it.precio_base===0
+    :of?`<span class="bd">-${BZ.oferta.pct}%</span>`:(it.precio<it.precio_base&&it.precio_base>0)?`<span class="bd">-${Math.round(100-it.precio*100/it.precio_base)}%</span>`:it.precio_base===0?'<span class="bd ok">Gratis</span>':'';
   const precio=it.tiene?'':`<div class="pr">${it.precio_base===0?'Gratis 🎁':(it.precio<it.precio_base?`<s>${it.precio_base}</s>`:'')+it.precio+' 💀'}</div>`;
   const sub=cat==='skins'?`<div style="color:var(--mut);font-size:.74rem">de ${esc((PJ.find(p=>p.key===it.pj)||{}).nombre||it.pj)}</div>`:'';
   let b;
@@ -255,8 +255,8 @@ function pick(k){
 async function empezar(){
   const r=await api('/api/nueva',{equipo:elegidos,nivel});
   if(r.error)return alert(r.error);
-  G=r.id;S=r.estado;sel=0;tgt=null;tgtAli=null;
-  dibujarCombate();
+  G=r.id;S=r.estado;sel=0;tgt=null;tgtAli=null;CBT.reset();
+  dibujarCombate();CBT.inicio();
   if(r.pasos.length)await reproducir(r.pasos);
 }
 
@@ -292,8 +292,8 @@ async function unirse(){
   LS.s('sala_pendiente',null);reto=null;LS.s('pvp_sala',r.codigo);entrarPvP(r.codigo,r);
 }
 function entrarPvP(cod,r){
-  MODO='pvp';G=cod;SALA=cod;SEQ=r.seq;S=r.actual;sel=0;tgt=null;tgtAli=null;lock=false;
-  dibujarCombate();
+  MODO='pvp';G=cod;SALA=cod;SEQ=r.seq;S=r.actual;sel=0;tgt=null;tgtAli=null;lock=false;CBT.reset();
+  dibujarCombate();CBT.inicio();
 }
 function aPasos(evs){return evs.filter(e=>e.seq>SEQ).map(e=>{SEQ=Math.max(SEQ,e.seq);return{estado:e.estado,anims:e.anims}})}
 setInterval(async()=>{
@@ -325,17 +325,18 @@ function tarjeta(l,lado){
   if(lado==0&&tgtAli===l.i)cl.push('ali');
   if(S.actor===l.i&&l.vivo&&((S.turno===0)===(lado==0)))cl.push('ya');
   const hp=l.forma?l.forma_hp:l.hp,mx=l.forma?90:l.max_hp,pct=Math.max(0,hp/mx*100);
+  if(l.vivo&&pct<30)cl.push('critico');
   const extra=[];
   if(l.sombras!=null)extra.push('🌑'.repeat(l.sombras));
   if(l.hojas!=null)extra.push('🍃'.repeat(l.hojas));
   if(l.pm!=null&&l.sombras==null)extra.push(l.pm+' PM');
   const nom=l.forma?('👹 '+esc(l.forma)):(emo(l)+' '+esc(l.nombre));
-  return `<div class="${cl.join(' ')}" style="${l.vivo?'':''}" onclick="clic(${lado},${l.i})">
+  return `<div class="${cl.join(' ')}" data-l="${lado}" data-i="${l.i}" onclick="clic(${lado},${l.i})">
    <span class="num">${l.i+1}</span>${l.gif?`<img class="r" src="${(lado==0&&YO.skins&&YO.skins[l.key])||l.gif}">`:''}
    <div class="n">${nom}</div>
-   <div class="barra hp ${pct<30?'bajo':''}"><i style="width:${pct}%"></i></div>
-   <div>${l.vivo?hp+'/'+mx:'💀'}</div>
-   <div class="barra ult"><i style="width:${Math.min(100,l.ulti)}%"></i></div>
+   ${CBT.barra('hp',lado,l.i,pct)}
+   <div>${l.vivo?CBT.num(lado,l.i,hp,mx):'💀'}</div>
+   ${CBT.barra('ult',lado,l.i,Math.min(100,l.ulti))}
    <div class="t">${l.vivo?extra.join(' '):''} ${l.ulti_lista?'💥':''}</div>
    <div class="t">${l.vivo?l.efectos.map(esc).join(' · ')+(l.guardia?' 🛡️':''):''}</div></div>`;
 }
@@ -356,19 +357,19 @@ function ordenH(eq,lado){
   const ya=(S.turno===0)===(lado==0)?S.actor:null;
   return `<div class="orden">Orden: ${eq.luchadores.map(l=>`<span class="${!l.vivo?'x':(l.i===ya?'on':'')}">${l.i+1}.º ${esc(l.forma||l.nombre)}</span>`).join(' → ')}</div>`;
 }
-function dibujarCombate(){
+function dibujarCombate(forzar){
   if(!S)return;
-  if(S.terminado){return dibujarFin()}
+  if(S.terminado&&!forzar){return dibujarFin()}
   musica('pelea');
   const a=actorActual();
   if(tgt==null||!S.blancos.includes(tgt))tgt=S.objetivo;
   const miTurno=S.turno===0;
   const soporte=a&&a.acciones.some(x=>x.apoyo||x.dual);
   const e0=S.equipos[0],e1=S.equipos[1];
-  let h=`<div class="cab ${S.turno===1?'act':''}"><span>${esc(e1.nombre)} ${S.turno===1?'🔔':''}</span><span>${S.turno===1?medios(S.medios[1]):''}</span></div>
+  let h=`<div class="cab ${S.turno===1?'act':''}"><span>${esc(e1.nombre)} ${S.turno===1?'🔔':''}</span><span>${CBT.iconos(1,S.medios[1],S.turno===1)}</span></div>
   ${ordenH(e1,1)}<div class="eq">${e1.luchadores.map(l=>tarjeta(l,1)).join('')}</div>
   <div class="log">${fmt(S.log)}${S.historial.length?`<div class="hist">📜 ${S.historial.map(fmt).join('<br>')}</div>`:''}</div>
-  <div class="cab ${miTurno?'act':''}"><span>${esc(e0.nombre)} ${miTurno?'🔔':''}</span><span>${miTurno?'Iconos: '+medios(S.medios[0]):''}</span></div>
+  <div class="cab ${miTurno?'act':''}"><span>${esc(e0.nombre)} ${miTurno?'🔔':''}</span><span>${miTurno?'Iconos: ':''}${CBT.iconos(0,S.medios[0],miTurno)}</span></div>
   ${ordenH(e0,0)}<div class="eq">${e0.luchadores.map(l=>tarjeta(l,0)).join('')}</div>`;
   if(miTurno&&a){
     h+=`<div class="panel"><div>▶ Turno de <b>${emo(a)} ${esc(a.forma||a.nombre)}</b> (${a.i+1}.º) — elige objetivo y acción</div>
@@ -380,6 +381,7 @@ function dibujarCombate(){
   }
   if(MODO==='pvp'&&!miTurno)h+=`<div class="panel">⏳ Turno de <b>${esc(e1.nombre)}</b>… tienes 150 s en tu turno o pierdes por abandono. <button class="sec" onclick="rendirse()">🏳️ Rendirse</button></div>`;
   $('#app').innerHTML=h;
+  CBT.post();
 }
 function costeTxt(m){return ({1:'½',2:'1',4:'2'})[m]||(m/2)}
 function botonAcc(a,x){
@@ -387,7 +389,7 @@ function botonAcc(a,x){
   const nom=x.k==='ulti'&&!a.ulti_lista?`ÚLTI ${a.ulti}%`:x.nombre;
   const col=x.k==='defender'?'#6b7280':x.k==='ulti'?'#d9534f':COL[a.boton]||COL.azul;
   const extra=(x.pm?` · ${x.pm}PM`:'')+(x.sombras?` · ${x.sombras}🌑`:'');
-  return `<button style="background:${col}" ${x.ok&&!lock?'':'disabled'} onclick="hacer('${x.k}')" title="${esc(x.desc)}">${ic} ${esc(nom)}<small>${costeTxt(x.coste)} icono${extra}</small></button>`;
+  return `<button style="background:${col}" data-ok="${x.ok?1:0}" ${x.ok&&!lock?'':'disabled'} onclick="hacer('${x.k}')" title="${esc(x.desc)}">${ic} ${esc(nom)}<small>${costeTxt(x.coste)} icono${extra}</small></button>`;
 }
 async function hacer(k){
   if(lock)return;const a=actorActual();if(!a)return;
@@ -396,7 +398,7 @@ async function hacer(k){
   lock=true;
   const r=await api(MODO==='pvp'?'/api/pvp/accion':'/api/accion',{id:G,desde:SEQ,actor:a.i,k,objetivo:tgt,aliado:apoyo||x.apoyo?tgtAli:null,apoyo});
   if(r.error){lock=false;alert(r.error);return}
-  tgtAli=null;
+  tgtAli=null;CBT.atk(0,a.i);
   await reproducir(MODO==='pvp'?aPasos(r.eventos):r.pasos);
 }
 async function terminar(){
@@ -408,24 +410,30 @@ async function terminar(){
 async function reproducir(pasos){
   lock=true;
   for(const p of pasos){
+    const prev=S;let cine=false;
     for(const an of p.anims){
-      $('#anim').style.display='flex';
-      $('#anim').innerHTML=`${an.gif?`<img src="${an.gif}">`:''}<h3 style="color:${an.color}">${fmt(an.titulo)}</h3><div>${fmt(an.desc)}</div>`;
-      await dormir(Math.min(4500,an.seg*1000));
+      if(!/Cambio de turno/.test(an.titulo))cine=true;
+      CBT.cine(an);
+      await CBT.esperar(Math.min(4500,an.seg*1000));
     }
-    $('#anim').style.display='none';
+    CBT.cerrar();
+    if(!cine)await CBT.antes(prev,p.estado);
     S=p.estado;
-    dibujarCombate();
-    if(MODO==='cpu'&&p.estado.turno===1&&!p.estado.terminado)await dormir(1300);
+    dibujarCombate(true);
+    CBT.efectos(prev,S,{trans:p.anims.some(a=>/Cambio de turno/.test(a.titulo))});
+    if(S.terminado)await dormir(1900);
+    else if(MODO==='cpu'&&S.turno===1)await dormir(1300);
   }
   lock=false;
-  dibujarCombate();
+  if(S.terminado)dibujarCombate();
+  else document.querySelectorAll('.acc button[data-ok="1"]').forEach(b=>b.disabled=false);
 }
 function dibujarFin(){
   musica('fin');
   const gane=S.ganador===0;
   if(MODO==='pvp'){LS.s('pvp_sala',null)}
-  $('#app').innerHTML=`<div class="vic"><h1>${gane?'🏆 ¡Ganaste!':'💀 Perdiste'}</h1>
+  if(gane&&!S._fx){S._fx=1;try{UI.fx()}catch(e){}}
+  $('#app').innerHTML=`<div class="vic ${gane?'gano':'perdio'}"><h1>${gane?'🏆 ¡Ganaste!':'💀 Perdiste'}</h1>
   ${(gane&&YO.victoria_img)||S.victoria_img?`<img src="${(gane&&YO.victoria_img)||S.victoria_img}">`:''}
   ${S.recompensa?`<h2>+${S.recompensa} 💀 Monedas del Alma (total ${S.monedas})</h2>`:(gane&&!YO.logueado&&YO.login_disponible?'<div class="info">Inicia sesión con Discord para ganar monedas.</div>':'')}
   <div class="log" style="text-align:left">${fmt(S.log)}</div>
