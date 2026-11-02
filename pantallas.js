@@ -286,3 +286,221 @@
     U.tocar(t[0]);
   };
 })();
+
+/* =====================================================================
+   EFECTOS DE COMBATE (barras con estela, números flotantes, golpes,
+   cinemática de habilidades/ULTI, iconos de turno, muertes, avisos)
+   Todo está aquí; index.html solo llama a window.CBT.
+   ===================================================================== */
+(function(){
+  const css=document.createElement('style');
+  css.textContent=`
+  /* barras: la de arriba (.b) es la vida real; la de atrás (.est) es la estela */
+  .barra{position:relative}
+  .barra i{position:absolute;left:0;top:0;height:100%}
+  .barra.hp .est{background:#ffd0d0}.barra.hp.cur .est{background:#a6ffc0}.barra.ult .est{background:#ffe9a0}
+  .barra.dan .b{transition:width .25s ease-out}
+  .barra.dan .est{transition:width .7s ease-in .45s}
+  .barra.cur .est{transition:width .2s}
+  .barra.cur .b{transition:width .8s ease-out .2s}
+  /* números flotantes (viven en una capa propia, no se borran al redibujar) */
+  #cbfx{position:fixed;inset:0;pointer-events:none;z-index:8;overflow:hidden}
+  .flt{position:absolute;transform:translateX(-50%);font-weight:900;font-size:1.3rem;white-space:nowrap;text-align:center;line-height:1.05;
+    text-shadow:0 2px 3px #000,0 0 8px #000;animation:cb-flota 1.15s ease-out forwards;opacity:0}
+  .flt.dan{color:#ff5b5b}.flt.cur{color:#5dff8f}.flt.fal{color:#cfd6e4;font-size:1rem}.flt.mue{font-size:1.7rem}
+  .flt.crit{color:#ffd400;font-size:1.8rem}.flt .sub{display:block;font-size:.72rem;letter-spacing:.08em}
+  @keyframes cb-flota{0%{opacity:0;transform:translate(-50%,12px) scale(.5)}15%{opacity:1;transform:translate(-50%,-4px) scale(1.3)}30%{transform:translate(-50%,-10px) scale(1)}100%{opacity:0;transform:translate(-50%,-56px) scale(1)}}
+  /* reacciones de las cartas */
+  .lu.golpe{animation:cb-golpe .45s}
+  .lu.golpe-f{animation:cb-golpef .65s}
+  .lu.sana{animation:cb-sana .9s}
+  .lu.esq{animation:cb-esq .45s}
+  .lu.morir{animation:cb-morir 1.1s ease-out}
+  .lu.lunge0{animation:cb-l0 .3s ease-out forwards;z-index:4}
+  .lu.lunge1{animation:cb-l1 .3s ease-out forwards;z-index:4}
+  .lu.critico{animation:cb-pulso 1.3s ease-in-out infinite}
+  .lu.ya img.r{animation:cb-resp 1.8s ease-in-out infinite}
+  @keyframes cb-golpe{0%{filter:brightness(2.4) saturate(.2)}15%{transform:translateX(-7px)}30%{transform:translateX(7px);filter:brightness(1.5)}45%{transform:translateX(-5px)}60%{transform:translateX(4px)}100%{transform:none;filter:none}}
+  @keyframes cb-golpef{0%{filter:brightness(3) saturate(0);transform:scale(1.08)}12%{transform:translate(-11px,3px) scale(1.08)}24%{transform:translate(11px,-3px);filter:brightness(1.8) sepia(1) hue-rotate(-30deg)}38%{transform:translate(-8px,2px)}52%{transform:translate(6px,-2px)}70%{transform:translateX(-3px)}100%{transform:none;filter:none}}
+  @keyframes cb-sana{0%{box-shadow:0 0 0 #5dff8f00}30%{box-shadow:0 0 22px #5dff8fcc;filter:brightness(1.35)}100%{box-shadow:0 0 0 #5dff8f00;filter:none}}
+  @keyframes cb-esq{30%{transform:translateX(12px) rotate(3deg);opacity:.7}100%{transform:none}}
+  @keyframes cb-morir{0%{opacity:1;filter:brightness(2.5)}20%{transform:translateX(-6px)}40%{transform:translateX(6px);opacity:1;filter:none}100%{opacity:.35;filter:grayscale(1);transform:translateY(5px)}}
+  @keyframes cb-l0{to{transform:translateY(-16px) scale(1.07)}}
+  @keyframes cb-l1{to{transform:translateY(16px) scale(1.07)}}
+  @keyframes cb-pulso{50%{box-shadow:0 0 12px #ff3b3bbb;border-color:#ff3b3b88}}
+  @keyframes cb-resp{50%{transform:translateY(-3px) scale(1.03)}}
+  #app.sacude{animation:cb-sacude .5s}
+  @keyframes cb-sacude{0%,100%{transform:none}15%{transform:translate(-6px,3px)}30%{transform:translate(6px,-3px)}45%{transform:translate(-5px,-2px)}60%{transform:translate(4px,3px)}80%{transform:translate(-2px,1px)}}
+  /* iconos de Press Turn */
+  .ico{display:inline-block}
+  .ico.gana{animation:cb-gana .7s backwards}
+  .ico.gasta{overflow:hidden;animation:cb-gasta .65s forwards}
+  @keyframes cb-gana{0%{transform:scale(0);opacity:0}55%{transform:scale(1.7);filter:drop-shadow(0 0 7px #8ff)}100%{transform:scale(1)}}
+  @keyframes cb-gasta{0%{transform:scale(1.5);filter:brightness(3);max-width:1.4em}60%{opacity:.8}100%{transform:scale(0) translateY(-10px);opacity:0;max-width:0}}
+  /* avisos de turno */
+  .cb-ban{position:fixed;left:0;right:0;top:36%;z-index:20;text-align:center;pointer-events:none;font-weight:900;font-size:1.6rem;letter-spacing:.05em;color:#fff;
+    text-shadow:0 0 14px var(--c,#4aa3ff),0 3px 6px #000;background:linear-gradient(90deg,transparent,#000b 20%,#000b 80%,transparent);padding:10px 0;animation:cb-ban 1.2s ease-out forwards}
+  @keyframes cb-ban{0%{opacity:0;transform:scaleY(.1)}15%{opacity:1;transform:scaleY(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-12px)}}
+  /* cinemática de habilidades y ULTI */
+  #anim{overflow:hidden}
+  #anim .cn-rayos{position:absolute;inset:-35%;background:repeating-conic-gradient(from 0deg,var(--c,#888) 0 5deg,transparent 5deg 15deg);opacity:.22;
+    -webkit-mask:radial-gradient(circle,transparent 8%,#000 65%);mask:radial-gradient(circle,transparent 8%,#000 65%);animation:cb-gira 7s linear infinite}
+  @keyframes cb-gira{to{transform:rotate(360deg)}}
+  #anim .cn-img{position:relative;max-width:92vw;max-height:52vh;border-radius:12px;box-shadow:0 0 34px var(--c,#888);animation:cb-img .45s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes cb-img{from{opacity:0;transform:translateX(-70px) scale(.75)}}
+  #anim .cn-tit{position:relative;font-weight:900;font-size:1.5rem;margin-top:12px;color:var(--c,#fff);text-shadow:0 0 14px var(--c,#fff),0 2px 0 #000;animation:cb-tit .5s .12s backwards}
+  @keyframes cb-tit{from{opacity:0;transform:scale(2.3);letter-spacing:.3em}}
+  #anim .cn-desc{position:relative;white-space:pre-line;margin-top:4px;animation:cb-fade .6s .35s backwards}
+  @keyframes cb-fade{from{opacity:0}}
+  #anim .cn-skip{position:absolute;bottom:14px;left:0;right:0;font-size:.7rem;color:#fff6}
+  #anim .cn-cinta{position:absolute;top:13%;left:-10%;right:-10%;padding:6px 0;transform:rotate(-4deg);background:linear-gradient(90deg,transparent,var(--c,#d33) 18%,var(--c,#d33) 82%,transparent);
+    font-weight:900;font-size:1.3rem;letter-spacing:.35em;color:#fff;text-shadow:0 2px 4px #000;animation:cb-cinta .5s cubic-bezier(.2,1.2,.4,1)}
+  @keyframes cb-cinta{from{transform:translateX(-120%) rotate(-4deg)}}
+  #anim.cn-u{animation:cb-flash .55s}
+  #anim.cn-u .cn-tit{font-size:2rem}
+  #anim.cn-u .cn-img{animation:cb-img .45s cubic-bezier(.2,1.4,.4,1),cb-tiembla .14s .45s infinite}
+  #anim.cn-c .cn-tit{color:#ffd400}
+  #anim.cn-t .cn-rayos,#anim.cn-t .cn-cinta{display:none}
+  @keyframes cb-flash{0%{background:#fff}100%{background:#000d}}
+  @keyframes cb-tiembla{25%{transform:translate(2px,-2px)}75%{transform:translate(-2px,2px)}}
+  /* pantalla final */
+  .vic.gano h1{animation:cb-vic .9s cubic-bezier(.2,1.6,.4,1)}
+  .vic.gano img{animation:cb-sube .8s .2s backwards;box-shadow:0 0 30px #ffd40088}
+  .vic.perdio{animation:cb-apaga 1.2s}
+  .vic.perdio img{filter:grayscale(.85);animation:cb-sube .8s .2s backwards}
+  @keyframes cb-vic{from{opacity:0;transform:scale(.2) rotate(-8deg)}}
+  @keyframes cb-sube{from{opacity:0;transform:translateY(30px)}}
+  @keyframes cb-apaga{from{opacity:.1;filter:brightness(.3)}}
+  @media (prefers-reduced-motion:reduce){.lu,.lu img,.flt,#app,#anim *,.cb-ban,.ico{animation:none!important}}
+  `;
+  document.head.appendChild(css);
+
+  const HPV={},ULV={},HPN={},MEDV={0:0,1:0};
+  let ATK=null;
+  const hpDe=l=>l.forma?l.forma_hp:l.hp;
+  const mxDe=l=>l.forma?90:l.max_hp;
+  const C=window.CBT={};
+  const esp=ms=>new Promise(r=>setTimeout(r,ms));
+
+  C.reset=function(){for(const o of [HPV,ULV,HPN])for(const k in o)delete o[k];MEDV[0]=MEDV[1]=0;ATK=null};
+  C.atk=function(lado,i){ATK={lado,i}};
+
+  /* barra de vida o de ulti con estela */
+  C.barra=function(tipo,lado,i,pct){
+    const K=tipo==='hp'?HPV:ULV,k=lado+':'+i,prev=K[k];K[k]=pct;
+    const bajo=tipo==='hp'&&pct<30?' bajo':'';
+    if(prev==null||Math.abs(prev-pct)<.01)
+      return `<div class="barra ${tipo}${bajo}"><i class="est" style="width:${pct}%"></i><i class="b" style="width:${pct}%"></i></div>`;
+    return `<div class="barra ${tipo}${bajo} ${pct<prev?'dan':'cur'}" data-to="${pct}"><i class="est" style="width:${prev}%"></i><i class="b" style="width:${prev}%"></i></div>`;
+  };
+  /* número de vida que cuenta hacia arriba o abajo */
+  C.num=function(lado,i,hp,mx){
+    const k=lado+':'+i,prev=HPN[k];HPN[k]=hp;
+    if(prev==null||prev===hp)return `${hp}/${mx}`;
+    return `<span class="hpt" data-a="${prev}" data-b="${hp}" data-m="${mx}">${prev}/${mx}</span>`;
+  };
+  /* arranca las animaciones de barras y números (se llama justo después de dibujar) */
+  C.post=function(){
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      document.querySelectorAll('.barra[data-to]').forEach(b=>{
+        const to=b.dataset.to+'%';b.querySelector('.b').style.width=to;b.querySelector('.est').style.width=to;b.removeAttribute('data-to');
+      });
+      document.querySelectorAll('.hpt[data-a]').forEach(el=>{
+        const a=+el.dataset.a,b=+el.dataset.b,m=el.dataset.m,t0=performance.now();el.removeAttribute('data-a');
+        const paso=t=>{const e=Math.min(1,(t-t0)/650);el.textContent=Math.round(a+(b-a)*e)+'/'+m;if(e<1&&el.isConnected)requestAnimationFrame(paso)};
+        requestAnimationFrame(paso);
+      });
+    }));
+  };
+
+  /* iconos de Press Turn: los gastados se apagan, los nuevos entran con brillo */
+  const tok=m=>[...Array(m>>1).fill('🔷'),...(m&1?['🔹']:[])];
+  C.iconos=function(lado,m,activo){
+    if(!activo){MEDV[lado]=0;return ''}
+    const prev=MEDV[lado]||0;MEDV[lado]=m;
+    const t=tok(m),g=m>prev?Math.max(1,tok(m-prev).length):0;
+    let h=t.map((x,i)=>{const nuevo=g&&i>=t.length-g;return `<span class="ico${nuevo?' gana':''}"${nuevo?` style="animation-delay:${(i-(t.length-g))*90}ms"`:''}>${x}</span>`}).join('');
+    if(m<prev)h+=tok(prev-m).map(x=>`<span class="ico gasta">${x}</span>`).join('');
+    return h||'—';
+  };
+
+  /* cinemática de habilidad / ULTI (se puede saltar tocando) */
+  let skip=null;
+  C.cine=function(an){
+    const a=document.getElementById('anim');
+    const ulti=/^💥/.test(an.titulo||''),crit=/CRÍTICO/.test(an.desc||''),trans=/Cambio de turno/.test(an.titulo||'');
+    a.className=ulti?'cn-u':crit?'cn-c':trans?'cn-t':'cn-h';
+    a.style.setProperty('--c',an.color||'#888');
+    a.style.display='flex';
+    a.innerHTML=`<div class="cn-rayos"></div>${ulti||crit?`<div class="cn-cinta">${ulti?'¡ÚLTI!':'¡CRÍTICO!'}</div>`:''}${an.gif?`<img class="cn-img" src="${an.gif}">`:''}`+
+      `<div class="cn-tit">${fmt(an.titulo)}</div><div class="cn-desc">${fmt(an.desc)}</div><div class="cn-skip">toca para saltar</div>`;
+  };
+  C.cerrar=function(){const a=document.getElementById('anim');a.style.display='none';a.className='';a.innerHTML=''};
+  C.esperar=ms=>new Promise(r=>{
+    const t=setTimeout(fin,ms);
+    function fin(){clearTimeout(t);skip=null;r()}
+    skip=fin;
+  });
+  document.addEventListener('click',e=>{if(skip&&e.target.closest&&e.target.closest('#anim'))skip()});
+
+  /* el atacante da un salto hacia el rival justo antes de que se vea el resultado */
+  C.antes=async function(prev,nuevo){
+    if(!prev||!nuevo||!/ usa \*\*|💥 \*\*/.test(nuevo.log||''))return;
+    const lado=prev.turno===0?0:1;
+    const i=(ATK&&ATK.lado===lado)?ATK.i:prev.actor;
+    const el=i==null?null:document.querySelector(`.lu[data-l="${lado}"][data-i="${i}"]`);
+    if(el){el.classList.add('lunge'+lado);await esp(300)}
+  };
+
+  function capa(){let c=document.getElementById('cbfx');if(!c){c=document.createElement('div');c.id='cbfx';document.body.appendChild(c)}return c}
+  function flota(card,html,cls,retraso){
+    if(!card)return;
+    const r=card.getBoundingClientRect(),e=document.createElement('div');
+    e.className='flt '+cls;e.innerHTML=html;
+    e.style.left=(r.left+r.width/2)+'px';e.style.top=(r.top+r.height*.22)+'px';e.style.animationDelay=retraso+'ms';
+    capa().appendChild(e);setTimeout(()=>e.remove(),1500+retraso);
+  }
+  C.aviso=function(txt,color){
+    const b=document.createElement('div');b.className='cb-ban';b.textContent=txt;b.style.setProperty('--c',color||'#4aa3ff');
+    document.body.appendChild(b);setTimeout(()=>b.remove(),1300);
+  };
+  C.inicio=function(){C.aviso('⚔️ ¡A pelear!','#ffd400')};
+
+  /* resultado de un paso: números, golpes, curaciones, esquivas, muertes, avisos */
+  C.efectos=function(prev,S,opc){
+    ATK=null;
+    if(!prev||!S)return;
+    const lado=prev.turno===0?0:1,rival=1-lado,log=S.log||'';
+    const crit=/¡Crítico!/.test(log),falla=/pero falla/.test(log),ulti=/💥 \*\*/.test(log);
+    const card=(s,i)=>document.querySelector(`.lu[data-l="${s}"][data-i="${i}"]`);
+    const ch=[];
+    [0,1].forEach(s=>S.equipos[s].luchadores.forEach(l=>{
+      const p=prev.equipos[s].luchadores[l.i];if(!p)return;
+      const d=(l.forma!==p.forma)?0:hpDe(l)-hpDe(p);
+      ch.push({s,i:l.i,d,mx:mxDe(l),murio:p.vivo&&!l.vivo});
+    }));
+    let pico=null;ch.filter(x=>x.s===rival&&x.d<0).forEach(x=>{if(!pico||x.d<pico.d)pico=x});
+    let fuerte=crit||ulti,n=0;
+    ch.forEach(x=>{
+      const el=card(x.s,x.i);if(!el)return;
+      const ret=n*90;
+      if(x.d<0){
+        const es=crit&&pico===x,f=es||-x.d>=x.mx*.3;if(f)fuerte=true;
+        el.classList.add(f?'golpe-f':'golpe');el.style.animationDelay=ret+'ms';
+        flota(el,(es?'<span class="sub">¡CRÍTICO!</span>':'')+'-'+(-x.d),es?'crit':'dan',ret);n++;
+      }else if(x.d>0){
+        el.classList.add('sana');el.style.animationDelay=ret+'ms';
+        flota(el,'+'+x.d,'cur',ret);n++;
+      }
+      if(x.murio){el.classList.remove('golpe','golpe-f');el.classList.add('morir');el.style.animationDelay=ret+'ms';flota(el,'💀','mue',ret+250);fuerte=true}
+    });
+    if(falla){
+      const m=log.match(/sobre \*\*(.+?)\*\*\.\.\./);
+      if(m){const tag=m[1],l=S.equipos[rival].luchadores.find(z=>tag.startsWith(z.nombre)||(z.forma&&tag.startsWith(z.forma)));
+        if(l){const el=card(rival,l.i);if(el){el.classList.add('esq');flota(el,'Falló 💨','fal',0)}}}
+    }
+    if(fuerte){const a=document.getElementById('app');a.classList.remove('sacude');void a.offsetWidth;a.classList.add('sacude');setTimeout(()=>a.classList.remove('sacude'),550)}
+    if(prev.turno!==S.turno&&!S.terminado&&!(opc&&opc.trans))
+      C.aviso(S.turno===0?'⚔️ ¡Tu turno!':'🔔 Turno de '+S.equipos[1].nombre,S.turno===0?'#4aa3ff':'#d9534f');
+  };
+})();
