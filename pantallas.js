@@ -116,7 +116,7 @@
     if(!d){d=document.createElement('div');d.id='fondo';document.body.prepend(d)}
     let img=FO[n]||'';if(!img&&n==='inicio')img=I.FONDO_IMG||'';
     if(!img&&n==='novela')img=FO.bazar||'';
-    if(n==='combate'&&typeof YO!=='undefined'&&YO.fondo_img)img=YO.fondo_img;
+    if(n==='combate'){if(typeof YO!=='undefined'&&YO.fondo_img)img=YO.fondo_img;else if(U.arena)img=U.arena}
     const o=I.FONDO_OSCURO==null?.55:I.FONDO_OSCURO;
     const nuevo=img?`linear-gradient(rgba(10,12,18,${o}),rgba(10,12,18,${o})),url("${img.replace(/"/g,'%22')}")`:'none';
     if(d.dataset.v!==nuevo){d.dataset.v=nuevo;d.style.backgroundImage=nuevo}
@@ -360,6 +360,8 @@
   #anim.cn-u .cn-tit{font-size:2rem}
   #anim.cn-u .cn-img{animation:cb-img .45s cubic-bezier(.2,1.4,.4,1),cb-tiembla .14s .45s infinite}
   #anim.cn-c .cn-tit{color:#ffd400}
+  #anim .cn-ult{max-width:100vw;max-height:62vh;border-radius:0;box-shadow:none;filter:drop-shadow(0 0 22px var(--c,#d33));animation:cb-ult .6s cubic-bezier(.15,1.25,.35,1)}
+  @keyframes cb-ult{from{opacity:0;transform:translateX(110vw) skewX(-12deg)}}
   #anim.cn-t .cn-rayos,#anim.cn-t .cn-cinta{display:none}
   @keyframes cb-flash{0%{background:#fff}100%{background:#000d}}
   @keyframes cb-tiembla{25%{transform:translate(2px,-2px)}75%{transform:translate(-2px,2px)}}
@@ -380,9 +382,33 @@
   const hpDe=l=>l.forma?l.forma_hp:l.hp;
   const mxDe=l=>l.forma?90:l.max_hp;
   const C=window.CBT={};
+  const I=window.INTERFAZ||{};
+  const U=window.UI=window.UI||{};
+  const faltan=new Set();   // imágenes que no existen (para no pedirlas otra vez)
   const esp=ms=>new Promise(r=>setTimeout(r,ms));
 
-  C.reset=function(){for(const o of [HPV,ULV,HPN])for(const k in o)delete o[k];MEDV[0]=MEDV[1]=0;ATK=null};
+  C.reset=function(){
+    for(const o of [HPV,ULV,HPN])for(const k in o)delete o[k];MEDV[0]=MEDV[1]=0;ATK=null;
+    /* arena al azar para esta pelea (lista ARENAS en interfaz.js) */
+    const L=(I.ARENAS||[]).filter(Boolean);
+    if(L.length){let n;do{n=L[Math.floor(Math.random()*L.length)]}while(L.length>1&&n===U.arena);U.arena=n}else U.arena='';
+  };
+  /* imagen por personaje con respaldo: /img/<clave>_<tipo>.png; si no existe usa la normal */
+  C.cara=function(key,tipo,base){
+    const u=`/img/${key}_${tipo}.png`;
+    if(faltan.has(u))return base?`src="${base}"`:'style="display:none"';
+    return `src="${u}" data-o="${base||''}" onerror="CBT.fb(this)"`;
+  };
+  C.fb=function(im){
+    faltan.add(im.getAttribute('src'));im.onerror=null;
+    if(im.dataset.o)im.src=im.dataset.o;else im.style.display='none';
+  };
+  /* quién está actuando en este paso (para la imagen de la ulti) */
+  C.quien=function(prev){
+    if(!prev)return null;
+    const lado=prev.turno===0?0:1,i=(ATK&&ATK.lado===lado)?ATK.i:prev.actor;
+    const l=i==null?null:prev.equipos[lado].luchadores[i];return l?l.key:null;
+  };
   C.atk=function(lado,i){ATK={lado,i}};
 
   /* barra de vida o de ulti con estela */
@@ -426,14 +452,18 @@
 
   /* cinemática de habilidad / ULTI (se puede saltar tocando) */
   let skip=null;
-  C.cine=function(an){
+  C.cine=function(an,key){
     const a=document.getElementById('anim');
     const ulti=/^💥/.test(an.titulo||''),crit=/CRÍTICO/.test(an.desc||''),trans=/Cambio de turno/.test(an.titulo||'');
     a.className=ulti?'cn-u':crit?'cn-c':trans?'cn-t':'cn-h';
     a.style.setProperty('--c',an.color||'#888');
     a.style.display='flex';
-    a.innerHTML=`<div class="cn-rayos"></div>${ulti||crit?`<div class="cn-cinta">${ulti?'¡ÚLTI!':'¡CRÍTICO!'}</div>`:''}${an.gif?`<img class="cn-img" src="${an.gif}">`:''}`+
+    a.innerHTML=`<div class="cn-rayos"></div>${ulti||crit?`<div class="cn-cinta">${ulti?'¡ÚLTI!':'¡CRÍTICO!'}</div>`:''}${ulti&&key&&!faltan.has('/img/'+key+'_ulti.png')?`<img class="cn-img cn-ult" src="/img/${key}_ulti.png" data-o="${an.gif||''}" onerror="CBT.fbU(this)">`:(an.gif?`<img class="cn-img" src="${an.gif}">`:'')}`+
       `<div class="cn-tit">${fmt(an.titulo)}</div><div class="cn-desc">${fmt(an.desc)}</div><div class="cn-skip">toca para saltar</div>`;
+  };
+  C.fbU=function(im){
+    faltan.add(im.getAttribute('src'));im.onerror=null;im.classList.remove('cn-ult');
+    if(im.dataset.o)im.src=im.dataset.o;else im.style.display='none';
   };
   C.cerrar=function(){const a=document.getElementById('anim');a.style.display='none';a.className='';a.innerHTML=''};
   C.esperar=ms=>new Promise(r=>{
