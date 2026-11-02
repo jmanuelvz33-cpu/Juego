@@ -109,6 +109,7 @@ def _luchador(c, eq, i, l, mio=True):
         "forma": (l.d.get("forma_nombre", "Mahoraga") if l.forma else None), "forma_hp": l.forma_hp,
         "forma_turnos": l.forma_turnos,
         "efectos": [M.EFECTOS_TXT[e] for e in l.efectos] + [M.BONOS_TXT[b] for b in l.bonos],
+        "efectos_det": [{"t": M.EFECTOS_TXT[e], "n": n} for e, n in l.efectos.items()] + [{"t": M.BONOS_TXT[b], "n": n} for b, n in l.bonos.items()],
         "acciones": acc,
     }
 
