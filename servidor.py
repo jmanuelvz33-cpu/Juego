@@ -240,11 +240,13 @@ def _oferta():
     return X.oferta({c: v[0] for c, v in CATS.items()})
 
 
-def _precio(cat, key):
-    it = CATS[cat][0][key]
+it = CATS[cat][0][key]
     of = _oferta()
+    pct = X.REBAJAS.get(key, 0)
     if of and of["cat"] == cat and of["key"] == key:
-        return max(1, round(it["precio"] * (100 - of["pct"]) / 100))
+        pct = max(pct, of["pct"])
+    if pct and it["precio"] > 0:
+        return max(1, round(it["precio"] * (100 - pct) / 100))
     return it["precio"]
 
 
