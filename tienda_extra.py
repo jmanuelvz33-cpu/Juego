@@ -41,7 +41,12 @@ SKINS = {
     "storm_verano": {"pj": "storm",  "nombre": "Storm navideña",   "precio": 350, "img": "https://i.imgur.com/6PfZ79h.jpeg"},
 }
 
-DESCUENTO_OFERTA = 25     # % de descuento de la oferta del día
+# Rebajas fijas (% de descuento permanente). Quita la línea para volver al precio normal.
+REBAJAS = {
+    "reze_verano": 98,
+}
+
+DESCUENTO_OFERTA = 25    # % de descuento de la oferta del día
 
 
 def _dia():
