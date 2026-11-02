@@ -22,23 +22,23 @@ TITULOS = {
 
 # Fondos comprables: reemplazan el fondo del combate. Pon la imagen en "img" (link o "/img/archivo.jpg").
 FONDOS = {
-    "atardecer": {"nombre": "Atardecer", "precio": 200, "img": ""},
-    "noche":     {"nombre": "Noche",     "precio": 200, "img": ""},
-    "ruinas":    {"nombre": "Ruinas",    "precio": 250, "img": ""},
+    "atardecer": {"nombre": "Atardecer", "precio": 200, "img": "https://i.imgur.com/vYLiSD9.jpeg"},
+    "noche":     {"nombre": "Noche",     "precio": 200, "img": "https://i.imgur.com/CrMXBFN.jpeg"},
+    "ruinas":    {"nombre": "Ruinas",    "precio": 250, "img": "https://i.imgur.com/J29emWP.jpeg"},
 }
 
 # Pantallas de victoria: la imagen que sale cuando ganas (en vez de la del personaje).
 VICTORIAS = {
-    "supremo":  {"nombre": "Ser supremo",       "precio": 300, "img": ""},
-    "disfraz":  {"nombre": "Disfraz divertido", "precio": 300, "img": ""},
-    "picante":  {"nombre": "Victoria picante",  "precio": 350, "img": ""},
-    "adorable": {"nombre": "Victoria adorable", "precio": 150, "img": ""},
+    "supremo":  {"nombre": "Ser supremo",       "precio": 300, "img": "https://i.imgur.com/faKa6Gf.gif"},
+    "disfraz":  {"nombre": "Disfraz divertido", "precio": 300, "img": "https://i.imgur.com/bhOLe6D.jpeg"},
+    "picante":  {"nombre": "Victoria picante",  "precio": 350, "img": "https://i.imgur.com/mWCW4zF.jpeg"},
+    "adorable": {"nombre": "Victoria adorable", "precio": 150, "img": "https://i.imgur.com/fjHiGVw.jpeg"},
 }
 
 # Skins: imagen alternativa de un personaje (se ve en tu selección y en tu lado del combate).
 SKINS = {
-    "reze_verano":   {"pj": "reze",   "nombre": "Reze de verano",   "precio": 350, "img": ""},
-    "storm_navidad": {"pj": "storm",  "nombre": "Storm navideña",   "precio": 350, "img": ""},
+    "reze_verano":   {"pj": "reze",   "nombre": "Reze de verano",   "precio": 350, "img": "https://i.imgur.com/pbMyLg3.jpeg"},
+    "storm_verano": {"pj": "storm",  "nombre": "Storm navideña",   "precio": 350, "img": "https://i.imgur.com/6PfZ79h.jpeg"},
 }
 
 DESCUENTO_OFERTA = 25     # % de descuento de la oferta del día
