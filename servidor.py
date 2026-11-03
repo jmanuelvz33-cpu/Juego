@@ -109,7 +109,7 @@ def _luchador(c, eq, i, l, mio=True):
         "forma": (l.d.get("forma_nombre", "Mahoraga") if l.forma else None), "forma_hp": l.forma_hp,
         "forma_turnos": l.forma_turnos,
         "efectos": [M.EFECTOS_TXT[e] for e in l.efectos] + [M.BONOS_TXT[b] for b in l.bonos],
-        "efectos_det": [{"t": M.EFECTOS_TXT[e], "n": n, "k": e} for e, n in l.efectos.items()] + [{"t": M.BONOS_TXT[b], "n": n, "k": b} for b, n in l.bonos.items()],
+        "efectos_det": [{"t": M.EFECTOS_TXT[e], "n": n} for e, n in l.efectos.items()] + [{"t": M.BONOS_TXT[b], "n": n} for b, n in l.bonos.items()],
         "acciones": acc,
     }
 
@@ -725,7 +725,7 @@ class H(BaseHTTPRequestHandler):
         try:
             if ruta in GETS:
                 return self._json(GETS[ruta]({k: v[0] for k, v in q.items()}, self._sesion()))
-            if ruta in ("/musica.js", "/reproductor.js", "/interfaz.js", "/pantallas.js", "/dialogos.js", "/novela.js", "/iconos.js") or ruta.startswith(("/musica/", "/img/")):
+            if ruta in ("/musica.js", "/reproductor.js", "/interfaz.js", "/pantallas.js", "/dialogos.js", "/novela.js") or ruta.startswith(("/musica/", "/img/")):
                 return self._estatico(ruta)
             if ruta in ("/", "/index.html"):
                 raw = (AQUI / "index.html").read_bytes()
