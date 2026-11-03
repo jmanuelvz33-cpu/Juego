@@ -19,17 +19,17 @@ window.ICONOS = {
 
   // Iconos de los efectos de estado (en las cartas, al tocarlos y en el registro).
   efectos: {
-    quemadura: "",     // 🔥 Quemadura
-    veneno: "",        // ☠️ Veneno
-    paralisis: "",     // ⚡ Parálisis
-    debilidad: "",     // 💫 Debilidad
-    guardia_rota: "",  // 🛡️ Guardia rota
+    quemadura: "https://i.imgur.com/NSCdhS7.gif",     // 🔥 Quemadura
+    veneno: "https://i.imgur.com/SbYIZDL.gif",        // ☠️ Veneno
+    paralisis: "https://i.imgur.com/t51JXbF.gif",     // ⚡ Parálisis
+    debilidad: "https://i.imgur.com/IFglDoc.gif",     // 💫 Debilidad
+    guardia_rota: "https://i.imgur.com/T3MtfTP.jpeg",  // 🛡️ Guardia rota
     enredado: "",      // 🪢 Enredado (Megumi)
-    sangrado: "",      // 🩸 Sangrado (Denji)
-    sueno: "",         // 💤 Sueño (Mantis)
+    sangrado: "https://i.imgur.com/3NwdUAE.gif",      // 🩸 Sangrado (Denji)
+    sueno: "https://i.imgur.com/ZCX0ubQ.gif",         // 💤 Sueño (Mantis)
     fusion: "",        // 🧵 Fusionado (Josuke)
-    regen: "",         // 💚 Regeneración (Josuke)
-    furia: "",         // 🔺 Furia (Jolyne)
+    regen: "https://i.imgur.com/X16uRsf.gif",         // 💚 Regeneración (Josuke)
+    furia: "https://i.imgur.com/bhEBX46.gif",         // 🔺 Furia (Jolyne)
     velocidad: "",     // 💨 Velocidad (Yoruichi)
     frenesi: "",       // 🩸 Frenesí (Denji)
     guardia: "",       // 🛡️ En guardia
