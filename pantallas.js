@@ -679,13 +679,13 @@
   C.chips=function(l){
     const det=(l.efectos_det||(l.efectos||[]).map(t=>({t,n:0}))).slice();
     if(l.guardia)det.push({t:'🛡️ En guardia',n:0});
-    return `<div class="efs">`+det.map(e=>`<span class="ef" data-fx="1" title="${esc(e.t)}" data-t="${esc(e.t)}" data-k="${esc(e.k||(e.t.includes('guardia')&&!e.t.includes('rota')?'guardia':''))}" data-n="${e.n||0}" onclick="event.stopPropagation();CBT.info(this)">${ICONO.ef(e.k||(e.t.includes('En guardia')?'guardia':''),e.t.split(' ')[0])}${e.n?`<sub>${e.n}</sub>`:''}</span>`).join('')+`</div>`;
+    return `<div class="efs">`+det.map(e=>`<span class="ef" title="${esc(e.t)}" data-t="${esc(e.t)}" data-n="${e.n||0}" onclick="event.stopPropagation();CBT.info(this)">${esc(e.t.split(' ')[0])}${e.n?`<sub>${e.n}</sub>`:''}</span>`).join('')+`</div>`;
   };
   let tmi=null;
   C.info=function(el){
-    let d=document.getElementById('efinfo');if(!d){d=document.createElement('div');d.id='efinfo';d.setAttribute('data-fx','1');d.onclick=()=>d.remove();document.body.appendChild(d)}
+    let d=document.getElementById('efinfo');if(!d){d=document.createElement('div');d.id='efinfo';d.onclick=()=>d.remove();document.body.appendChild(d)}
     const t=el.dataset.t,n=+el.dataset.n,desc=descDe(t);
-    d.innerHTML=`<b>${ICONO.ef(el.dataset.k,t.split(' ')[0])} ${esc(t.replace(/^\S+\s/,''))}</b>${desc?`<br>${esc(desc)}`:''}${n?`<br><span style="color:var(--mut)">Le quedan ${n} turno${n==1?'':'s'} de su equipo.</span>`:''}`;
+    d.innerHTML=`<b>${esc(t)}</b>${desc?`<br>${esc(desc)}`:''}${n?`<br><span style="color:var(--mut)">Le quedan ${n} turno${n==1?'':'s'} de su equipo.</span>`:''}`;
     clearTimeout(tmi);tmi=setTimeout(()=>{const x=document.getElementById('efinfo');x&&x.remove()},4500);
   };
 
@@ -739,78 +739,4 @@
       ${fila('💚 Curación',ST.cura[0],ST.cura[1])}${fila('💀 Bajas causadas',ST.bajas[0],ST.bajas[1])}
       ${l?`<div class="mvp"><img src="${esc((YO.skins&&YO.skins[l.key])||l.gif||'')}"><div><b>⭐ MVP: ${esc(l.nombre)}</b><small>${mvp.v} de daño causado</small></div></div>`:''}</div>`;
   };
-})();
-
-
-/* =====================================================================
-   EMOJIS PERSONALIZADOS: lee iconos.js y cambia los emojis de toda la
-   pantalla (botones, registro, Bazar...) sin tocar el resto del código.
-   ===================================================================== */
-(function(){
-  const IC=window.ICONOS||{},GEN=IC.general||{},EF=IC.efectos||{};
-  const norm=s=>String(s).replace(/️/g,'');
-  const eh=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  const url=v=>{
-    v=String(v||'').trim();const m=/^<(a?):\w+:(\d+)>$/.exec(v);
-    if(m)return `https://cdn.discordapp.com/emojis/${m[2]}.${m[1]?'gif':'png'}?size=64`;
-    return (/^(https?:)?\/\//.test(v)||v[0]==='/')?v:null;
-  };
-  const html=v=>{const u=url(v);return u?`<img class="emo" src="${eh(u)}" alt="">`:eh(v)};
-  window.ICONO={html,ef:(k,ch)=>(k&&EF[k])?html(EF[k]):eh(ch)};
-
-  const mapa={};Object.keys(GEN).forEach(k=>{if(GEN[k])mapa[norm(k)]=GEN[k]});
-  const EFC={'🔥':'quemadura','☠':'veneno','⚡':'paralisis','💫':'debilidad','🪢':'enredado','🩸':'sangrado','💤':'sueno','🧵':'fusion','🔺':'furia','💨':'velocidad','🛡':'guardia','💚':'regen'};
-  const claves=new Set(Object.keys(mapa));
-  Object.keys(EFC).forEach(c=>{if(EF[EFC[c]]||(c==='🩸'&&EF.frenesi)||(c==='🛡'&&EF.guardia_rota))claves.add(c)});
-  if(IC.moneda)claves.add('💀');
-  if(!claves.size)return;
-  const esc=c=>c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-  const lista=[...claves].map(esc).join('|');
-  const re=new RegExp('('+lista+')\\uFE0F?','gu'),rt=new RegExp('('+lista+')','u');
-  /* qué efecto es, según el texto que rodea al emoji (en el registro) */
-  const efKey=(c,t)=>{
-    if(c==='🩸')return /Frenes/.test(t)?'frenesi':'sangrado';
-    if(c==='🛡')return /rota/i.test(t)?'guardia_rota':'guardia';
-    if(c==='💚')return /regenera/.test(t)?'regen':null;
-    if(c==='💨')return /falla|Falló/i.test(t)?null:'velocidad';
-    return EFC[c];
-  };
-  const SKIP=/^(SCRIPT|STYLE|TEXTAREA|INPUT|OPTION|SELECT|TITLE)$/;
-  const mios=new WeakSet();
-  const nodo=v=>{
-    const u=url(v);
-    if(u){const i=document.createElement('img');i.className='emo';i.src=u;i.alt='';return i}
-    const t=document.createTextNode(v);mios.add(t);return t;
-  };
-  function conv(n){
-    if(mios.has(n))return;
-    const t=n.nodeValue;if(!t||!rt.test(t))return;
-    const p=n.parentElement;if(!p||SKIP.test(p.tagName)||p.closest('[data-fx]'))return;
-    const enReg=!!p.closest('.reg');
-    const frag=document.createDocumentFragment();let i=0,m;re.lastIndex=0;
-    while((m=re.exec(t))){
-      const c=norm(m[1]);let v=null;
-      if(enReg){const k=efKey(c,t);if(k&&EF[k])v=EF[k]}
-      if(!v&&c==='💀'&&IC.moneda&&(/\d/.test(t)||/Monedas/.test(t)))v=IC.moneda;
-      if(!v)v=mapa[c]||(c==='💀'?mapa['💀']:null);
-      if(m.index>i)frag.appendChild(document.createTextNode(t.slice(i,m.index)));
-      frag.appendChild(v?nodo(v):document.createTextNode(m[0]));
-      i=m.index+m[0].length;
-    }
-    if(i<t.length)frag.appendChild(document.createTextNode(t.slice(i)));
-    n.parentNode.replaceChild(frag,n);
-  }
-  function walk(n){
-    if(n.nodeType===3)return conv(n);
-    if(n.nodeType!==1||SKIP.test(n.tagName))return;
-    const w=document.createTreeWalker(n,NodeFilter.SHOW_TEXT),l=[];
-    while(w.nextNode())l.push(w.currentNode);
-    l.forEach(conv);
-  }
-  const obs=new MutationObserver(ms=>ms.forEach(m=>{
-    if(m.type==='characterData')conv(m.target);else m.addedNodes.forEach(walk);
-  }));
-  const ini=()=>{walk(document.body);obs.observe(document.body,{childList:true,subtree:true,characterData:true})};
-  if(document.body)ini();else document.addEventListener('DOMContentLoaded',ini);
-  const st=document.createElement('style');st.textContent='.confeti i .emo{height:1em}';document.head.appendChild(st);
 })();
