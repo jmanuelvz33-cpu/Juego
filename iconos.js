@@ -67,7 +67,7 @@ window.ICONOS = {
     "💔": "",  // derrotas en tu perfil
 
     // ---- BAZAR, LA MESA Y MENÚS ----
-    "🔥": "",  // Burnice (Bazar, mesa, botón Bazar)
+    "🔥": "https://i.imgur.com/nf01Ngc.jpeg",  // Burnice (Bazar, mesa, botón Bazar)
     "☀️": "",  // Niko
     "🛒": "",  // botón Comprar
     "🎒": "",  // botón Mis cosas
