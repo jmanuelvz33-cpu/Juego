@@ -111,7 +111,7 @@ PERSONAJES = {
         "nombre": "Reze",
         "emoji": "<:emoji_17:1563289420923146321>",
         "color": 0xC0392B,
-        "boton": "rojo",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
+        "boton": "#b319ae",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": VIDA,
         "desc": "La Chica Bomba (Chainsaw Man). Daño: todo lo que toca explota.",
         "gif": "https://i.imgur.com/0nwo6rb.jpeg",
