@@ -186,7 +186,7 @@ PERSONAJES = {
         "boton": "D2693C",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": VIDA,
         "desc": "Jujutsu Kaisen. Golpe pesado: prepara su Masa Virtual y luego golpea muy fuerte.",
-        "gif": "https://i.imgur.com/mW3oWb2.jpeg",            # <- retrato de Yuki
+        "gif": "https://i.imgur.com/eJQK7p6.jpeg",            # <- retrato de Yuki
         "crit_gif": "https://i.imgur.com/lieBufC.gif",       # <- animación de golpe fuerte / crítico
         "victoria_img": "https://i.imgur.com/KrjerJx.jpeg",   # <- imagen de victoria
         "mov": {
