@@ -208,7 +208,7 @@ PERSONAJES = {
         "nombre": "Yoruichi Shihōin",
         "emoji": "<:emoji_22:1563551448124362782>",
         "color": 0xF39C12,
-        "boton": "azul",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
+        "boton": "FFB54F",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": VIDA,
         "desc": "Bleach. Velocidad: sube su probabilidad de crítico para encadenar turnos extra.",
         "gif": "https://i.imgur.com/snpCdI8.jpeg",            # <- retrato de Yoruichi
@@ -233,7 +233,7 @@ PERSONAJES = {
         "nombre": "Megumi Fushiguro",
         "emoji": "<:emoji_26:1565487546916409364>",     # <- pon aquí tu emoji de Megumi: <:nombre:ID>
         "color": 0x1C2833,
-        "boton": "gris",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
+        "boton": "524C64",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": 120,
         "sombras": True,   # usa el medidor 🌑 de sombras en vez de PM
         "desc": "Jujutsu Kaisen. Invocador: junta sombras con su lobo, convoca shikigamis y, con el medidor lleno, a Mahoraga.",
@@ -278,7 +278,7 @@ PERSONAJES = {
         "nombre": "Josuke Higashikata",
         "emoji": "<:emoji_24:1565078822708060160>",     # <- pon aquí tu emoji de Josuke: <:nombre:ID>
         "color": 0xFF8FB1,
-        "boton": "gris",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
+        "boton": "D3127C",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": 135,
         "curador": True,   # sus ataques también pueden curar a un compañero (se elige en el menú de objetivos)
         "desc": "Crazy Diamond (JoJo, parte 4). Apoyo: sus golpes dañan al rival o curan a un compañero.",
@@ -305,7 +305,7 @@ PERSONAJES = {
         "nombre": "Denji",
         "emoji": "<:emoji_25:1565152531364053062>",     # <- pon aquí tu emoji de Denji: <:nombre:ID>
         "color": 0xD35400,
-        "boton": "rojo",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
+        "boton": "8E292C",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": VIDA,
         "desc": "Chainsaw Man. Debilitador: sus motosierras dejan sangrado y se alimenta de la sangre del rival.",
         "gif": "https://i.imgur.com/l8JxhvO.jpeg",            # <- retrato de Denji
@@ -332,7 +332,7 @@ PERSONAJES = {
         "nombre": "Mantis",
         "emoji": "<:emoji_23:1564807292795224146>",     # <- pon aquí tu emoji de Mantis: <:nombre:ID>
         "color": 0x27AE60,
-        "boton": "verde",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
+        "boton": "30C57B",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": 125,        # menos vida que el resto (130): hay que protegerla
         "hojas": True,      # usa 🍃 hojas (las gana con el ataque normal)
         "desc": "Guardianes de la Galaxia (Marvel). Apoyo: junta hojas para curar y su ÚLTI duerme al rival.",
