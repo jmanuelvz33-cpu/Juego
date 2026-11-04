@@ -388,9 +388,12 @@ function costeTxt(m){return ({1:'½',2:'1',4:'2'})[m]||(m/2)}
 function botonAcc(a,x){
   const ic={normal:'⚔️',hab1:'✨',hab2:'💢',defender:'🛡️',ulti:'💥'}[x.k];
   const nom=x.k==='ulti'&&!a.ulti_lista?`ÚLTI ${a.ulti}%`:x.nombre;
-  const col=x.k==='defender'?'#6b7280':x.k==='ulti'?'#d9534f':COL[a.boton]||(/^#[0-9a-f]{6}$/i.test(a.boton)?a.boton:COL.azul);
+  const b=String(a.boton||'');
+  const hex=/^#?[0-9a-f]{6}$/i.test(b)?'#'+b.replace('#',''):null;
+  const col=x.k==='defender'?'#6b7280':x.k==='ulti'?'#d9534f':COL[b.toLowerCase()]||hex||COL.azul;
   const extra=(x.pm?` · ${x.pm}PM`:'')+(x.sombras?` · ${x.sombras}🌑`:'');
-  return `<button style="background:${col}" data-ok=${x.ok?1:0}" ${x.ok&&!lock?'':'disabled'} onclick="hacer('${x.k}')" title="${esc(x.desc)}">${ic} ${esc(nom)}<small>${costeTxt(x.coste)} icono${extra}</small></button>`;
+  return `<button style="background:${col};border:2px solid color-mix(in srgb,${col} 45%,#fff)" data-ok="${x.ok?1:0}" ${x.ok&&!lock?'':'disabled'} onclick="hacer('${x.k}')" title="${esc(x.desc)}">${ic} ${esc(nom)}<small>${costeTxt(x.coste)} icono${extra}</small></button>`;
+}
 }
 async function hacer(k){
   if(lock)return;const a=actorActual();if(!a)return;
