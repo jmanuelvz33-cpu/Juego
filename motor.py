@@ -87,7 +87,7 @@ PERSONAJES = {
         "nombre": "Jolyne Kujo",
         "emoji": "<:emoji_15:1563289355601059991>",
         "color": 0x3FA7D6,
-        "boton": "azul",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
+        "boton": "9DDC55",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": VIDA,
         "desc": "Stone Free (JoJo). Control: sus hilos paralizan y su ÚLTI protege y potencia a todo el equipo.",
         "gif": "https://i.imgur.com/OiNWM0J.jpeg",            # <- retrato de Jolyne
@@ -111,7 +111,7 @@ PERSONAJES = {
         "nombre": "Reze",
         "emoji": "<:emoji_17:1563289420923146321>",
         "color": 0xC0392B,
-        "boton": "rojo",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
+        "boton": "D2527F",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": VIDA,
         "desc": "La Chica Bomba (Chainsaw Man). Daño: todo lo que toca explota.",
         "gif": "https://i.imgur.com/0nwo6rb.jpeg",
@@ -135,7 +135,7 @@ PERSONAJES = {
         "nombre": "Storm",
         "emoji": "<:emoji_16:1563289388190924943>",
         "color": 0x5DADE2,
-        "boton": "verde",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
+        "boton": "50B2CB",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": VIDA,
         "desc": "Ororo Munroe (X-Men). Apoyo y área: debilita al rival y lanza tormentas a todo el equipo.",
         "gif": "https://i.imgur.com/y1z0rAi.jpeg",
@@ -159,7 +159,7 @@ PERSONAJES = {
         "nombre": "Ochako Uraraka",
         "emoji": "<:emoji_18:1563289444302200872>",
         "color": 0xF48FB1,
-        "boton": "Azul",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
+        "boton": "E599C3",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": VIDA,
         "desc": "Uravity (My Hero Academia). Utilidad: quita la guardia del rival y lo deja flotando.",
         "gif": "https://i.imgur.com/apmxpCV.jpeg",
@@ -183,7 +183,7 @@ PERSONAJES = {
         "nombre": "Yuki Tsukumo",
         "emoji": "<:emoji_21:1563551373629325574>",
         "color": 0x8E44AD,
-        "boton": "rojo",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
+        "boton": "D2693C",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": VIDA,
         "desc": "Jujutsu Kaisen. Golpe pesado: prepara su Masa Virtual y luego golpea muy fuerte.",
         "gif": "https://i.imgur.com/uCQar2w.jpeg",            # <- retrato de Yuki
