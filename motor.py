@@ -90,7 +90,7 @@ PERSONAJES = {
         "boton": "9DDC55",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": VIDA,
         "desc": "Stone Free (JoJo). Control: sus hilos paralizan y su ÚLTI protege y potencia a todo el equipo.",
-        "gif": "https://i.imgur.com/OiNWM0J.jpeg",            # <- retrato de Jolyne
+        "gif": "https://i.imgur.com/BIV9D5p.jpeg",            # <- retrato de Jolyne
         "crit_gif": "https://i.imgur.com/M4KRFZs.gif",       # <- animación de golpe fuerte / crítico
         "victoria_img": "https://i.imgur.com/U6Vh0da.jpeg",   # <- imagen de victoria
         "mov": {
@@ -186,7 +186,7 @@ PERSONAJES = {
         "boton": "D2693C",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": VIDA,
         "desc": "Jujutsu Kaisen. Golpe pesado: prepara su Masa Virtual y luego golpea muy fuerte.",
-        "gif": "https://i.imgur.com/uCQar2w.jpeg",            # <- retrato de Yuki
+        "gif": "https://i.imgur.com/mW3oWb2.jpeg",            # <- retrato de Yuki
         "crit_gif": "https://i.imgur.com/lieBufC.gif",       # <- animación de golpe fuerte / crítico
         "victoria_img": "https://i.imgur.com/KrjerJx.jpeg",   # <- imagen de victoria
         "mov": {
@@ -211,8 +211,8 @@ PERSONAJES = {
         "boton": "FFB54F",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": VIDA,
         "desc": "Bleach. Velocidad: sube su probabilidad de crítico para encadenar turnos extra.",
-        "gif": "https://i.imgur.com/snpCdI8.jpeg",            # <- retrato de Yoruichi
-        "crit_gif": "https://i.imgur.com/nzjlXaG.gif",       # <- animación de golpe fuerte / crítico
+        "gif": "https://i.imgur.com/ijBEI56.jpeg",            # <- retrato de Yoruichi
+        "crit_gif": "https://i.imgur.com/KrHwirN.gif",       # <- animación de golpe fuerte / crítico
         "victoria_img": "https://i.imgur.com/EsE8Uk2.jpeg",   # <- imagen de victoria
         "mov": {
             "normal": {"nombre": "Golpe de hakuda", "tipo": "normal", "coste": COSTE_NORMAL,
