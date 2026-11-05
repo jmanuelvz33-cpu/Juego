@@ -226,6 +226,21 @@ def api_personajes(_, ses):
     return {"personajes": out}
 
 
+# Voces de los personajes: archivos voces/<personaje>_critico_1.mp3 y voces/<personaje>_ulti_1.mp3
+VOZ_RE = re.compile(r"^([a-z0-9]+)_(critico|ulti)(?:[_-]?\d+)?\.(mp3|ogg|wav|m4a)$", re.I)
+
+
+def api_voces(_, ses):
+    out = {}
+    d = AQUI / "voces"
+    if d.is_dir():
+        for f in sorted(d.iterdir()):
+            m = VOZ_RE.match(f.name)
+            if m and m.group(1).lower() in M.PERSONAJES:
+                out.setdefault(m.group(1).lower(), {}).setdefault(m.group(2).lower(), []).append("/voces/" + urllib.parse.quote(f.name))
+    return {"voces": out}
+
+
 # categoría -> (catálogo, lista en la base de datos, clave de "equipado")
 CATS = {
     "mascotas": (C.COSMETICOS["mascotas"], "mascotas", "mascota"),
@@ -621,7 +636,7 @@ def api_pvp_rendirse(b, ses):
     return _vista(s, yo, int(b.get("desde", 0) or 0))
 
 
-GETS = {"/api/personajes": api_personajes, "/api/yo": api_yo, "/api/bazar": api_bazar,
+GETS = {"/api/voces": api_voces, "/api/personajes": api_personajes, "/api/yo": api_yo, "/api/bazar": api_bazar,
         "/api/pvp/info": api_pvp_info, "/api/pvp/estado": api_pvp_estado}
 POSTS = {"/api/nueva": api_nueva, "/api/accion": api_accion, "/api/terminar": api_terminar,
          "/api/comprar": api_comprar, "/api/equipar": api_equipar, "/api/visto": api_visto,
@@ -672,8 +687,8 @@ class H(BaseHTTPRequestHandler):
         tipos = {".js": "application/javascript; charset=utf-8", ".mp3": "audio/mpeg", ".ogg": "audio/ogg",
                  ".m4a": "audio/mp4", ".wav": "audio/wav", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
                  ".png": "image/png", ".webp": "image/webp"}
-        if ruta.startswith("/musica/") or ruta.startswith("/img/"):
-            carpeta = "musica" if ruta.startswith("/musica/") else "img"
+        if ruta.startswith(("/musica/", "/img/", "/voces/")):
+            carpeta = ruta.split("/")[1]
             nombre = urllib.parse.unquote(ruta.split("/", 2)[2])
             arc = (AQUI / carpeta / Path(nombre).name)          # Path.name evita salirse de la carpeta
         else:
@@ -701,7 +716,7 @@ class H(BaseHTTPRequestHandler):
         self.send_response(cod)
         self.send_header("Content-Type", tipo)
         self.send_header("Accept-Ranges", "bytes")
-        self.send_header("Cache-Control", "no-cache" if arc.suffix == ".js" else ("public, max-age=300" if ruta.startswith("/img/") else "public, max-age=86400"))
+        self.send_header("Cache-Control", "no-cache" if arc.suffix == ".js" else ("public, max-age=300" if ruta.startswith(("/img/", "/voces/")) else "public, max-age=86400"))
         if cod == 206:
             self.send_header("Content-Range", f"bytes {ini}-{fin}/{total}")
         self.send_header("Content-Length", str(fin - ini + 1))
@@ -725,7 +740,7 @@ class H(BaseHTTPRequestHandler):
         try:
             if ruta in GETS:
                 return self._json(GETS[ruta]({k: v[0] for k, v in q.items()}, self._sesion()))
-            if ruta in ("/musica.js", "/reproductor.js", "/interfaz.js", "/pantallas.js", "/dialogos.js", "/novela.js") or ruta.startswith(("/musica/", "/img/")):
+            if ruta in ("/musica.js", "/reproductor.js", "/interfaz.js", "/pantallas.js", "/dialogos.js", "/novela.js") or ruta.startswith(("/musica/", "/img/", "/voces/")):
                 return self._estatico(ruta)
             if ruta in ("/", "/index.html"):
                 raw = (AQUI / "index.html").read_bytes()
