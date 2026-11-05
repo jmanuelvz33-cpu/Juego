@@ -69,6 +69,7 @@ select{background:#20242f;color:#fff;border:0;border-radius:8px;padding:8px}
 <script src="/pantallas.js"></script>
 <script src="/dialogos.js"></script>
 <script src="/novela.js"></script>
+<script src="/combate2.js"></script>
 <script>
 function musica(m){try{window.MUS&&window.MUS.modo(m)}catch(e){}try{window.UI&&UI.fondoDe(m)}catch(e){}}
 const $=s=>document.querySelector(s);
@@ -362,6 +363,7 @@ function dibujarCombate(forzar){
   if(!S)return;
   if(S.terminado&&!forzar){return dibujarFin()}
   musica('pelea');
+  if(window.UI2&&UI2.activo())return UI2.dibujar();   // diseño horizontal (prototipo): ?ui=2
   const a=actorActual();
   if(tgt==null||!S.blancos.includes(tgt))tgt=S.objetivo;
   const miTurno=S.turno===0;
