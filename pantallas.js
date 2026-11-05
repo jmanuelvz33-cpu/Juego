@@ -635,6 +635,83 @@
     if(!mute())C.sfx('turno');
   };
 
+
+  /* ---------- VOCES de los personajes (críticos, golpes fuertes y ÚLTI) ----------
+     Archivos en la carpeta voces/ :  <personaje>_critico_1.mp3 · <personaje>_ulti_1.mp3 (ver LEEME_VOCES.txt)
+     Reglas: cada audio suena UNA vez (nunca en bucle) · solo una voz a la vez · pausa después de cada voz ·
+     un personaje no vuelve a hablar enseguida · no repite el mismo audio hasta usar todos los demás. */
+  const VOZ_VOL=1.0;            // volumen de las voces (0 a 1)
+  const VOZ_MAX_MS=5500;        // ningún audio suena más de esto (se corta con fundido)
+  const VOZ_GAP_MS=2500;        // pausa global después de terminar una voz (crítico)
+  const VOZ_GAP_PJ_MS=7000;     // pausa de ese mismo personaje después de terminar su voz
+  const VOZ_PROB={critico:1,ulti:1}; // probabilidad de hablar (1 = siempre, 0.6 = 60%)
+  let VOCES=null,vozLista=null,vozNodo=null,vozTipo=null,vozLibre=0,vozPaso=0;   // vozPaso = nº de jugada (cinemática y resultado de una jugada no hablan dos veces)
+  const vozBuf={},vozBolsa={},vozUlt={},vozIntento={},vozPj={};
+  const vozOn=()=>LS.g('voz_off')!=='1';
+  function vozCargarLista(){
+    if(!vozLista)vozLista=fetch('/api/voces').then(r=>r.json()).then(d=>{VOCES=d.voces||{}}).catch(()=>{VOCES={}});
+    return vozLista;
+  }
+  function vozBuffer(url){
+    if(!vozBuf[url])vozBuf[url]=fetch(url).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()})
+      .then(b=>new Promise((ok,no)=>{const a=audio();if(!a)return no();a.decodeAudioData(b,ok,no)})).catch(()=>{delete vozBuf[url];return null});
+    return vozBuf[url];
+  }
+  function vozElegir(key,tipo){            // baraja: usa todos los audios antes de repetir y nunca el mismo dos veces seguidas
+    const l=((VOCES||{})[key]||{})[tipo]||[];if(!l.length)return null;
+    const id=key+':'+tipo;let b=vozBolsa[id];
+    if(!b||!b.length){
+      b=l.slice().sort(()=>Math.random()-.5);
+      if(l.length>1&&b[b.length-1]===vozUlt[id]){const t=b[0];b[0]=b[b.length-1];b[b.length-1]=t}
+      vozBolsa[id]=b;
+    }
+    return (vozUlt[id]=b.pop());
+  }
+  function vozParar(){try{vozNodo&&vozNodo.stop()}catch(e){}}
+  C.vozPrecargar=function(S){
+    try{vozCargarLista().then(()=>{
+      [0,1].forEach(s=>((S&&S.equipos&&S.equipos[s].luchadores)||[]).forEach(l=>{
+        const v=(VOCES||{})[l.key]||{};['critico','ulti'].forEach(t=>(v[t]||[]).forEach(u=>vozBuffer(u)));
+      }));
+    })}catch(e){}
+  };
+  C.vozPaso=()=>vozPaso;
+  C.vozDecir=async function(key,tipo,paso){
+    try{
+      const id=key+':'+tipo,t0=Date.now();
+      if(paso===undefined)paso=vozPaso;
+      if(vozIntento[id]===paso)return;   // ya se intentó con esta misma jugada
+      vozIntento[id]=paso;
+      if(!vozOn())return;
+      if(Math.random()>(VOZ_PROB[tipo]===undefined?1:VOZ_PROB[tipo]))return;
+      await vozCargarLista();
+      const url=vozElegir(key,tipo);if(!url)return;
+      const a=audio();if(!a||a.state!=='running')return;
+      const ulti=tipo==='ulti';
+      if(vozNodo&&!(ulti&&vozTipo!=='ulti'))return;                      // ya hay una voz sonando (la ÚLTI sí puede cortar a un crítico)
+      if(!ulti&&t0<vozLibre)return;                                       // pausa global
+      if(t0<(vozPj[id]||0))return;                                        // pausa de este personaje
+      const buf=await vozBuffer(url);if(!buf)return;
+      if(Date.now()-t0>1500)return;                                       // llegó tarde: ya no tiene sentido
+      if(vozNodo){if(ulti&&vozTipo!=='ulti')vozParar();else return}
+      const ac=audio(),src=ac.createBufferSource(),g=ac.createGain();
+      src.buffer=buf;g.gain.value=VOZ_VOL;src.connect(g);g.connect(ac.destination);
+      vozNodo=src;vozTipo=tipo;
+      src.onended=()=>{
+        if(vozNodo===src){vozNodo=null;vozTipo=null}
+        const fin=Date.now();vozLibre=fin+VOZ_GAP_MS;vozPj[id]=fin+VOZ_GAP_PJ_MS;
+      };
+      const ahora=ac.currentTime,max=VOZ_MAX_MS/1000;
+      src.start(ahora);
+      if(buf.duration>max){g.gain.setValueAtTime(VOZ_VOL,ahora+max-.25);g.gain.linearRampToValueAtTime(0,ahora+max);src.stop(ahora+max)}
+    }catch(e){}
+  };
+  C.voz=function(b){
+    LS.s('voz_off',vozOn()?'1':'0');
+    if(b)b.textContent=(vozOn()?'🗣️':'🤐')+' Voces';
+    if(!vozOn())vozParar();
+  };
+
   /* ---------- registro ---------- */
   let REG=true;
   C.reg=function(v){REG=v};
@@ -654,7 +731,7 @@
   C.registro=function(S){
     const hist=(S.historial||[]).map(h=>`<div>${C.lineas(h)}</div>`).join('<div class="lgsep"></div>');
     return `<details class="reg" ${REG?'open':''} ontoggle="CBT.reg(this.open)"><summary><span>📜 Registro</span>`+
-      `<button class="sfxb" onclick="event.preventDefault();event.stopPropagation();CBT.mute(this)">${mute()?'🔇':'🔊'} Efectos</button></summary>`+
+      `<span><button class="sfxb" onclick="event.preventDefault();event.stopPropagation();CBT.voz(this)">${vozOn()?'🗣️':'🤐'} Voces</button> <button class="sfxb" onclick="event.preventDefault();event.stopPropagation();CBT.mute(this)">${mute()?'🔇':'🔊'} Efectos</button></span></summary>`+
       `<div class="regc"><div>${C.lineas(S.log)}</div>${hist?`<div class="lgold">📜 Turnos anteriores${hist}</div>`:''}</div></details>`;
   };
 
@@ -714,13 +791,19 @@
   }
   function suena(r,prev,S){
     if(r.dano>0)C.sfx(r.crit?'crit':(r.fuerte||r.ulti)?'fuerte':'golpe');else if(r.falla)C.sfx('falla');
+    try{const l=r.ai!=null&&prev.equipos[r.lado].luchadores[r.ai],k=l&&l.key;
+      const paso=C.vozPaso();
+      if(k&&r.ulti)setTimeout(()=>C.vozDecir(k,'ulti',paso),150);
+      else if(k&&r.dano>0&&(r.crit||r.fuerte))setTimeout(()=>C.vozDecir(k,'critico',paso),150)}catch(e){}
     if(r.cura[0]+r.cura[1]>0)setTimeout(()=>C.sfx('cura'),r.dano>0?230:0);
     if(r.muertes.length)setTimeout(()=>C.sfx('muerte'),r.dano>0?280:0);
     if(prev.turno!==S.turno&&!S.terminado)setTimeout(()=>C.sfx(S.turno===0?'turno':'rival'),650);
   }
   const e0=C.efectos;
   C.efectos=function(prev,S,opc){
+    try{if(S)C.vozPrecargar(S)}catch(e){}
     try{if(prev&&S){const r=calc(prev,S);acumula(r,prev,S);suena(r,prev,S)}}catch(e){}
+    vozPaso++;     // la jugada terminó: la siguiente puede volver a hablar
     e0(prev,S,opc);
   };
   const c0=C.cine;
@@ -728,6 +811,7 @@
     c0(an,key);
     const t=an.titulo||'';
     if(/^💥/.test(t))C.sfx('ulti');else if(!/Cambio de turno/.test(t))C.sfx('habilidad');
+    if(key){if(/^💥/.test(t))C.vozDecir(key,'ulti');else if(/CRÍTICO/.test(an.desc||''))C.vozDecir(key,'critico')}
   };
   C.resumen=function(S){
     let mvp=null;Object.keys(ST.pj).forEach(k=>{if(k[0]==='0'&&(!mvp||ST.pj[k]>mvp.v))mvp={i:+k.slice(2),v:ST.pj[k]}});
