@@ -58,6 +58,24 @@ select{background:#20242f;color:#fff;border:0;border-radius:8px;padding:8px}
 .ficha{background:var(--card2);border-radius:10px;padding:10px;font-size:.85rem;margin-top:8px}
 .ficha li{margin:4px 0}
 @media(max-width:520px){.acc{grid-template-columns:1fr 1fr}.lu{font-size:.7rem}}
+/* pantalla de victoria/derrota: en horizontal, imagen a un lado e info al otro */
+@media (orientation:landscape) and (min-width:700px){
+  main:has(.vic){max-width:1100px}
+  .vic{text-align:left}.vic h1{text-align:center;margin:4px 0 10px}
+  .vic-w{display:grid;grid-template-columns:minmax(0,38%) minmax(0,1fr);gap:20px;align-items:start}
+  .vic-i{position:sticky;top:8px}
+  .vic-i img{width:100%;max-height:calc(100vh - 130px);object-fit:contain}
+  .vic-d .reg{max-height:24vh;overflow:auto}
+}
+@media (orientation:landscape) and (max-height:520px){   /* celular girado: más compacto, botones a la vista */
+  main:has(.vic){padding-top:4px}
+  .vic h1{font-size:1.05rem;margin:0 0 4px}
+  .vic-w{gap:14px}.vic-i{top:4px}
+  .vic-i img{max-height:calc(100vh - 84px)}
+  .vic-d h2{font-size:.9rem;margin:2px 0 6px}
+  .vic-d .reg{display:none}
+  .vic-d .info,.vic-d table{font-size:.8rem}
+}
 </style>
 <link rel="stylesheet" href="/estilo.css">
 </head>
@@ -442,11 +460,13 @@ function dibujarFin(){
   if(!gane&&!S._fx){S._fx=1;CBT.sfx('derrota')}
   if(gane&&!S._fx){S._fx=1;try{UI.fx()}catch(e){}}
   $('#app').innerHTML=`<div class="vic ${gane?'gano':'perdio'}"><h1>${gane?'🏆 ¡Ganaste!':'💀 Perdiste'}</h1>
+  <div class="vic-w"><div class="vic-i">
   ${(gane&&YO.victoria_img)?`<img src="${YO.victoria_img}">`:(lid?`<img ${CBT.cara(lid,'victoria',S.victoria_img||'')}>`:(S.victoria_img?`<img src="${S.victoria_img}">`:''))}
+  </div><div class="vic-d">
   ${S.recompensa?`<h2>+${S.recompensa} 💀 Monedas del Alma (total ${S.monedas})</h2>`:(gane&&!YO.logueado&&YO.login_disponible?'<div class="info">Inicia sesión con Discord para ganar monedas.</div>':'')}
   ${CBT.resumen(S)}
   <div class="reg" style="padding:6px 10px"><div>${CBT.lineas(S.log)}</div></div>
-  <button onclick="inicio()">Otra pelea</button> <button class="btn-burnice" onclick="bazar('inicio')">🔥 Bazar</button></div>`;
+  <button onclick="inicio()">Otra pelea</button> <button class="btn-burnice" onclick="bazar('inicio')">🔥 Bazar</button></div></div></div>`;
 }
 inicio(true);
 </script></body></html>
