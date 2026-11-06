@@ -686,8 +686,9 @@ class H(BaseHTTPRequestHandler):
     def _estatico(self, ruta):
         tipos = {".js": "application/javascript; charset=utf-8", ".mp3": "audio/mpeg", ".ogg": "audio/ogg",
                  ".m4a": "audio/mp4", ".wav": "audio/wav", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
-                 ".png": "image/png", ".webp": "image/webp"}
-        if ruta.startswith(("/musica/", "/img/", "/voces/")):
+                 ".png": "image/png", ".webp": "image/webp",
+                 ".css": "text/css; charset=utf-8", ".ttf": "font/ttf", ".woff2": "font/woff2", ".otf": "font/otf"}
+        if ruta.startswith(("/musica/", "/img/", "/voces/", "/fuentes/")):
             carpeta = ruta.split("/")[1]
             nombre = urllib.parse.unquote(ruta.split("/", 2)[2])
             arc = (AQUI / carpeta / Path(nombre).name)          # Path.name evita salirse de la carpeta
@@ -716,7 +717,7 @@ class H(BaseHTTPRequestHandler):
         self.send_response(cod)
         self.send_header("Content-Type", tipo)
         self.send_header("Accept-Ranges", "bytes")
-        self.send_header("Cache-Control", "no-cache" if arc.suffix == ".js" else ("public, max-age=300" if ruta.startswith(("/img/", "/voces/")) else "public, max-age=86400"))
+        self.send_header("Cache-Control", "no-cache" if arc.suffix in (".js", ".css") else ("public, max-age=300" if ruta.startswith(("/img/", "/voces/")) else "public, max-age=86400"))
         if cod == 206:
             self.send_header("Content-Range", f"bytes {ini}-{fin}/{total}")
         self.send_header("Content-Length", str(fin - ini + 1))
@@ -740,7 +741,7 @@ class H(BaseHTTPRequestHandler):
         try:
             if ruta in GETS:
                 return self._json(GETS[ruta]({k: v[0] for k, v in q.items()}, self._sesion()))
-            if ruta in ("/musica.js", "/reproductor.js", "/interfaz.js", "/pantallas.js", "/dialogos.js", "/novela.js", "/combate2.js") or ruta.startswith(("/musica/", "/img/", "/voces/")):
+            if ruta in ("/musica.js", "/reproductor.js", "/interfaz.js", "/pantallas.js", "/dialogos.js", "/novela.js", "/combate2.js", "/estilo.css") or ruta.startswith(("/musica/", "/img/", "/voces/", "/fuentes/")):
                 return self._estatico(ruta)
             if ruta in ("/", "/index.html"):
                 raw = (AQUI / "index.html").read_bytes()
