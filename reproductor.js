@@ -13,7 +13,7 @@
     background:radial-gradient(circle,#111 0 22%,transparent 23%),repeating-radial-gradient(circle,#0b0b0e 0 2px,#1c1c22 3px 4px);
     border:2px solid #333;animation:musgira 5s linear infinite;animation-play-state:paused}
   #mus.suena .disc{animation-play-state:running}
-  #mus .disc i{position:absolute;inset:30%;border-radius:50%;background:#ff7a3d center/cover;border:1px solid #000}
+  #mus .disc i{position:absolute;inset:30%;border-radius:50%;background:var(--ac) center/cover;border:1px solid #000}
   #mus .disc::after{content:"";position:absolute;inset:46%;border-radius:50%;background:#0f1117}
   @keyframes musgira{to{transform:rotate(360deg)}}
   #mus .tx{min-width:0;width:120px;overflow:hidden}
@@ -22,7 +22,7 @@
   @keyframes musmarq{0%,12%{transform:translateX(0)}88%,100%{transform:translateX(var(--d))}}
   #mus small{display:block;color:#8a90a2;font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
   #mus button{background:none;border:0;color:#e8eaf0;padding:4px 5px;font-size:15px;border-radius:8px;cursor:pointer}
-  #mus input[type=range]{width:56px;accent-color:#ff7a3d}
+  #mus input[type=range]{width:56px;accent-color:var(--ac)}
   #mus.min .tx,#mus.min button,#mus.min input{display:none}
   #mus.min{padding:5px}
   @media(max-width:520px){#mus input[type=range]{display:none}#mus .tx{width:96px}}`;
