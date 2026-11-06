@@ -119,7 +119,7 @@ def estado(c, p=None, yo=0):
     orden = [yo, 1 - yo]
     mi_turno = (c.turno == yo) and not c.terminado()
     d = {
-        "turno": 0 if c.turno == yo else 1, "terminado": c.terminado(), "log": c.log, "historial": list(c.historial),
+        "turno": 0 if c.turno == yo else 1, "terminado": c.terminado(), "log": c.log,
         "medios": [c.equipos[i].medios for i in orden],
         "equipos": [{"nombre": c.equipos[i].nombre, "cpu": c.equipos[i].es_cpu,
                      "luchadores": [_luchador(c, c.equipos[i], j, l, mio=(i == yo)) for j, l in enumerate(c.equipos[i].luchadores)]}
