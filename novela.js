@@ -22,8 +22,8 @@
   .vn .opc{display:grid;gap:7px;margin-top:10px}
   .vn .opc button{background:#232838;border:1px solid #3a4052;text-align:left;padding:10px 12px;font-size:.92rem}
   .vn .opc button.hecha{border-color:#3fb56b66;color:#c9d1e0}
-  .vn .opc button.sal{background:#3a3f4f;text-align:center}
-  .vn .opc button.otra{background:#3a2a1a;border-color:#ff7a3d88;text-align:center}
+  .vn .opc button.sal{background:var(--card2);text-align:center}
+  .vn .opc button.otra{background:var(--ac);border-color:#ff7a3d88;text-align:center}
   `;
   document.head.appendChild(css);
   const U=window.UI=window.UI||{};
