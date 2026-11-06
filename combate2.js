@@ -2,7 +2,8 @@
    COMBATE 2 — pantalla de combate HORIZONTAL (PROTOTIPO)
    Inspirada en el combate Press Turn: menú a la izquierda, rivales al centro,
    tu luchador activo de frente en primer plano, tu equipo a la derecha,
-   iconos de turno arriba y barra de ayuda abajo. Fondo negro.
+   iconos de turno arriba y barra de ayuda abajo. Fondo: la arena de la pelea (ARENAS en interfaz.js);
+   si no hay ninguna, negro.
 
    - Usa el MISMO motor y las MISMAS animaciones/efectos/voces del combate clásico
      (todo se engancha a  .lu[data-l][data-i] ), solo cambia cómo se dibuja.
@@ -18,9 +19,9 @@
 
   const CSS=`
   main:has(#c2){max-width:none;padding:0}
-  body:has(#c2){overflow:hidden}
+  body:has(#c2){overflow:hidden;background:#000}
   body:has(#c2) #mus{top:auto;bottom:0;right:calc(1.5% + 100px);transform:scale(.52);transform-origin:bottom right}
-  #c2{position:relative;height:100vh;height:100dvh;min-height:300px;background:#000;overflow:hidden;color:#fff;
+  #c2{position:relative;height:100vh;height:100dvh;min-height:300px;background:transparent;overflow:hidden;color:#fff;
     font-size:clamp(10px,2.4vh,22px);line-height:1.25;user-select:none;-webkit-user-select:none;
     padding:0 env(safe-area-inset-right) 0 env(safe-area-inset-left)}
   #c2 *{box-sizing:border-box}
