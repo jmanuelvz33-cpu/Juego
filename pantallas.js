@@ -565,8 +565,6 @@
   .lg-falla{border-color:#8a90a2;color:#aab3c5}
   .lg-efecto{border-color:#a970ff;background:#a970ff16}
   .lg-aviso{border-color:#4aa3ff;background:#4aa3ff14}
-  .lgold{opacity:.62;font-size:.78rem;margin-top:8px;padding-top:4px;border-top:1px dashed #3a4052}
-  .lgold .lg{font-size:.78rem}.lgsep{height:6px}
   .efs{display:flex;flex-wrap:wrap;gap:3px;min-height:1.4em;margin-top:2px}
   .ef{font-size:.95rem;line-height:1;background:#0007;border-radius:8px;padding:2px 4px;cursor:pointer}
   .ef sub{font-size:.58rem;color:#ffd400;margin-left:1px}
@@ -729,10 +727,9 @@
   };
   C.lineas=txt=>(txt||'').split('\n').filter(x=>x.trim()).map(l=>`<div class="lg ${tipo(l)}">${fmt(l)}</div>`).join('');
   C.registro=function(S){
-    const hist=(S.historial||[]).map(h=>`<div>${C.lineas(h)}</div>`).join('<div class="lgsep"></div>');
     return `<details class="reg" ${REG?'open':''} ontoggle="CBT.reg(this.open)"><summary><span>📜 Registro</span>`+
       `<span><button class="sfxb" onclick="event.preventDefault();event.stopPropagation();CBT.voz(this)">${vozOn()?'🗣️':'🤐'} Voces</button> <button class="sfxb" onclick="event.preventDefault();event.stopPropagation();CBT.mute(this)">${mute()?'🔇':'🔊'} Efectos</button></span></summary>`+
-      `<div class="regc"><div>${C.lineas(S.log)}</div>${hist?`<div class="lgold">📜 Turnos anteriores${hist}</div>`:''}</div></details>`;
+      `<div class="regc"><div>${C.lineas(S.log)}</div></div></details>`;
   };
 
   /* ---------- iconos de efectos con explicación ---------- */
