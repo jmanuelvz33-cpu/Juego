@@ -35,7 +35,7 @@
     .vn .arr{grid-row:1;grid-column:1}
     .vn .esc,.vn .opc{grid-row:2;grid-column:1;min-height:0}
     .vn .esc{padding:0;align-items:flex-end;position:relative}
-    .vn{--nv-alto:1.2}   /* tamaño del personaje en horizontal: 1 = normal, 1.15 = 15% más grande */
+    .vn{--nv-alto:1.1}   /* tamaño del personaje en horizontal: 1 = normal, 1.15 = 15% más grande */
     .vn .esc img{height:calc(100% * var(--nv-alto));max-height:none;max-width:60%;width:auto;object-fit:contain;object-position:bottom}
     .vn .opc{margin:0;z-index:2;pointer-events:none;align-content:center;align-items:center;gap:8px 0;
       grid-template-columns:minmax(0,1fr) minmax(0,34%) minmax(0,1fr);padding:0 1%}
