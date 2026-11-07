@@ -35,7 +35,7 @@
     .vn .arr{grid-row:1;grid-column:1}
     .vn .esc,.vn .opc{grid-row:2;grid-column:1;min-height:0}
     .vn .esc{padding:0;align-items:flex-end;position:relative}
-    .vn{--nv-alto:1.1}   /* tamaño del personaje en horizontal: 1 = normal, 1.15 = 15% más grande */
+    .vn{--nv-alto:1}   /* tamaño del personaje en horizontal: 1 = normal, 1.15 = 15% más grande */
     .vn .esc img{height:calc(100% * var(--nv-alto));max-height:none;max-width:60%;width:auto;object-fit:contain;object-position:bottom}
     .vn .opc{margin:0;z-index:2;pointer-events:none;align-content:center;align-items:center;gap:8px 0;
       grid-template-columns:minmax(0,1fr) minmax(0,34%) minmax(0,1fr);padding:0 1%}
@@ -51,6 +51,35 @@
     .vn .opc button{font-size:.72rem;padding:.4em .7em}
     .vn .caja{min-height:64px;padding:14px 12px 8px;border-radius:10px}
     .vn .caja .txt{font-size:.82rem;line-height:1.35;min-height:2.6em}
+  }
+
+  /* ---------- LA MESA: riel de tarjetas ---------- */
+  .ms-riel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
+  .ms-c{position:relative;aspect-ratio:2/3;cursor:pointer;overflow:hidden;background:#0b1420;
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%);
+    transition:transform .18s,filter .18s;scroll-snap-align:center}
+  .ms-c::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 35%,var(--c,var(--ac)),transparent 72%);opacity:.4;transition:opacity .18s}
+  .ms-c img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 12%}
+  .ms-c:hover,.ms-c:focus-visible{transform:translateY(-10px);filter:brightness(1.12)}
+  .ms-c:hover::before{opacity:.75}
+  .ms-ft{position:absolute;left:0;right:0;bottom:0;padding:26px 12px 12px;background:linear-gradient(transparent,rgba(3,6,10,.92) 55%);border-bottom:4px solid var(--c,var(--ac))}
+  .ms-ft b{display:block;font-family:var(--f-titulo);font-weight:400;text-transform:uppercase;letter-spacing:.05em;font-size:1rem;line-height:1.1}
+  .ms-ft span{font-size:.75rem;color:var(--mut)}
+  .ms-new{position:absolute;top:8px;right:8px;z-index:2;background:var(--gold);color:#1a1300;font-weight:800;font-size:.72rem;padding:3px 8px;animation:ms-p 1.2s ease-in-out infinite;clip-path:polygon(0 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+  @keyframes ms-p{50%{transform:scale(1.12)}}
+  .ms-ft i{font-style:normal}
+  .ms-pie{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .ms-hint{display:none;color:var(--mut);font-size:.8rem}
+  @media (orientation:landscape) and (min-width:700px){
+    main:has(.ms){max-width:none;padding-left:18px;padding-right:18px}
+    .ms .burnice{margin:6px 0}
+    .ms-riel{display:flex;gap:16px;overflow-x:auto;overflow-y:hidden;padding:16px 6px 6px;margin:0;height:55vh;scroll-snap-type:x proximity;scrollbar-width:thin}
+    .ms-c{height:100%;aspect-ratio:2/3;flex:0 0 auto;transform-origin:bottom}
+    .ms-hint{display:inline}
+  }
+  @media (orientation:landscape) and (max-height:520px){
+    .ms h1{font-size:1rem;margin:0}.ms .burnice{font-size:.78rem;padding:6px 10px;margin:4px 0}
+    .ms-ft{padding:16px 8px 8px}.ms-ft b{font-size:.78rem}.ms-ft span{font-size:.62rem}.ms-ft .nvn{display:none}
   }
   `;
   document.head.appendChild(css);
@@ -124,7 +153,7 @@
   U.nvOtras=function(){if(N.fin)return;sacar();opciones()};
   U.nvSalir=function(){
     if(tm){clearInterval(tm);tm=null}
-    if(ESP(N.k))bazar('mesa');else bazar('personaje',{k:N.k});
+    bazar('mesa');
   };
   // en horizontal la escena ocupa justo lo que queda de pantalla (sin scroll)
   function ajusta(){
@@ -132,6 +161,32 @@
     v.style.height=matchMedia('(orientation:landscape) and (min-width:700px)').matches?Math.max(260,innerHeight-v.getBoundingClientRect().top-10)+'px':'';
   }
   window.addEventListener('resize',ajusta);
+
+  // ---------- LA MESA: devuelve el HTML (la llama bazar('mesa') en index.html) ----------
+  U.mesa=function(t,im,volver){
+    const lvl=k=>{const w=(YO.vic_pj||{})[k]||0;return w>=NIV[1]?2:w>=NIV[0]?1:0};
+    const tarj=(k,nom,col,imgs,pie,nuevo)=>{
+      const l=imgs.filter(Boolean);
+      return `<div class="ms-c" style="--c:${esc(col)}" tabindex="0" onclick="UI.novela('${k}')" onkeydown="if(event.key==='Enter')UI.novela('${k}')">
+        ${nuevo?'<span class="ms-new">💬 ¡Te habla!</span>':''}
+        <img alt="" src="${esc(l[0]||'')}" data-c='${esc(JSON.stringify(l.slice(1)))}' onerror="UI.nvFb(this)">
+        <div class="ms-ft"><b>${esc(nom)}</b><span>${pie}</span></div></div>`;
+    };
+    const nov=k=>[`/img/${k}_novela_1.png`,`/img/${k}_novela_1.webp`];
+    const cartas=[tarj('burnice','Burnice','#ff5a1f',[...nov('burnice'),im.burnice,I.BIENVENIDA_IMG],'🔥 la anfitriona')]
+      .concat(PJ.map(p=>{const l=lvl(p.key);return tarj(p.key,p.nombre,p.color||'#38d4ff',[...nov(p.key),U.gif?U.gif(p):p.gif,p.gif],'❤️'.repeat(l+1)+'🤍'.repeat(2-l)+' <i class="nvn">'+NN[l]+'</i>',(YO.nuevo_pj||{})[p.key])}))
+      .concat([tarj('niko','Niko','#ffd24a',[...nov('niko'),im.niko],'☀️ siempre aquí')]);
+    return `<div class="ms"><h1>🪑 La mesa</h1><div class="burnice">${fmt(t.mesa)}</div>
+      <div class="ms-riel" id="msriel">${cartas.join('')}</div>
+      <div class="ms-pie">${volver}<span class="ms-hint">↔ Desliza (o usa la rueda del mouse) y elige con quién hablar</span></div></div>`;
+  };
+  U.mesaInit=function(){
+    const r=$('#msriel');if(!r)return;
+    const fit=()=>{const rr=$('#msriel');if(!rr)return;
+      rr.style.height=matchMedia('(orientation:landscape) and (min-width:700px)').matches?Math.max(150,innerHeight-rr.getBoundingClientRect().top-72)+'px':''};
+    fit();window.addEventListener('resize',fit);
+    r.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)&&r.scrollWidth>r.clientWidth){r.scrollLeft+=e.deltaY;e.preventDefault()}},{passive:false});
+  };
   U.novela=function(k){
     musica('bazar');U.fondo&&U.fondo('novela');
     const d=D[k]||{hola:[['normal','…']],preguntas:[]};
