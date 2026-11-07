@@ -95,6 +95,31 @@ select{background:#20242f;color:#fff;border:0;border-radius:8px;padding:8px}
   .cs-v{margin-top:10px}.cs-vp{display:none}
   .cs h2{scroll-margin-top:10px}.cs h2:first-child{margin-top:0}
 }
+/* Bazar: Comprar con Burnice a la derecha (solo horizontal) */
+.cm-r{display:none}
+@media (orientation:landscape) and (min-width:700px){
+  main:has(.cm){max-width:1250px}
+  .cm{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,30%);gap:26px;align-items:start}
+  .cm .banner{display:none}
+  .cm h1{color:var(--ac);margin-top:0}
+  .cm .tabs{flex-wrap:wrap;overflow:visible}
+  .cm .vit{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .cm-r{display:flex;position:sticky;top:8px;height:calc(100vh - 90px);align-items:flex-end;justify-content:center}
+  .cm-r img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 6px 18px rgba(255,90,31,.35))}
+}
+@media (orientation:landscape) and (max-height:520px){
+  .cm{grid-template-columns:minmax(0,1fr) 26%;gap:14px}
+  .cm-r{height:calc(100vh - 66px)}
+  .cm h1{font-size:1.2rem;margin:0 0 4px}
+  .cm .burnice{font-size:.68rem;line-height:1.3;padding:5px 9px;margin:4px 0}
+  .cm .info{font-size:.68rem;padding:4px 9px;margin:4px 0}
+  .cm .of{font-size:.68rem;padding:4px 8px;margin:4px 0}.cm .of button{font-size:.68rem;padding:.3em 1em .3em .6em}
+  .cm .tabs button{font-size:.7rem;padding:.35em 1em .35em .6em}
+  .cm .vit{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:7px}
+  .cm .cartx{padding:6px;gap:4px}.cm .cartx .vis{height:58px}.cm .cartx .vis img.gi{height:48px}
+  .cm .cartx .nm{font-size:.78rem}.cm .cartx .pr{font-size:.8rem}
+  .cm .cartx .bt2 button{font-size:.7rem;padding:5px 2px}.cm .cartx .bt2 button.ver{width:30px}
+}
 @media (orientation:landscape) and (max-height:520px){
   .bz{min-height:calc(100vh - 100px);gap:18px}
   .bz-i .banner{max-height:calc(100vh - 110px)}
@@ -214,10 +239,12 @@ async function bazar(pantalla,datos){
     const msg=datos&&datos.msg||t.comprar;
     const tabs=`<div class="tabs">${Object.keys(CATN).map(c=>`<button class="${pantalla==='comprar'&&tab===c?'on':''}" onclick="bazar('comprar',{tab:'${c}'})">${CATN[c][0]} ${CATN[c][1]}</button>`).join('')}</div>`;
     if(pantalla==='comprar'){
-      h+=`${banner(im.comprar)}<h1>🛒 Comprar</h1><div class="burnice">${fmt(msg)}</div>
+      const bp=['/img/burnice_comprar.png','/img/burnice_comprar.webp','/img/burnice_novela_1.png','/img/burnice_novela_1.webp','/img/burnice_normal.png'];
+      h+=`<div class="cm"><div class="cm-l">${banner(im.comprar)}<h1>🛒 Comprar</h1><div class="burnice">${fmt(msg)}</div>
       ${YO.logueado?'':'<div class="info">Inicia sesión con Discord para comprar.</div>'}${bofer}${tabs}
       <div class="vit">${(BZ.cats[tab]||[]).map(it=>tarjetaTienda(tab,it)).join('')}</div>
-      <div class="fila" style="margin-top:12px">${volver}</div>`;
+      <div class="fila" style="margin-top:12px">${volver}</div></div>
+      <div class="cm-r"><img alt="" src="${bp[0]}" data-c='${JSON.stringify(bp.slice(1))}' onerror="UI.nvFb(this)"></div></div>`;
     }else{
       let tot=0,mis=0;const cnt={};
       Object.keys(CATN).forEach(c=>{const l=BZ.cats[c]||[];cnt[c]=[l.filter(x=>x.tiene).length,l.length];tot+=l.length;mis+=cnt[c][0]});
