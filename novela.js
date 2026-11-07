@@ -30,12 +30,13 @@
   @media (orientation:landscape) and (min-width:700px){
     main:has(.vn){max-width:1200px;padding-top:4px}
     .vn{display:grid;grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr) auto;min-height:0;position:relative;overflow:hidden}
-    body:has(.vn) #mus{transform:scale(.55);transform-origin:top right}
+    body:has(.vn) #mus{right:auto;left:50%;transform:translateX(-50%) scale(.55);transform-origin:top center}
     .vn .arr h1{display:none}.vn .arr{justify-content:flex-end}
     .vn .arr{grid-row:1;grid-column:1}
     .vn .esc,.vn .opc{grid-row:2;grid-column:1;min-height:0}
     .vn .esc{padding:0;align-items:flex-end;position:relative}
-    .vn .esc img{height:100%;max-height:100%;max-width:60%;width:auto;object-fit:contain;object-position:bottom}
+    .vn{--nv-alto:1.2}   /* tamaño del personaje en horizontal: 1 = normal, 1.15 = 15% más grande */
+    .vn .esc img{height:calc(100% * var(--nv-alto));max-height:none;max-width:60%;width:auto;object-fit:contain;object-position:bottom}
     .vn .opc{margin:0;z-index:2;pointer-events:none;align-content:center;align-items:center;gap:8px 0;
       grid-template-columns:minmax(0,1fr) minmax(0,34%) minmax(0,1fr);padding:0 1%}
     .vn .opc button{pointer-events:auto;width:100%;font-size:.9rem;background:rgba(6,10,16,.88)}
