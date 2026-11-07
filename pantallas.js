@@ -80,6 +80,41 @@
   #panel .mv{display:flex;align-items:center;gap:6px;margin:6px 0}
   #panel .mv span{flex:1;text-align:center;font-size:.8rem;color:var(--mut)}
   #panel .mv button{padding:6px 14px;background:var(--card2)}
+  /* selección de equipo en horizontal: rueda + carta grande a la izquierda, equipo y botones a la derecha */
+  @media (orientation:landscape) and (min-width:700px){
+    main:has(.se){max-width:1250px}
+    .se{display:grid;grid-template-columns:minmax(0,1fr) 330px;column-gap:26px;align-items:start}
+    .se>h1{grid-column:1/-1;margin:0 0 6px}
+    .se>.roles{grid-column:1/-1;max-width:640px;margin:0 0 10px}
+    .se>.sel2{grid-column:1;grid-row:3/span 5;margin-top:0}
+    .se>.fila3,.se>.ordtxt,.se>.guard,.se>#ctrl{grid-column:2}
+    .se>.fila3{grid-row:3}.se>.ordtxt{grid-row:4}.se>.guard{grid-row:5}.se>#ctrl{grid-row:6;margin-top:10px!important}
+    .fila3 .ranura{max-width:none;height:96px}
+    #panel{display:grid;grid-template-columns:minmax(0,250px) minmax(0,1fr);column-gap:18px;align-content:start}
+    #panel>*{grid-column:2}
+    #panel .ret{grid-column:1;grid-row:1/span 7;max-width:none;margin:0}
+    #panel .vacio{grid-column:1/-1}
+    #panel .nom{text-align:left;font-size:1.6rem;margin:0}#panel .rl{text-align:left;margin-bottom:6px}
+    #panel .fr{font-size:1rem;padding:10px 12px}
+    #panel .bt button{padding:14px 8px}
+    .se #ctrl .fila{display:grid;grid-template-columns:1fr;gap:8px}
+    .se #ctrl .fila>span{display:none}
+    .se #ctrl .fila select,.se #ctrl .fila button{width:100%}
+    .se #ctrl .fila button{padding:14px 16px;font-size:1.05rem;text-align:left}
+  }
+  @media (orientation:landscape) and (max-height:520px){
+    .se{grid-template-columns:minmax(0,1fr) 250px;column-gap:14px}
+    .se>.roles{max-width:520px;margin-bottom:6px}.rol{font-size:.6rem;padding:2px}.rol .im{height:24px;font-size:1.1rem}.rol .im img{max-height:24px}
+    .se>h1{display:none}
+    .se>#ctrl{grid-row:4;margin-top:6px!important}.se>.guard{grid-row:5}
+    .se #ctrl .fila{gap:5px}.se #ctrl .fila select{padding:4px}
+    .fila3 .ranura{height:64px}.ordtxt{display:none}
+    .guard .tt{display:none}.gs .gm{height:26px}.gs .gm img{height:26px}
+    #panel{grid-template-columns:minmax(0,150px) minmax(0,1fr);column-gap:10px}
+    #panel .nom{font-size:1.1rem}#panel .fr{font-size:.8rem;padding:6px 8px;margin:4px 0}
+    .se #ctrl .fila button{padding:9px 12px;font-size:.85rem}
+    #rueda{zoom:.8}
+  }
   .guard{margin:8px 0}
   .guard .tt{color:var(--mut);font-size:.75rem;margin-bottom:4px}
   .guard .fl{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
@@ -278,13 +313,13 @@
       `<button class="rol ${U.filtro==='fav'?'on':''}" onclick="UI.filtrar('fav')"><div class="im">⭐</div>Favoritos</button>`].join('');
     const w=ruedaH();
     $('#app').innerHTML=barra(`<button class="sec" onclick="inicio(true)">🏠 Inicio</button> <button class="btn-burnice" onclick="bazar('inicio')">🔥 Bazar</button>`)+
-    `<h1 style="font-size:1.1rem">⚔️ Elige tu equipo de 3</h1>
+    `<div class="se"><h1 style="font-size:1.1rem">⚔️ Elige tu equipo de 3</h1>
     <div class="roles">${bl}</div>
     <div class="fila3"><div id="ranuras" style="display:contents"></div><button class="sec azar" onclick="UI.azar()">🎲 Al azar</button></div>
     <div class="ordtxt">El orden de las ranuras (1º → 2º → 3º) es el orden en que actúan. Elige un personaje de tu equipo y muévelo con ◀ ▶.</div>
     <div class="guard" id="guard"></div>
     <div class="sel2"><div id="rueda" style="height:${w.H}px">${w.h}</div><div id="panel"></div></div>
-    <div id="ctrl" style="margin-top:12px"></div>`;
+    <div id="ctrl" style="margin-top:12px"></div></div>`;
     U.refrescar();
   };
   U.fraseDe=function(k){const f=(I.FRASES||{})[k];U.frase=f&&f.length?azar(f):''};
