@@ -166,6 +166,7 @@ const ANIMO=()=>{
 };
 async function bazar(pantalla,datos){
   musica('bazar');
+  if(pantalla==='personaje'){UI.novela(datos.k);return}   // la ficha se quitó: va directo a hablar
   if(!BZ||pantalla==='inicio'){BZ=await api('/api/bazar');await cargarYo();BZ.animo=ANIMO()}
   const t=BZ.textos,im=BZ.imgs;
   const banner=u=>u?`<img class="banner" src="${esc(u)}">`:'';
@@ -196,20 +197,7 @@ async function bazar(pantalla,datos){
       <div class="fila" style="margin-top:12px">${volver}</div>`;
     }
   }else if(pantalla==='mesa'){
-    h+=`${banner(im.mesa)}<h1>🪑 La mesa</h1><div class="burnice">${fmt(t.mesa)}</div>
-    <div class="grid"><div class="pj" onclick="UI.novela('burnice')">${im.burnice?`<img class="r" src="${esc(im.burnice)}">`:''}<b>🔥 Burnice</b></div>
-    ${PJ.map(p=>`<div class="pj" onclick="bazar('personaje',{k:'${p.key}'})">${p.gif?`<img class="r" src="${UI.gif(p)}">`:''}<b>${emo(p)} ${esc(p.nombre)}${(YO.nuevo_pj||{})[p.key]?' 💬':''}</b></div>`).join('')}
-    <div class="pj" onclick="UI.novela('niko')">${im.niko?`<img class="r" src="${esc(im.niko)}">`:''}<b>☀️ Niko</b></div></div>
-    <div class="fila" style="margin-top:12px">${volver}</div>`;
-  }else if(pantalla==='personaje'){
-    const p=PJ.find(x=>x.key===datos.k),f=p.ficha;
-    h+=`${p.gif?`<img class="banner" style="max-height:260px;object-fit:contain" src="${UI.gif(p)}">`:''}<h1>${emo(p)} ${esc(p.nombre)}</h1>
-    <div class="burnice"><b>🔥 Burnice:</b> ${fmt((BZ.charlas[p.key]||{burnice:'…'}).burnice||'…')}</div>
-    <div class="fila"><button class="btn-burnice" onclick="UI.novela('${p.key}')">💬 Hablar${(YO.nuevo_pj||{})[p.key]?' (¡tiene algo que decirte!)':''}</button>
-    <button class="sec" onclick="bazar('mesa')">⬅️ Mesa</button></div>
-    <div class="ficha"><b>Vida</b> ${f.vida} · ${esc(f.recurso)}<ul>${f.movs.map(m=>`<li><b>${esc(m.nombre)}</b> (${costeTxt(m.coste)} icono${m.pm?`, ${m.pm} PM`:''}${m.sombras?`, ${m.sombras}🌑`:''})${m.dmg?` — ${m.dmg[0]}-${m.dmg[1]} de daño, ${Math.round(m.prec*100)}% de acierto`:''}${m.desc?`<br>${esc(m.desc)}`:''}</li>`).join('')}
-    <li>💥 <b>ÚLTI: ${esc(f.ulti.nombre)}</b> (${costeTxt(f.ulti.coste)} iconos) — ${esc(f.ulti.desc)}</li>
-    ${f.ulti_alt?`<li>👹 <b>ÚLTI con 3 sombras: ${esc(f.ulti_alt.nombre)}</b> — ${esc(f.ulti_alt.desc)}</li>`:''}</ul></div>`;
+    h+=UI.mesa(t,im,volver);
   }else if(pantalla==='niko'){
     const n=datos.n,l=t.niko[n%t.niko.length];
     h+=`${im.niko?`<img class="banner" src="${esc(im.niko)}">`:''}<h1>☀️ Niko</h1><div class="burnice" style="border-color:#ffd700"><b>Niko:</b> ${fmt(l)}</div>
@@ -218,6 +206,7 @@ async function bazar(pantalla,datos){
     h+=`${banner(im.burnice)}<div class="burnice">${fmt(azar(t.salidas))}</div><div class="fila"><button onclick="inicio()">⚔️ Ir a pelear</button><button class="sec" onclick="bazar('inicio')">Volver al Bazar</button></div>`;
   }
   $('#app').innerHTML=h;
+  if(pantalla==='mesa')UI.mesaInit();
 }
 async function comprar(cat,k){
   const r=await api('/api/comprar',{cat,key:k});
