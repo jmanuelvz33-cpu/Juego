@@ -12,6 +12,27 @@
   .portada .dia{background:linear-gradient(135deg,#2a1a14,#181b25);border:1px solid #ff5a1f55;border-radius:12px;padding:10px;margin:8px 0;font-size:.9rem}
   .portada .grandes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
   .portada .grandes button{padding:18px 8px;font-size:1.15rem;font-weight:700;border-radius:14px}
+  .portada{display:flex;flex-direction:column}
+  .portada .po-d{display:contents}
+  .portada .po-pf{order:0}.portada .po-i{order:1}.portada .po-d>*{order:2}
+  .portada .po-t{display:none}
+  @media (orientation:landscape) and (min-width:700px){
+    main:has(.portada){max-width:1200px}
+    .portada{display:grid;grid-template-columns:minmax(0,46%) minmax(0,1fr);grid-template-rows:auto 1fr;column-gap:30px;text-align:left}
+    .portada .po-pf{grid-column:1/-1;grid-row:1}
+    .portada .po-i{grid-column:1;grid-row:2;display:flex;align-items:flex-end;justify-content:center;min-height:0}
+    .portada .bur{max-height:100%;max-width:100%;height:100%;width:auto;margin:0}
+    .portada .po-d{display:flex;flex-direction:column;justify-content:center;gap:10px;grid-column:2;grid-row:2;min-height:0}
+    .portada .po-d>*{order:0}
+    .portada .po-t{display:block;font-size:2.6rem;margin:0 0 4px;letter-spacing:.08em;color:var(--ac);text-shadow:0 0 22px rgba(56,212,255,.45)}
+    .portada .grandes{grid-template-columns:1fr;gap:12px;margin-top:8px}
+    .portada .grandes button{padding:20px 22px;font-size:1.3rem;text-align:left;border-radius:0}
+  }
+  @media (orientation:landscape) and (max-height:520px){
+    .portada .po-t{font-size:1.5rem}.portada .po-d{gap:6px}
+    .portada .grandes button{padding:10px 16px;font-size:1rem}
+    .portada .burnice{font-size:.8rem;padding:8px 10px}.portada .dia{font-size:.75rem;padding:6px}
+  }
   .perfil{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:14px;padding:8px 12px;text-align:left}
   .perfil img.av{width:44px;height:44px;border-radius:50%}
   .perfil .nom{font-weight:700}.perfil .sub{color:var(--mut);font-size:.82rem}
@@ -151,6 +172,11 @@
   const nombre=()=>(typeof YO!=='undefined'&&YO.logueado)?YO.nombre:'viajero';
 
   /* ---------- inicio ---------- */
+  U.portadaFit=function(){
+    const f=()=>{const p=document.querySelector('.portada');if(!p)return;
+      p.style.height=matchMedia('(orientation:landscape) and (min-width:700px)').matches?Math.max(240,innerHeight-p.getBoundingClientRect().top-10)+'px':''};
+    f();if(!U._pf){U._pf=1;window.addEventListener('resize',f)}
+  };
   U.portada=function(){
     musica('menu');
     U.fondo('inicio');
@@ -160,12 +186,14 @@
         ${YO.mascota_url?`<img class="mas" src="${esc(YO.mascota_url)}">`:''}<a href="/auth/logout" style="color:var(--mut);font-size:.75rem">salir</a></div>`
      :(YO.login_disponible?`<a class="btn-discord" style="display:block;padding:10px;border-radius:12px;color:#fff;text-decoration:none" href="/auth/login">Iniciar sesión con Discord</a>`:`<div class="perfil"><span style="color:var(--mut)">Modo invitado</span></div>`);
     const frase=azar(I.BIENVENIDAS&&I.BIENVENIDAS.length?I.BIENVENIDAS:['¡Hola!']).replace(/\{nombre\}/g,nombre());
-    $('#app').innerHTML=`<div class="portada">${perfil}
-      ${I.BIENVENIDA_IMG?`<img class="bur" src="${esc(I.BIENVENIDA_IMG)}">`:`<div class="bur0">🔥</div>`}
+    $('#app').innerHTML=`<div class="portada"><div class="po-pf">${perfil}</div>
+      <div class="po-i">${I.BIENVENIDA_IMG?`<img class="bur" src="${esc(I.BIENVENIDA_IMG)}">`:`<div class="bur0">🔥</div>`}</div>
+      <div class="po-d"><h1 class="po-t">PRESS TURN</h1>
       <div class="burnice" style="text-align:left"><b>🔥 Burnice:</b> ${fmt(frase)}</div>
       ${I.AVISO?`<div class="dia">📣 ${fmt(I.AVISO)}</div>`:''}
       <div class="grandes"><button onclick="dibujarEleccion()">⚔️ Jugar</button><button class="btn-burnice" onclick="bazar('inicio')">🔥 Bazar</button></div>
-      <div id="extras"></div></div>`;
+      <div id="extras"></div></div></div>`;
+    UI.portadaFit&&UI.portadaFit();
   };
 
   /* ---------- selección (rueda) ---------- */
