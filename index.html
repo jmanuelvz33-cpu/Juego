@@ -76,6 +76,34 @@ select{background:#20242f;color:#fff;border:0;border-radius:8px;padding:8px}
   .vic-d .reg{display:none}
   .vic-d .info,.vic-d table{font-size:.8rem}
 }
+/* Bazar: inicio, salir y mis cosas en horizontal */
+.cs-bar{height:8px;background:#0a121c;margin:6px 0 12px}.cs-bar i{display:block;height:100%;background:var(--gold)}
+.cs-n{display:none}.cs h2 small{color:var(--mut);font-size:.7em}
+@media (orientation:landscape) and (min-width:700px){
+  main:has(.bz),main:has(.cs){max-width:1200px}
+  .bz{display:grid;grid-template-columns:minmax(0,42%) minmax(0,1fr);gap:30px;align-items:center;min-height:calc(100vh - 130px)}
+  .bz-i{display:flex;align-items:flex-end;justify-content:center}
+  .bz-i .banner{width:auto;max-width:100%;max-height:calc(100vh - 140px);object-fit:contain;background:none;margin:0;filter:drop-shadow(0 6px 18px rgba(255,90,31,.35))}
+  .bz-d{display:flex;flex-direction:column;gap:12px;justify-content:center}
+  .bz-d h1{font-size:2.1rem;margin:0;color:var(--ac)}
+  .bz .fila{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .bz .fila button{padding:18px 20px;font-size:1.15rem;text-align:left}
+  .cs{display:grid;grid-template-columns:210px minmax(0,1fr);gap:22px;align-items:start}
+  .cs-n{display:flex;flex-direction:column;gap:8px;position:sticky;top:10px}
+  .cs-n button{display:flex;justify-content:space-between;gap:10px;font-size:.9rem}
+  .cs-n b{color:var(--gold)}
+  .cs-v{margin-top:10px}.cs-vp{display:none}
+  .cs h2{scroll-margin-top:10px}.cs h2:first-child{margin-top:0}
+}
+@media (orientation:landscape) and (max-height:520px){
+  .bz{min-height:calc(100vh - 100px);gap:18px}
+  .bz-i .banner{max-height:calc(100vh - 110px)}
+  .bz-d{gap:8px}.bz-d h1{font-size:1.3rem}
+  .bz .burnice{font-size:.8rem;padding:8px 10px}.bz .of{font-size:.75rem;padding:6px}
+  .bz .fila button{padding:10px 14px;font-size:.95rem}
+  .cs{grid-template-columns:160px minmax(0,1fr);gap:14px}
+  .cs-n{gap:5px}.cs-n button{font-size:.68rem;padding:.4em 1.1em .4em .6em;white-space:nowrap}
+}
 </style>
 <link rel="stylesheet" href="/estilo.css">
 </head>
@@ -176,11 +204,11 @@ async function bazar(pantalla,datos){
   const bofer=of?`<div class="of"><div>🏷️ <b>Oferta del día:</b> ${esc(of.nombre)} (${CATN[BZ.oferta.cat][1]}) <b>-${BZ.oferta.pct}%</b> → ${of.tiene?'ya lo tienes':of.precio+' 💀'}</div><button class="btn-burnice" onclick="bazar('comprar',{tab:'${BZ.oferta.cat}'})">Ver</button></div>`:'';
   if(pantalla==='inicio'){
     BZ.saludo=BZ.saludo||azar(t.saludos);
-    h+=`${banner(im.burnice)}<h1>🔥 El Bazar de Burnice</h1><div class="burnice">${fmt(BZ.saludo+(BZ.animo||''))}</div>${bofer}
+    h+=`<div class="bz"><div class="bz-i">${banner(im.burnice)}</div><div class="bz-d"><h1>🔥 El Bazar de Burnice</h1><div class="burnice">${fmt(BZ.saludo+(BZ.animo||''))}</div>${bofer}
     <div class="fila"><button class="btn-burnice" onclick="bazar('comprar')">🛒 Comprar</button>
     <button class="btn-burnice" onclick="bazar('cosas')">🎒 Mis cosas</button>
     <button class="btn-burnice" onclick="bazar('mesa')">🪑 La mesa</button>
-    <button class="sec" onclick="bazar('salir')">👋 Salir</button></div>`;
+    <button class="sec" onclick="bazar('salir')">👋 Salir</button></div></div></div>`;
   }else if(pantalla==='comprar'||pantalla==='cosas'){
     const tab=(datos&&datos.tab)||BZ.tab||'mascotas';BZ.tab=tab;
     const msg=datos&&datos.msg||t.comprar;
@@ -191,10 +219,14 @@ async function bazar(pantalla,datos){
       <div class="vit">${(BZ.cats[tab]||[]).map(it=>tarjetaTienda(tab,it)).join('')}</div>
       <div class="fila" style="margin-top:12px">${volver}</div>`;
     }else{
-      let tot=0,mis=0;Object.values(BZ.cats).forEach(l=>l.forEach(x=>{tot++;if(x.tiene)mis++}));
+      let tot=0,mis=0;const cnt={};
+      Object.keys(CATN).forEach(c=>{const l=BZ.cats[c]||[];cnt[c]=[l.filter(x=>x.tiene).length,l.length];tot+=l.length;mis+=cnt[c][0]});
+      const nav=Object.keys(CATN).map(c=>`<button class="sec" onclick="document.getElementById('cs-${c}').scrollIntoView({behavior:'smooth',block:'start'})"><span>${CATN[c][0]} ${CATN[c][1]}</span><b>${cnt[c][0]}/${cnt[c][1]}</b></button>`).join('');
       h+=`<h1>🎒 Mis cosas</h1><div class="col">Colección: <b>${mis}/${tot}</b> · lo gris con 🔒 es lo que te falta (tócalo en Comprar).</div>
-      ${Object.keys(CATN).map(c=>`<h2>${CATN[c][0]} ${CATN[c][1]}</h2><div class="vit">${BZ.cats[c].map(it=>tarjetaTienda(c,it,'bloq')).join('')}</div>`).join('')}
-      <div class="fila" style="margin-top:12px">${volver}</div>`;
+      <div class="cs-bar"><i style="width:${tot?Math.round(mis*100/tot):0}%"></i></div>
+      <div class="cs"><div class="cs-n">${nav}<div class="cs-v">${volver}</div></div><div class="cs-l">
+      ${Object.keys(CATN).map(c=>`<h2 id="cs-${c}">${CATN[c][0]} ${CATN[c][1]} <small>${cnt[c][0]}/${cnt[c][1]}</small></h2><div class="vit">${BZ.cats[c].map(it=>tarjetaTienda(c,it,'bloq')).join('')}</div>`).join('')}
+      <div class="fila cs-vp" style="margin-top:12px">${volver}</div></div></div>`;
     }
   }else if(pantalla==='mesa'){
     h+=UI.mesa(t,im,volver);
@@ -203,7 +235,7 @@ async function bazar(pantalla,datos){
     h+=`${im.niko?`<img class="banner" src="${esc(im.niko)}">`:''}<h1>☀️ Niko</h1><div class="burnice" style="border-color:#ffd700"><b>Niko:</b> ${fmt(l)}</div>
     <div class="fila"><button class="btn-burnice" onclick="bazar('niko',{n:${n+1}})">💬 Hablar</button><button class="sec" onclick="bazar('mesa')">⬅️ Mesa</button></div>`;
   }else if(pantalla==='salir'){
-    h+=`${banner(im.burnice)}<div class="burnice">${fmt(azar(t.salidas))}</div><div class="fila"><button onclick="inicio()">⚔️ Ir a pelear</button><button class="sec" onclick="bazar('inicio')">Volver al Bazar</button></div>`;
+    h+=`<div class="bz"><div class="bz-i">${banner(im.burnice)}</div><div class="bz-d"><div class="burnice">${fmt(azar(t.salidas))}</div><div class="fila"><button onclick="inicio()">⚔️ Ir a pelear</button><button class="sec" onclick="bazar('inicio')">Volver al Bazar</button></div></div></div>`;
   }
   $('#app').innerHTML=h;
   if(pantalla==='mesa')UI.mesaInit();
