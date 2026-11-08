@@ -173,11 +173,12 @@
     let img=FO[n]||'';if(!img&&n==='inicio')img=I.FONDO_IMG||'';
     if(!img&&n==='novela')img=FO.bazar||'';
     if(n==='combate'){if(typeof YO!=='undefined'&&YO.fondo_img)img=YO.fondo_img;else if(U.arena)img=U.arena}
+    if(U.fondoHist&&(n==='novela'||n==='combate'))img=U.fondoHist;   // fondo propio del capítulo de la historia
     const o=I.FONDO_OSCURO==null?.55:I.FONDO_OSCURO;
     const nuevo=img?`linear-gradient(rgba(10,12,18,${o}),rgba(10,12,18,${o})),url("${img.replace(/"/g,'%22')}")`:'none';
     if(d.dataset.v!==nuevo){d.dataset.v=nuevo;d.style.backgroundImage=nuevo}
   };
-  U.fondoDe=function(m){U.fondo({menu:'inicio',bazar:'bazar',pelea:'combate',fin:'combate'}[m]||'inicio')};
+  U.fondoDe=function(m){U.fondo(/^hist_/.test(m)?(/_batalla$/.test(m)?'combate':'novela'):{menu:'inicio',bazar:'bazar',pelea:'combate',fin:'combate'}[m]||'inicio')};
   /* avatar con marco comprado */
   U.av=function(y,px){
     px=px||44;
