@@ -559,7 +559,7 @@
     a.style.setProperty('--c',an.color||'#888');
     a.style.display='flex';
     if(crit&&!ulti){        // estilo Persona: franjas, imagen que entra de lado y nombre del ataque en grande
-      const nom=esc((an.titulo||'').replace(/^[^\p{L}\p{N}]+/u,'')),tag=(an.desc||'').split('\n').slice(1).join(' ');
+      const nom=esc((an.titulo||'').replace(/<a?:\w+:\d+>/g,'').replace(/^[^\p{L}\p{N}]+/u,'')),tag=(an.desc||'').split('\n').slice(1).join(' ');
       a.innerHTML=`<div class="cp-f"></div><div class="cp-r"></div>
         ${key||an.gif?`<div class="cp-w"><img class="cp-img" alt="" ${cadena(key,['banner','ulti'],'')}></div>`:''}
         <div class="cp-n"><small>¡CRÍTICO!</small><b>${nom}</b></div>
