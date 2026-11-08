@@ -219,7 +219,7 @@ const ANIMO=()=>{
   return g&&A[g]&&A[g].length?'\n\n'+azar(A[g]):'';
 };
 async function bazar(pantalla,datos){
-  HIST=null;musica('bazar');
+  HIST=null;UI.fondoHist='';musica('bazar');
   if(pantalla==='historia'){UI.histMenu();return}
   if(pantalla==='personaje'){UI.novela(datos.k);return}   // la ficha se quitó: va directo a hablar
   if(!BZ||pantalla==='inicio'){BZ=await api('/api/bazar');await cargarYo();BZ.animo=ANIMO()}
@@ -284,7 +284,7 @@ async function equipar(cat,k,quitar,pj){
 
 /* ---------- elegir equipo ---------- */
 async function inicio(conPortada){
-  HIST=null;musica('menu');
+  HIST=null;UI.fondoHist='';musica('menu');
   if(!PJ.length)PJ=(await api('/api/personajes')).personajes;
   await cargarYo();
   MODO='cpu';SEQ=0;SALA=null;
@@ -432,7 +432,7 @@ function ordenH(eq,lado){
 function dibujarCombate(forzar){
   if(!S)return;
   if(S.terminado&&!forzar){return dibujarFin()}
-  musica('pelea');
+  musica(HIST&&HIST.musica?HIST.musica:'pelea');
   if(window.UI2&&UI2.activo())return UI2.dibujar();   // diseño horizontal (prototipo): ?ui=2
   const a=actorActual();
   if(tgt==null||!S.blancos.includes(tgt))tgt=S.objetivo;
