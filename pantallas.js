@@ -425,6 +425,28 @@
   #anim.cn-c .cn-tit{color:var(--gold)}
   #anim .cn-ult{max-width:100vw;max-height:62vh;border-radius:0;box-shadow:none;filter:drop-shadow(0 0 22px var(--c,#d33));animation:cb-ult .6s cubic-bezier(.15,1.25,.35,1)}
   @keyframes cb-ult{from{opacity:0;transform:translateX(110vw) skewX(-12deg)}}
+  /* CRÍTICO estilo Persona */
+  #anim.cn-c{padding:0;animation:none;background:#05060a}
+  #anim.cn-c .cn-rayos,#anim.cn-c .cn-cinta{display:none}
+  .cp-f,.cp-r,.cp-fl{position:absolute;inset:0;pointer-events:none}
+  .cp-f::before{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 0 30%,var(--c,#d33) 30% 60%,transparent 60%);opacity:.9;animation:cp-slab .32s cubic-bezier(.2,.9,.3,1) backwards}
+  .cp-r{inset:-10%;background:repeating-linear-gradient(115deg,transparent 0 40px,var(--c,#d33) 40px 80px);opacity:.2;animation:cp-drift 1.1s linear infinite}
+  .cp-fl{background:#fff;animation:cp-fl .4s forwards}
+  .cp-w{position:absolute;inset:0 0 26% 0;display:flex;align-items:center;justify-content:center;filter:drop-shadow(7px 7px 0 #000) drop-shadow(0 0 20px var(--c,#d33));animation:cp-w .45s cubic-bezier(.15,1.2,.35,1) .08s backwards}
+  #anim .cp-img{display:block;max-width:86vw;max-height:50vh;width:auto;height:auto;border-radius:0;clip-path:polygon(7% 0,100% 0,93% 100%,0 100%);animation:cb-tiembla .12s .5s 4}
+  .cp-n{position:absolute;left:0;right:0;bottom:15%;padding:.05em 6vw .12em;text-align:left;background:linear-gradient(90deg,#000 0,#000e 80%,transparent);transform:skewX(-8deg);animation:cp-n .4s cubic-bezier(.15,1.2,.35,1) .22s backwards}
+  .cp-n small{display:block;font-family:var(--f-titulo);font-size:clamp(.8rem,3vh,1.4rem);letter-spacing:.35em;color:var(--gold);transform-origin:left;animation:cp-pop .3s .55s backwards}
+  .cp-n b{display:block;font-family:var(--f-titulo);font-weight:400;text-transform:uppercase;letter-spacing:.04em;font-size:clamp(1.8rem,min(9vw,16vh),5.2rem);line-height:1.02;color:#fff;text-shadow:4px 4px 0 var(--c,#d33);-webkit-text-stroke:2px #000;paint-order:stroke fill}
+  .cp-d{position:absolute;left:6vw;bottom:8%;color:#fffa;font-size:.9rem;animation:cb-fade .6s .5s backwards}
+  @media (orientation:landscape) and (max-height:520px){#anim .cp-img{max-height:44vh}.cp-w{inset:0 0 30% 0}.cp-n{bottom:12%}}
+  #anim .cp-an{animation:cp-an .4s cubic-bezier(.15,1.2,.35,1)}
+  @keyframes cp-an{from{opacity:0;transform:scale(1.3)}}
+  @keyframes cp-slab{from{transform:translateX(-100%)}}
+  @keyframes cp-drift{to{background-position:88.3px 0}}
+  @keyframes cp-fl{to{opacity:0}}
+  @keyframes cp-w{from{opacity:0;transform:translateX(100vw) skewX(-10deg)}}
+  @keyframes cp-n{from{transform:translateX(-110%) skewX(-8deg)}}
+  @keyframes cp-pop{from{opacity:0;transform:scale(2.2)}}
   #anim.cn-t .cn-rayos,#anim.cn-t .cn-cinta{display:none}
   @keyframes cb-flash{0%{background:#fff}100%{background:#000d}}
   @keyframes cb-tiembla{25%{transform:translate(2px,-2px)}75%{transform:translate(-2px,2px)}}
@@ -461,6 +483,12 @@
   const lista=(key,tipo)=>EXT.map(e=>`/img/${key}_${tipo}.${e}`).filter(u=>!faltan.has(u));
   C.cara=function(key,tipo,base){
     const l=lista(key,tipo);
+    if(!l.length)return base?`src="${base}"`:'style="display:none"';
+    return `src="${l[0]}" data-c="${l.slice(1).join('|')}" data-o="${base||''}" onerror="CBT.fb(this)"`;
+  };
+  /* igual que cara(), pero prueba varios tipos en orden (ej. critico → ulti → respaldo) */
+  const cadena=(key,tipos,base)=>{
+    const l=key?tipos.flatMap(t=>lista(key,t)):[];
     if(!l.length)return base?`src="${base}"`:'style="display:none"';
     return `src="${l[0]}" data-c="${l.slice(1).join('|')}" data-o="${base||''}" onerror="CBT.fb(this)"`;
   };
@@ -523,18 +551,39 @@
   };
 
   /* cinemática de habilidad / ULTI (se puede saltar tocando) */
-  let skip=null;
+  let skip=null,FASE=0,EXTRA=0;
   C.cine=function(an,key){
     const a=document.getElementById('anim');
     const ulti=/^💥/.test(an.titulo||''),crit=/CRÍTICO/.test(an.desc||''),trans=/Cambio de turno/.test(an.titulo||'');
     a.className=ulti?'cn-u':crit?'cn-c':trans?'cn-t':'cn-h';
     a.style.setProperty('--c',an.color||'#888');
     a.style.display='flex';
-    a.innerHTML=`<div class="cn-rayos"></div>${ulti||crit?`<div class="cn-cinta">${ulti?'¡ÚLTI!':'¡CRÍTICO!'}</div>`:''}${ulti&&key&&lista(key,'ulti').length?`<img class="cn-img cn-ult" ${C.cara(key,'ulti',an.gif)}>`:(an.gif?`<img class="cn-img" src="${an.gif}">`:'')}`+
+    if(crit&&!ulti){        // estilo Persona: franjas, imagen que entra de lado y nombre del ataque en grande
+      const nom=esc((an.titulo||'').replace(/^[^\p{L}\p{N}]+/u,'')),tag=(an.desc||'').split('\n').slice(1).join(' ');
+      a.innerHTML=`<div class="cp-f"></div><div class="cp-r"></div>
+        ${key||an.gif?`<div class="cp-w"><img class="cp-img" alt="" ${cadena(key,['banner','ulti'],'')}></div>`:''}
+        <div class="cp-n"><small>¡CRÍTICO!</small><b>${nom}</b></div>
+        <div class="cp-d">${fmt(tag)}</div><div class="cp-fl"></div><div class="cn-skip">toca para saltar</div>`;
+      /* fase 2: tras el banner, entra la animación del crítico (<personaje>_critico.webp o .gif; si no existe, el GIF de imgur) */
+      const mi=++FASE;
+      if(key&&lista(key,'critico').length||an.gif){
+        EXTRA=1800;
+        setTimeout(()=>{
+          if(mi!==FASE||!a.classList.contains('cn-c'))return;
+          const w=a.querySelector('.cp-w');if(!w)return;
+          w.style.animation='none';
+          w.innerHTML=`<img class="cp-img cp-an" alt="" ${cadena(key,['critico'],an.gif)}>`;
+          const fl=document.createElement('div');fl.className='cp-fl';a.appendChild(fl);
+        },1800);
+      }
+      return;
+    }
+    a.innerHTML=`<div class="cn-rayos"></div>${ulti||crit?`<div class="cn-cinta">${ulti?'¡ÚLTI!':'¡CRÍTICO!'}</div>`:''}${ulti&&key&&lista(key,'ulti').length?`<img class="cn-img cn-ult" ${C.cara(key,'ulti',an.gif)}>`:(an.gif?`<img class="cn-img" ${key?cadena(key,['ataque'],an.gif):`src="${an.gif}"`}>`:'')}`+
       `<div class="cn-tit">${fmt(an.titulo)}</div><div class="cn-desc">${fmt(an.desc)}</div><div class="cn-skip">toca para saltar</div>`;
   };
-  C.cerrar=function(){const a=document.getElementById('anim');a.style.display='none';a.className='';a.innerHTML=''};
-  C.esperar=ms=>new Promise(r=>{
+  C.cerrar=function(){FASE++;const a=document.getElementById('anim');a.style.display='none';a.className='';a.innerHTML=''};
+  C.esperar=ms0=>new Promise(r=>{
+    const ms=ms0+EXTRA;EXTRA=0;
     const t=setTimeout(fin,ms);
     function fin(){clearTimeout(t);skip=null;r()}
     skip=fin;
