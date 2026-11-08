@@ -208,6 +208,8 @@ def _limpiar():
 def api_personajes(_, ses):
     out = []
     for k, d in M.PERSONAJES.items():
+        if d.get("oculto"):
+            continue
         movs = []
         for m in ("normal", "hab1", "hab2"):
             x = d["mov"][m]
@@ -395,12 +397,12 @@ def api_visto(b, ses):
 
 def api_nueva(b, ses):
     keys = b.get("equipo", [])
-    if len(keys) != 3 or any(k not in M.PERSONAJES for k in keys):
+    if len(keys) != 3 or any(k not in M.PERSONAJES or M.PERSONAJES[k].get("oculto") for k in keys):
         return {"error": "Elige 3 luchadores."}
     nivel = b.get("nivel", "normal")
     if nivel not in M.CPU_NIVELES:
         nivel = "normal"
-    rival = random.sample(list(M.PERSONAJES), 3)
+    rival = random.sample([k for k, d in M.PERSONAJES.items() if not d.get("oculto")], 3)
     nombre = ses["n"] if ses else "Invitado"
     c = M.Combate(M.Equipo(Jugador(nombre), keys), M.Equipo(Jugador("CPU", True), rival, es_cpu=True))
     c.nivel = nivel
@@ -408,6 +410,27 @@ def api_nueva(b, ses):
     gid = uuid.uuid4().hex[:10]
     _limpiar()
     p = PARTIDAS[gid] = {"c": c, "t": time.time(), "uid": ses["id"] if ses else None, "pagado": False}
+    pasos = []
+    _turnos_cpu(p, pasos)
+    return {"id": gid, "estado": estado(c, p), "pasos": pasos}
+
+
+# ------------------------------------------------------------------ modo historia
+# capítulo -> (tu equipo, rival). Pelea siempre en dificultad normal y sin monedas.
+CAPITULOS = {"piloto": (["megumi", "mantis"], ["esbirro"])}
+
+
+def api_historia(b, ses):
+    cap = CAPITULOS.get(b.get("cap"))
+    if not cap:
+        return {"error": "Ese capítulo no existe."}
+    nombre = ses["n"] if ses else "Invitado"
+    c = M.Combate(M.Equipo(Jugador(nombre), cap[0]), M.Equipo(Jugador("CPU", True), cap[1], es_cpu=True))
+    c.nivel = "normal"
+    c.inteligencia = M.CPU_NIVELES["normal"]
+    gid = uuid.uuid4().hex[:10]
+    _limpiar()
+    p = PARTIDAS[gid] = {"c": c, "t": time.time(), "uid": ses["id"] if ses else None, "pagado": True, "historia": True}
     pasos = []
     _turnos_cpu(p, pasos)
     return {"id": gid, "estado": estado(c, p), "pasos": pasos}
@@ -519,7 +542,7 @@ def _sala(q_id, ses):
 
 
 def _equipo_valido(keys):
-    return isinstance(keys, list) and len(keys) == 3 and all(k in M.PERSONAJES for k in keys)
+    return isinstance(keys, list) and len(keys) == 3 and all(k in M.PERSONAJES and not M.PERSONAJES[k].get("oculto") for k in keys)
 
 
 def api_pvp_crear(b, ses):
@@ -638,7 +661,7 @@ def api_pvp_rendirse(b, ses):
 
 GETS = {"/api/voces": api_voces, "/api/personajes": api_personajes, "/api/yo": api_yo, "/api/bazar": api_bazar,
         "/api/pvp/info": api_pvp_info, "/api/pvp/estado": api_pvp_estado}
-POSTS = {"/api/nueva": api_nueva, "/api/accion": api_accion, "/api/terminar": api_terminar,
+POSTS = {"/api/nueva": api_nueva, "/api/historia": api_historia, "/api/accion": api_accion, "/api/terminar": api_terminar,
          "/api/comprar": api_comprar, "/api/equipar": api_equipar, "/api/visto": api_visto,
          "/api/pvp/crear": api_pvp_crear, "/api/pvp/unirse": api_pvp_unirse, "/api/pvp/accion": api_pvp_accion,
          "/api/pvp/terminar": api_pvp_terminar, "/api/pvp/rendirse": api_pvp_rendirse}
@@ -741,7 +764,7 @@ class H(BaseHTTPRequestHandler):
         try:
             if ruta in GETS:
                 return self._json(GETS[ruta]({k: v[0] for k, v in q.items()}, self._sesion()))
-            if ruta in ("/musica.js", "/reproductor.js", "/interfaz.js", "/pantallas.js", "/dialogos.js", "/novela.js", "/combate2.js", "/estilo.css") or ruta.startswith(("/musica/", "/img/", "/voces/", "/fuentes/")):
+            if ruta in ("/musica.js", "/reproductor.js", "/interfaz.js", "/pantallas.js", "/dialogos.js", "/novela.js", "/historia.js", "/combate2.js", "/estilo.css") or ruta.startswith(("/musica/", "/img/", "/voces/", "/fuentes/")):
                 return self._estatico(ruta)
             if ruta in ("/", "/index.html"):
                 raw = (AQUI / "index.html").read_bytes()
