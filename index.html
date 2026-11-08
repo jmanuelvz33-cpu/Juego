@@ -141,6 +141,7 @@ select{background:#20242f;color:#fff;border:0;border-radius:8px;padding:8px}
 <script src="/pantallas.js"></script>
 <script src="/dialogos.js"></script>
 <script src="/novela.js"></script>
+<script src="/historia.js"></script>
 <script src="/combate2.js"></script>
 <script>
 function musica(m){try{window.MUS&&window.MUS.modo(m)}catch(e){}try{window.UI&&UI.fondoDe(m)}catch(e){}}
@@ -154,7 +155,7 @@ function fmt(t){
 const emo=(p)=>p.emoji_url?`<img class="emo" src="${p.emoji_url}">`:esc(p.emoji||'');
 const medios=m=>'🔷'.repeat(m>>1)+'🔹'.repeat(m&1)||'—';
 const COL={azul:'#4f7cff',verde:'#3fb56b',rojo:'#d9534f',gris:'#6b7280'};
-let PJ=[],elegidos=[],nivel='normal',G=null,S=null,sel=0,tgt=null,tgtAli=null,lock=false,MODO='cpu',SEQ=0,SALA=null,reto=null;
+let PJ=[],elegidos=[],nivel='normal',G=null,S=null,sel=0,tgt=null,tgtAli=null,lock=false,MODO='cpu',SEQ=0,SALA=null,reto=null,HIST=null;
 const LS={g:k=>{try{return localStorage.getItem(k)}catch(e){return null}},s:(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
 
 async function api(ruta,datos){
@@ -218,7 +219,8 @@ const ANIMO=()=>{
   return g&&A[g]&&A[g].length?'\n\n'+azar(A[g]):'';
 };
 async function bazar(pantalla,datos){
-  musica('bazar');
+  HIST=null;musica('bazar');
+  if(pantalla==='historia'){UI.histMenu();return}
   if(pantalla==='personaje'){UI.novela(datos.k);return}   // la ficha se quitó: va directo a hablar
   if(!BZ||pantalla==='inicio'){BZ=await api('/api/bazar');await cargarYo();BZ.animo=ANIMO()}
   const t=BZ.textos,im=BZ.imgs;
@@ -230,7 +232,8 @@ async function bazar(pantalla,datos){
   if(pantalla==='inicio'){
     BZ.saludo=BZ.saludo||azar(t.saludos);
     h+=`<div class="bz"><div class="bz-i">${banner(im.burnice)}</div><div class="bz-d"><h1>🔥 El Bazar de Burnice</h1><div class="burnice">${fmt(BZ.saludo+(BZ.animo||''))}</div>${bofer}
-    <div class="fila"><button class="btn-burnice" onclick="bazar('comprar')">🛒 Comprar</button>
+    <div class="fila"><button class="btn-burnice" onclick="bazar('historia')">📖 Modo historia</button>
+    <button class="btn-burnice" onclick="bazar('comprar')">🛒 Comprar</button>
     <button class="btn-burnice" onclick="bazar('cosas')">🎒 Mis cosas</button>
     <button class="btn-burnice" onclick="bazar('mesa')">🪑 La mesa</button>
     <button class="sec" onclick="bazar('salir')">👋 Salir</button></div></div></div>`;
@@ -281,7 +284,7 @@ async function equipar(cat,k,quitar,pj){
 
 /* ---------- elegir equipo ---------- */
 async function inicio(conPortada){
-  musica('menu');
+  HIST=null;musica('menu');
   if(!PJ.length)PJ=(await api('/api/personajes')).personajes;
   await cargarYo();
   MODO='cpu';SEQ=0;SALA=null;
@@ -514,7 +517,7 @@ function dibujarFin(){
   ${S.recompensa?`<h2>+${S.recompensa} 💀 Monedas del Alma (total ${S.monedas})</h2>`:(gane&&!YO.logueado&&YO.login_disponible?'<div class="info">Inicia sesión con Discord para ganar monedas.</div>':'')}
   ${CBT.resumen(S)}
   <div class="reg" style="padding:6px 10px"><div>${CBT.lineas(S.log)}</div></div>
-  <button onclick="inicio()">Otra pelea</button> <button class="btn-burnice" onclick="bazar('inicio')">🔥 Bazar</button></div></div></div>`;
+  ${HIST?(gane?`<button onclick="UI.histPost()">▶ Continuar la historia</button>`:`<button onclick="UI.histBatalla()">🔁 Reintentar</button>`)+` <button class="sec" onclick="UI.histMenu()">📖 Capítulos</button>`:`<button onclick="inicio()">Otra pelea</button>`} <button class="btn-burnice" onclick="bazar('inicio')">🔥 Bazar</button></div></div></div>`;
 }
 inicio(true);
 </script></body></html>
