@@ -50,7 +50,7 @@
   function titulo(){
     if(!pista)return;
     const t=q('.tit');t.classList.remove('mov');t.textContent=pista.t||'';q('small').textContent=pista.a?'por '+pista.a:'';
-    const c=q('.disc i');c.style.backgroundImage=pista.c?`url("/musica/${encodeURIComponent(pista.c)}")`:'none';
+    const c=q('.disc i');c.style.backgroundImage=pista.c?`url("/${pista.d||'musica'}/${encodeURIComponent(pista.c)}")`:'none';
     requestAnimationFrame(()=>{const d=t.scrollWidth-q('.tx').clientWidth;if(d>4){t.style.setProperty('--d',-(d+6)+'px');t.classList.add('mov')}});
   }
   function jugar(){
@@ -59,7 +59,7 @@
   }
   function cargar(t){
     pista=t;au.loop=lista.length===1;
-    au.src='/musica/'+encodeURIComponent(t.f);aplicaVol();titulo();pinta();jugar();
+    au.src='/'+(t.d||'musica')+'/'+encodeURIComponent(t.f);aplicaVol();titulo();pinta();jugar();
   }
   function siguiente(){
     if(!lista.length)return;
