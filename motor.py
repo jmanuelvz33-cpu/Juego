@@ -353,6 +353,28 @@ PERSONAJES = {
                  "gif": "https://i.imgur.com/FN5ttuM.gif", "grito": "¡Sus antenas brillan y todos se duermen!",
                  "desc": "Duerme a todo el equipo rival: no puede actuar en su próximo turno. Siempre acierta."},
     },
+    # ---- Personaje SOLO del modo historia: no sale en la selección de equipo ----
+    "esbirro": {
+        "nombre": "Esbirro de Dio",
+        "emoji": "🧛",
+        "color": 0x8B1A2B,
+        "boton": "8E292C",
+        "oculto": True,      # no se puede elegir ni sale de rival al azar
+        "vida": 170,         # pelea 2 contra 1 (probado: el jugador gana ~90% con juego normal)
+        "desc": "Vampiro al servicio de Dio. Solo historia.",
+        "gif": "",           # retrato: img/esbirro_normal.png
+        "crit_gif": "",
+        "victoria_img": "",
+        "mov": {
+            "normal": {"nombre": "Zarpazo", "tipo": "normal", "coste": COSTE_NORMAL,
+                       "dmg": (11, 15), "prec": 0.95},
+            "hab1": {"nombre": "Sed de sangre", "tipo": "fuerte", "coste": COSTE_HABILIDAD, "pm": 2,
+                     "dmg": (22, 28), "prec": 0.90, "drena": 0.5,
+                     "desc": "Muerde a un rival y recupera la mitad del daño en vida."},
+            "hab2": {"nombre": "—", "tipo": "normal", "coste": 99, "no": True},
+        },
+        "ulti": {"nombre": "—", "tipo": "normal", "coste": 99, "no": True},
+    },
 }
 
 
@@ -829,6 +851,11 @@ class Combate:
             a.hp += curado
             if curado:
                 notas.append(f"🩸 **{a.tag}** recupera {curado} de vida.")
+        if m.get("drena") and a.vivo and real > 0:        # 🧛 chupa vida: recupera una parte del daño
+            curado = min(round(real * m["drena"]), a.max_hp - a.hp)
+            if curado > 0:
+                a.hp += curado
+                notas.append(f"🧛 **{a.tag}** recupera {curado} de vida.")
         if k == "normal" and a.pm < PM_MAX:
             a.pm = min(PM_MAX, a.pm + PM_NORMAL)
         if m.get("extra") and (t.hp > 0 or t.forma):      # daño eléctrico extra: no lo reduce la guardia
