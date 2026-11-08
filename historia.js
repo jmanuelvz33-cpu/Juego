@@ -7,12 +7,24 @@
 //  Imágenes: img/PERSONAJE_novela_NUMERO.png (o .webp), igual que en La mesa. El esbirro usa img/esbirro_novela_1.png
 //  ["@batalla"] = aquí empieza la pelea. Lo de "antes" va antes de pelear y lo de "despues" al ganar.
 //  "reparto" = de izquierda a derecha, quién sale en pantalla (cada uno aparece cuando habla por primera vez).
+//
+//  FONDO Y MÚSICA DE CADA CAPÍTULO (todo opcional: lo que dejes vacío usa lo de siempre)
+//     fondo   = imagen de fondo para las escenas y la pelea. Puede ser un link o varios nombres a probar.
+//               Por defecto busca img/historia_ID_fondo.webp, .jpg o .png  (ej. img/historia_piloto_fondo.jpg)
+//     musica.hablar  = canciones mientras se leen las escenas   (archivos en la carpeta musica_historia/)
+//     musica.batalla = canciones durante la pelea
+//        cada canción: {t:"Título", a:"Autor", f:"archivo.mp3", c:"portada.jpg"}  (c es opcional y va también en musica_historia/)
+//        Si el archivo no está subido todavía, se usa la música normal del juego.
 // ============================================================
 window.HISTORIA = {
   piloto: {
     titulo: "Capítulo piloto",
     sub: "Un lugar vacío",
     reparto: ["megumi", "mantis", "esbirro"],
+    musica: {
+      hablar:  [{t: "Capítulo piloto", a: "", f: "piloto_hablar.mp3"}],
+      batalla: [{t: "Capítulo piloto — batalla", a: "", f: "piloto_batalla.mp3"}],
+    },
     nombres: {megumi: "Megumi", mantis: "Mantis", esbirro: "Esbirro de Dio"},
     antes: [
       ["", "", "Megumi se levanta de lo que parece una caída dura."],
@@ -78,6 +90,31 @@ window.HISTORIA = {
   const mal=new Set();let N=null,tm=null;
   const hecho=c=>{try{return !!localStorage.getItem('hist_'+c)}catch(e){return false}};
   const marcar=c=>{try{localStorage.setItem('hist_'+c,'1')}catch(e){}};
+
+  // ---------- fondo y música propios del capítulo ----------
+  const existe=async url=>{
+    try{const c=new AbortController();const r=await fetch(url,{headers:{Range:'bytes=0-0'},signal:c.signal});c.abort();return r.ok}catch(e){return false}
+  };
+  const imgOk=url=>new Promise(r=>{const i=new Image();i.onload=()=>r(true);i.onerror=()=>r(false);i.src=url});
+  async function preparar(id){
+    const cap=H[id],U=window.UI;
+    if(cap._ok)return;
+    cap._ok=true;
+    // fondo
+    let c=cap.fondo;c=c?(Array.isArray(c)?c:[c]):['webp','jpg','jpeg','png'].map(e=>`/img/historia_${id}_fondo.${e}`);
+    cap._fondo='';
+    for(const u of c){if(await imgOk(u)){cap._fondo=u;break}}
+    // música: solo las canciones cuyo archivo existe; si no hay, usa la del juego
+    const M=window.MUSICA=window.MUSICA||{},m=cap.musica||{};
+    for(const [g,base] of [['hablar','bazar'],['batalla','pelea']]){
+      const ok=[];
+      for(const t of (m[g]||[])){if(t&&t.f&&await existe('/musica_historia/'+encodeURIComponent(t.f)))ok.push(Object.assign({d:'musica_historia'},t))}
+      M['hist_'+id+'_'+g]=ok.length?ok:(M[base]&&M[base].length?M[base]:(M.menu||[]));
+    }
+  }
+  function ambiente(id){
+    const U=window.UI;U.fondoHist=(H[id]&&H[id]._fondo)||'';
+  }
 
   function cand(k,exp){
     const n=numExp(exp),l=[];
@@ -152,7 +189,7 @@ window.HISTORIA = {
 
   function pantalla(fase){
     const cap=N.cap;
-    musica('bazar');U.fondo&&U.fondo('novela');
+    ambiente(N.id);musica('hist_'+N.id+'_hablar');
     $('#app').innerHTML=barra(`<button class="sec" onclick="UI.histSalir()">⬅️ Salir</button>`)+
     `<div class="vn hs"><div class="arr"><h1 style="margin:0">${esc(cap.titulo)}</h1><div class="hs-bar"><button class="sec" onclick="UI.histSaltar()">⏭️ ${fase==='antes'?'Saltar a la pelea':'Saltar'}</button></div></div>
       <div class="esc" id="hsesc"></div>
@@ -166,8 +203,8 @@ window.HISTORIA = {
 
   // ---------- menú de capítulos ----------
   U.histMenu=function(){
-    N=null;if(tm){clearInterval(tm);tm=null}
-    musica('bazar');U.fondo&&U.fondo('novela');
+    N=null;HIST=null;if(tm){clearInterval(tm);tm=null}
+    U.fondoHist='';musica('bazar');
     const ids=Object.keys(H);
     $('#app').innerHTML=barra(`<button class="sec" onclick="bazar('inicio')">⬅️ Bazar</button>`)+
     `<div class="hsm"><h1>📖 Modo historia</h1><div class="burnice">Megumi y Mantis, un viaje por el mundo… y alguien que los quiere de cena.</div>
@@ -176,8 +213,9 @@ window.HISTORIA = {
       <div class="hs-c bloq"><div><h2>Capítulo 1</h2><small>🔒 Próximamente</small></div></div></div>
     <div class="fila"><button class="sec" onclick="bazar('inicio')">⬅️ Bazar</button></div></div>`;
   };
-  U.hist=function(id){
+  U.hist=async function(id){
     if(!H[id])return;
+    await preparar(id);
     N={id,cap:H[id],vistos:new Set(),exp:{},fin:null};
     pantalla('antes');
   };
@@ -197,7 +235,8 @@ window.HISTORIA = {
     const id=N&&N.id||U._hid;U._hid=id;
     const r=await api('/api/historia',{cap:id});
     if(r.error)return alert(r.error);
-    HIST={id};MODO='cpu';SEQ=0;SALA=null;
+    await preparar(id);ambiente(id);
+    HIST={id,musica:'hist_'+id+'_batalla'};MODO='cpu';SEQ=0;SALA=null;
     G=r.id;S=r.estado;sel=0;tgt=null;tgtAli=null;CBT.reset();
     N=null;
     dibujarCombate();CBT.inicio();
@@ -206,6 +245,7 @@ window.HISTORIA = {
   // ---------- tras la pelea ----------
   U.histPost=function(){
     const id=(typeof HIST!=='undefined'&&HIST&&HIST.id)||U._hid;
+    HIST=null;
     N={id,cap:H[id],vistos:new Set(['megumi','mantis']),exp:{},fin:null};
     pantalla('despues');
   };
