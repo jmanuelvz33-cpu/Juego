@@ -481,7 +481,7 @@
   };
   /* imagen por personaje con respaldo: /img/<clave>_<tipo>.png (o .jpg, .jpeg, .webp); si no existe usa la normal */
   const EXT=['png','jpg','jpeg','webp'];
-  const lista=(key,tipo)=>EXT.map(e=>`/img/${key}_${tipo}.${e}`).filter(u=>!faltan.has(u));
+  const lista=(key,tipo)=>['img_historia','img'].flatMap(c=>EXT.map(e=>`/${c}/${key}_${tipo}.${e}`)).filter(u=>!faltan.has(u));   // img_historia = imágenes que solo usa el modo historia
   C.cara=function(key,tipo,base){
     const l=lista(key,tipo);
     if(!l.length)return base?`src="${base}"`:'style="display:none"';
