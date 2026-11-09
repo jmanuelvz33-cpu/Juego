@@ -12,6 +12,20 @@
   .vn .conf b{color:#ff6b8a}
   .vn .esc{flex:1;display:flex;align-items:flex-end;justify-content:center;min-height:36vh;padding-top:6px}
   .vn .esc img{max-height:54vh;max-width:92%;object-fit:contain;filter:drop-shadow(0 8px 18px rgba(0,0,0,.6));animation:flota 4s ease-in-out infinite,entra .35s ease-out}
+  /* ---- expresiones con movimiento y símbolos (sirve con una sola imagen por personaje) ---- */
+  .vn .esc{position:relative}
+  @keyframes ex-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px) rotate(-.8deg)}40%{transform:translateX(6px) rotate(.8deg)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+  @keyframes ex-hop{0%,100%{transform:translateY(0)}40%{transform:translateY(-22px)}}
+  @keyframes ex-pop{0%{transform:scale(1)}30%{transform:scale(1.13) translateY(-8px)}100%{transform:scale(1)}}
+  @keyframes ex-trem{0%,100%{transform:translateX(0)}50%{transform:translateX(2px)}}
+  @keyframes ex-sink{from{transform:translateY(0)}to{transform:translateY(14px)}}
+  @keyframes ex-s{0%{transform:scale(0) rotate(-25deg);opacity:0}15%{transform:scale(1.35) rotate(8deg);opacity:1}30%{transform:scale(1) rotate(0)}85%{opacity:1}100%{transform:translateY(-12px);opacity:0}}
+  .vn .esc img.x-enojado{animation:flota 4s ease-in-out infinite,ex-shake .12s linear 10;filter:drop-shadow(0 8px 18px rgba(0,0,0,.6)) drop-shadow(0 0 14px rgba(255,60,60,.6))}
+  .vn .esc img.x-feliz{animation:flota 4s ease-in-out infinite,ex-hop .45s ease-out 2;filter:drop-shadow(0 8px 18px rgba(0,0,0,.6)) drop-shadow(0 0 12px rgba(255,220,120,.5))}
+  .vn .esc img.x-sorpresa{animation:flota 4s ease-in-out infinite,ex-pop .5s ease-out 1}
+  .vn .esc img.x-nervioso{animation:ex-trem .09s linear infinite}
+  .vn .esc img.x-triste{animation:ex-sink .8s ease-out forwards;filter:drop-shadow(0 8px 18px rgba(0,0,0,.6)) brightness(.72) saturate(.75)}
+  .vn .esc .exs{position:absolute;z-index:3;pointer-events:none;font-size:clamp(26px,5.5vw,54px);line-height:1;animation:ex-s 2.4s ease-out forwards;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))}
   @keyframes flota{50%{transform:translateY(-6px)}}
   @keyframes entra{from{opacity:0;transform:translateY(10px)}}
   .vn .caja{position:relative;background:rgba(6,10,16,.93);border:2px solid var(--ac);border-radius:14px;padding:18px 14px 12px;margin-top:6px;min-height:92px;cursor:pointer}
@@ -36,7 +50,7 @@
     .vn .esc,.vn .opc{grid-row:2;grid-column:1;min-height:0}
     .vn .esc{padding:0;align-items:flex-end;position:relative}
     .vn{--nv-alto:1}   /* tamaño del personaje en horizontal: 1 = normal, 1.15 = 15% más grande */
-    .vn .esc img{height:calc(100% * var(--nv-alto));max-height:none;max-width:75%;width:auto;object-fit:contain;object-position:bottom}
+    .vn .esc img{height:calc(100% * var(--nv-alto));max-height:none;max-width:60%;width:auto;object-fit:contain;object-position:bottom}
     .vn .opc{margin:0;z-index:2;pointer-events:none;align-content:center;align-items:center;gap:8px 0;
       grid-template-columns:minmax(0,1fr) minmax(0,34%) minmax(0,1fr);padding:0 1%}
     .vn .opc button{pointer-events:auto;width:100%;font-size:.9rem;background:rgba(6,10,16,.88)}
@@ -99,6 +113,28 @@
     if(k==='burnice'&&I.BIENVENIDA_IMG)l.push(I.BIENVENIDA_IMG);else if(k==='niko'&&typeof BZ!=='undefined'&&BZ&&BZ.imgs&&BZ.imgs.niko)l.push(BZ.imgs.niko);else if(p&&p.gif)l.push(p.gif);
     return l.filter(u=>!mal.has(u));
   }
+  // ---- EXPR: efecto de la expresión sobre la imagen (movimiento + símbolo de manga). Lo usa también historia.js ----
+  const SIMB={enojado:'💢',feliz:'✨',triste:'💧',sorpresa:'❗',nervioso:'💦'};
+  const nomExp=e=>{e=String(e==null?'normal':e);if(/^\d+$/.test(e)){const k=Object.keys(EXP).find(x=>EXP[x]===+e);return k||'normal'}return e};
+  window.EXPR={
+    nombre:nomExp,
+    limpiar(im){if(!im)return;[...im.classList].filter(c=>c.indexOf('x-')===0).forEach(c=>im.classList.remove(c))},
+    aplicar(im,exp){
+      if(!im)return;const nm=nomExp(exp),box=im.parentElement;
+      this.limpiar(im);void im.offsetWidth;
+      if(box)box.querySelectorAll('.exs').forEach(e=>e.remove());
+      if(nm==='normal'||!SIMB[nm])return;
+      im.classList.add('x-'+nm);
+      const poner=()=>{
+        if(!box||!im.isConnected)return;
+        const s=document.createElement('span');s.className='exs';s.textContent=SIMB[nm];
+        box.appendChild(s);
+        const x=Math.min(im.offsetLeft+im.offsetWidth*.68,box.clientWidth-s.offsetWidth-4);
+        s.style.left=Math.max(0,x)+'px';s.style.top=Math.max(0,im.offsetTop+im.offsetHeight*.04)+'px';
+      };
+      if(im.complete&&im.naturalWidth)poner();else im.addEventListener('load',poner,{once:true});
+    }
+  };
   U.nvFb=function(im){
     mal.add(im.getAttribute('src'));
     const l=JSON.parse(im.dataset.c||'[]').filter(u=>!mal.has(u));
@@ -107,10 +143,10 @@
   function sprite(exp){
     const im=$("#nvspr");if(!im)return;exp=String(exp);
     const l=cand(N.k,exp);if(!l.length){im.style.visibility='hidden';return}
-    if(im.dataset.exp===exp&&im.style.visibility!=='hidden')return;
+    if(im.dataset.exp===exp&&im.style.visibility!=='hidden'){EXPR.aplicar(im,exp);return}
     im.dataset.exp=exp;im.dataset.c=JSON.stringify(l);im.style.visibility='visible';
     im.style.animation='none';void im.offsetWidth;im.style.animation='';
-    im.src=l[0];
+    im.src=l[0];EXPR.aplicar(im,exp);
   }
   function nivel(){
     const w=ESP(N.k)?0:(typeof YO!=='undefined'&&YO.vic_pj&&YO.vic_pj[N.k])||0;
