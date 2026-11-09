@@ -375,6 +375,48 @@ PERSONAJES = {
         },
         "ulti": {"nombre": "—", "tipo": "normal", "coste": 99, "no": True},
     },
+    "lagarto": {
+        "nombre": "Lagarto zombie",
+        "emoji": "🦎",
+        "color": 0x5E7A3A,
+        "boton": "5E7A3A",
+        "oculto": True,
+        "vida": 85,
+        "desc": "Lagarto podrido que vaga por el bosque. Solo historia.",
+        "gif": "",           # retrato: img_historia/lagarto_normal.png
+        "crit_gif": "",
+        "victoria_img": "",
+        "mov": {
+            "normal": {"nombre": "Garra podrida", "tipo": "normal", "coste": COSTE_NORMAL,
+                       "dmg": (7, 10), "prec": 0.95},
+            "hab1": {"nombre": "Mordida infecta", "tipo": "fuerte", "coste": COSTE_HABILIDAD, "pm": 2,
+                     "dmg": (12, 16), "prec": 0.90, "efecto": ("veneno", 2, 0.60),
+                     "desc": "Muerde y puede envenenar."},
+            "hab2": {"nombre": "—", "tipo": "normal", "coste": 99, "no": True},
+        },
+        "ulti": {"nombre": "—", "tipo": "normal", "coste": 99, "no": True},
+    },
+    "lobo": {
+        "nombre": "Lobo salvaje",
+        "emoji": "🐺",
+        "color": 0x6B6F78,
+        "boton": "6B6F78",
+        "oculto": True,
+        "vida": 70,
+        "desc": "Lobo hambriento del bosque. Solo historia.",
+        "gif": "",           # retrato: img_historia/lobo_normal.png
+        "crit_gif": "",
+        "victoria_img": "",
+        "mov": {
+            "normal": {"nombre": "Mordisco", "tipo": "normal", "coste": COSTE_NORMAL,
+                       "dmg": (8, 11), "prec": 0.95},
+            "hab1": {"nombre": "Embestida", "tipo": "fuerte", "coste": COSTE_HABILIDAD, "pm": 2,
+                     "dmg": (15, 20), "prec": 0.90,
+                     "desc": "Se lanza con todo su peso."},
+            "hab2": {"nombre": "—", "tipo": "normal", "coste": 99, "no": True},
+        },
+        "ulti": {"nombre": "—", "tipo": "normal", "coste": 99, "no": True},
+    },
 }
 
 
