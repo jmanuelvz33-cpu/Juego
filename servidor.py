@@ -711,7 +711,7 @@ class H(BaseHTTPRequestHandler):
                  ".m4a": "audio/mp4", ".wav": "audio/wav", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
                  ".png": "image/png", ".webp": "image/webp",
                  ".css": "text/css; charset=utf-8", ".ttf": "font/ttf", ".woff2": "font/woff2", ".otf": "font/otf"}
-        if ruta.startswith(("/musica/", "/musica_historia/", "/img/", "/voces/", "/fuentes/")):
+        if ruta.startswith(("/musica/", "/musica_historia/", "/img/", "/img_historia/", "/voces/", "/fuentes/")):
             carpeta = ruta.split("/")[1]
             nombre = urllib.parse.unquote(ruta.split("/", 2)[2])
             arc = (AQUI / carpeta / Path(nombre).name)          # Path.name evita salirse de la carpeta
@@ -764,7 +764,7 @@ class H(BaseHTTPRequestHandler):
         try:
             if ruta in GETS:
                 return self._json(GETS[ruta]({k: v[0] for k, v in q.items()}, self._sesion()))
-            if ruta in ("/musica.js", "/reproductor.js", "/interfaz.js", "/pantallas.js", "/dialogos.js", "/novela.js", "/historia.js", "/combate2.js", "/estilo.css") or ruta.startswith(("/musica/", "/musica_historia/", "/img/", "/voces/", "/fuentes/")):
+            if ruta in ("/musica.js", "/reproductor.js", "/interfaz.js", "/pantallas.js", "/dialogos.js", "/novela.js", "/historia.js", "/combate2.js", "/estilo.css") or ruta.startswith(("/musica/", "/musica_historia/", "/img/", "/img_historia/", "/voces/", "/fuentes/")):
                 return self._estatico(ruta)
             if ruta in ("/", "/index.html"):
                 raw = (AQUI / "index.html").read_bytes()
