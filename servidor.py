@@ -417,7 +417,10 @@ def api_nueva(b, ses):
 
 # ------------------------------------------------------------------ modo historia
 # capítulo -> (tu equipo, rival). Pelea siempre en dificultad normal y sin monedas.
-CAPITULOS = {"piloto": (["megumi", "mantis"], ["esbirro"])}
+CAPITULOS = {
+    "piloto": (["megumi", "mantis"], ["esbirro"]),
+    "cap1": (["megumi", "mantis"], ["lagarto", "lobo"]),
+}
 
 
 def api_historia(b, ses):
