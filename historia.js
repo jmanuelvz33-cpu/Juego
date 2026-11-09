@@ -6,7 +6,7 @@
 //     expresión  = normal, feliz, triste, enojado, sorpresa, nervioso (o un número). Si falta esa imagen usa la normal.
 //  Imágenes: primero busca en la carpeta img_historia/ y luego en img/:  PERSONAJE_novela_NUMERO.png (o .webp). El esbirro: esbirro_novela_1.png
 //  ["@batalla"] = aquí empieza la pelea. Lo de "antes" va antes de pelear y lo de "despues" al ganar.
-//  "rivales" = texto del menú (ej. "2 rivales"). "requiere" = id del capítulo que hay que terminar antes.
+//  "rivales" = texto del menú (ej. "2 rivales"). "rivales:false" = capítulo sin pelea (sin "@batalla"). ["@fondo","nombre"] cambia el fondo en medio del capítulo (lista "fondos"). "requiere" = id del capítulo que hay que terminar antes.
 //  "reparto" = de izquierda a derecha, quién sale en pantalla (cada uno aparece cuando habla por primera vez).
 //
 //  FONDO Y MÚSICA DE CADA CAPÍTULO (todo opcional: lo que dejes vacío usa lo de siempre)
@@ -17,15 +17,15 @@
 //        cada canción: {t:"Título", a:"Autor", f:"archivo.mp3", c:"portada.jpg"}  (c es opcional y va también en musica_historia/)
 //        Si el archivo no está subido todavía, se usa la música normal del juego.
 // ============================================================
+// Música de TODOS los capítulos (la misma). Para darle una propia a un capítulo, cambia su "musica".
+const MUS_HABLAR  = [{t: "Capítulo piloto", a: "", f: "piloto_hablar.mp3"}];
+const MUS_BATALLA = [{t: "Capítulo piloto — batalla", a: "", f: "piloto_batalla.mp3"}];
 window.HISTORIA = {
   piloto: {
     titulo: "Capítulo piloto",
     sub: "Un lugar vacío",
     reparto: ["megumi", "mantis", "esbirro"],
-    musica: {
-      hablar:  [{t: "Capítulo piloto", a: "", f: "piloto_hablar.mp3"}],
-      batalla: [{t: "Capítulo piloto — batalla", a: "", f: "piloto_batalla.mp3"}],
-    },
+    musica: {hablar: MUS_HABLAR, batalla: MUS_BATALLA},
     nombres: {megumi: "Megumi", mantis: "Mantis", esbirro: "Esbirro de Dio"},
     antes: [
       ["", "", "Megumi se levanta de lo que parece una caída dura."],
@@ -59,10 +59,7 @@ window.HISTORIA = {
     rivales: "2 rivales",
     requiere: "piloto",          // se desbloquea al terminar el piloto
     reparto: ["megumi", "mantis"],
-    musica: {
-      hablar:  [{t: "Capítulo 1", a: "", f: "cap1_hablar.mp3"}],
-      batalla: [{t: "Capítulo 1 — batalla", a: "", f: "cap1_batalla.mp3"}],
-    },
+    musica: {hablar: MUS_HABLAR, batalla: MUS_BATALLA},
     nombres: {megumi: "Megumi", mantis: "Mantis"},
     antes: [
       ["", "", "Megumi se detiene, mira alrededor y suelta un suspiro corto."],
@@ -74,11 +71,11 @@ window.HISTORIA = {
       ["megumi", "triste", "La verdad es que no sé, a mí eso no me parece una buena idea. Solo quiero encontrar a mis compañeros, si es que cayeron conmigo aquí. Porque si no, estaré atrapado con una desconocida."],
       ["mantis", "enojado", "Soy Mantis, en primer lugar. Y no seas así. En el fondo siento que tienes miedo de estar solo y de no encontrar a nadie. Podemos juntarnos, yo estoy dispuesta a ser amiga tuya si eso te sirve."],
       ["megumi", "nervioso", "Apenas nos conocemos, pero supongo que vale la pena intentarlo. Al menos esta vez."],
+      ["megumi", "normal", "…Está bien. Podemos ir juntos. Por ahora."],
+      ["", "", "Mantis sonríe y da una palmada suave."],
+      ["mantis", "feliz", "Trato hecho. Aunque todavía no sé si somos un dúo o solo dos perdidos juntos."],
       ["", "", "Mantis aplaude suavemente."],
       ["mantis", "feliz", "¡Bien! Pues, ¿de qué quieres hablar?"],
-      ["megumi", "normal", "…Está bien. Podemos ir juntos. Por ahora."],
-      ["", "", "Mantis sonríe un poco y da una palmada suave."],
-      ["mantis", "feliz", "Trato hecho. Aunque todavía no sé si somos un dúo o solo dos perdidos juntos."],
       ["", "", "Megumi se queda callado un largo rato."],
       ["megumi", "normal", "¿Cómo se llaman tus amigos?"],
       ["mantis", "feliz", "Pues uno es un mapache llamado Rocket, es bueno con la tecnología, y otro llamado Quill, un gran amigo. Escucha música de su planeta, es muy bonita y…"],
@@ -102,6 +99,56 @@ window.HISTORIA = {
       ["megumi", "normal", "Tienes demasiada energía."],
       ["", "", "Ambos se ponen en marcha. Fin del capítulo."],
     ],
+  },
+  cap2: {
+    titulo: "Capítulo 2",
+    sub: "La cabaña",
+    rivales: false,              // false = capítulo sin pelea
+    requiere: "cap1",
+    reparto: ["megumi", "mantis", "gato"],
+    // fondos que cambian dentro del capítulo: ["@fondo","nombre"] busca img_historia/cap2_NOMBRE.(webp|jpg|png)
+    fondos: ["bosque", "cabana", "sotano"],
+    musica: {hablar: MUS_HABLAR},
+    nombres: {megumi: "Megumi", mantis: "Mantis", gato: "Gato mago"},
+    antes: [
+      ["@fondo", "bosque"],
+      ["", "", "Dejan de caminar para ver qué estaba oscureciendo. El bosque se veía cada vez más oscuro."],
+      ["mantis", "nervioso", "Se está volviendo peligroso estar así en el bosque."],
+      ["megumi", "normal", "Lo sé, y no quiero gastar más energía peleando. Dijiste que había algo más tranquilo. Dime dónde está."],
+      ["", "", "Mantis mira hacia abajo y siente el latido de alguien, o algo parecido. Levanta la vista y corre hacia esa dirección. Megumi la sigue."],
+      ["@fondo", "cabana"],
+      ["", "", "Al llegar ven una cabaña."],
+      ["mantis", "nervioso", "Debe haber alguien aquí, pero hay que tener cuidado. No sabemos qué podemos encontrarnos."],
+      ["megumi", "normal", "Solo espero no pelear otra vez."],
+      ["", "", "Se acercan y abren la puerta con cuidado. Como no hay nada abajo, suben al sótano."],
+      ["@fondo", "sotano"],
+      ["mantis", "normal", "Definitivamente hay alguien."],
+      ["megumi", "enojado", "Mantente alerta."],
+      ["", "", "Luego oyen el sonido de una rampa rompiéndose. Megumi invoca a su lobo y Mantis levanta los brazos, pero después miran abajo y ven a un gato antropomorfo con ropa de mago."],
+      ["gato", "sorpresa", "¡Aaah! ¿Qué hacen aquí? ¡No se roben nada! Yo, emm… no puedo defenderme de la mejor manera, ¡pero los haré sufrir! ¡Y de dónde sacaron ese lobo!"],
+      ["", "", "El gato salta asustado y se sube al techo."],
+      ["mantis", "nervioso", "Oye, no te haremos daño… tú tranquilo."],
+      ["", "", "Mantis lo dice algo nerviosa."],
+      ["megumi", "sorpresa", "Uy, lo siento."],
+      ["", "", "El lobo desaparece."],
+      ["megumi", "normal", "Tampoco venimos a pelear, solo queremos descansar."],
+      ["", "", "El gato baja."],
+      ["gato", "nervioso", "No confío mucho en ustedes, pero si no me atacaron de primera, supongo que… me van a atacar por la espalda después."],
+      ["mantis", "enojado", "¡Que no te vamos a hacer daño! Megumi, ayúdame."],
+      ["megumi", "normal", "No lastimo a gente que no lo merece, y tú no has hecho nada malo. Además, al menos tiene conciencia, no como los otros que vimos."],
+      ["gato", "normal", "Bueno, igual no confío, pero pueden quedarse. Eso sí, estaré despierto toda la noche por si se atreven a hacer algo."],
+      ["", "", "Mantis se lanza a la cama y Megumi solo se sienta."],
+      ["megumi", "normal", "De acuerdo, no hay problema… ¿señor?"],
+      ["gato", "feliz", "Mago miau."],
+      ["megumi", "enojado", "No voy a decir eso."],
+      ["gato", "normal", "Entonces no digas nada."],
+      ["mantis", "feliz", "Es bueno conocer a alguien que no nos quiere matar. ¡Es un placer conocerte, mago miau! Soy Mantis, y este es Megumi."],
+      ["gato", "normal", "Umm, bueno. Soy un mago que está viendo y conociendo este mundo. Quizás sea el momento perfecto para…"],
+      ["", "", "Ambos ya están dormidos."],
+      ["gato", "triste", "Hablemos más tarde, supongo… miau."],
+      ["", "", "Fin del capítulo."],
+    ],
+    despues: [],
   },
 };
 
@@ -155,6 +202,11 @@ window.HISTORIA = {
     let c=cap.fondo;c=c?(Array.isArray(c)?c:[c]):['img_historia/'+id+'_fondo','img/historia_'+id+'_fondo'].flatMap(b=>['webp','jpg','jpeg','png'].map(e=>`/${b}.${e}`));
     cap._fondo='';
     for(const u of c){if(await imgOk(u)){cap._fondo=u;break}}
+    // fondos que cambian dentro del capítulo
+    cap._fondos={};
+    for(const n of (cap.fondos||[])){
+      for(const e of ['webp','jpg','jpeg','png']){const u=`/img_historia/${id}_${n}.${e}`;if(await imgOk(u)){cap._fondos[n]=u;break}}
+    }
     // música: solo las canciones cuyo archivo existe; si no hay, usa la del juego
     const M=window.MUSICA=window.MUSICA||{},m=cap.musica||{};
     for(const [g,base] of [['hablar','bazar'],['batalla','pelea']]){
@@ -207,6 +259,7 @@ window.HISTORIA = {
     const arr=N.fase==='antes'?N.cap.antes:N.cap.despues,l=arr[N.i];
     if(!l)return fin();
     if(l[0]==='@batalla')return U.histBatalla();
+    if(l[0]==='@fondo'){U.fondoHist=(N.cap._fondos&&N.cap._fondos[l[1]])||N.cap._fondo||'';U.fondo('novela');N.i++;return linea()}
     const [q,exp,tx]=l;
     escena(q,exp);
     const caja=document.getElementById('hscaja'),nom=document.getElementById('hsnom'),t=document.getElementById('hstxt'),sig=document.getElementById('hssig');
@@ -219,8 +272,9 @@ window.HISTORIA = {
     N.listo=false;
     tm=setInterval(()=>{i+=2;t.textContent=tx.slice(0,i);if(i>=tx.length)N.fin()},22);
   }
+  const hayPelea=cap=>(cap.antes||[]).some(l=>l[0]==='@batalla');
   function fin(){
-    if(N.fase==='antes')return U.histBatalla();
+    if(N.fase==='antes'&&hayPelea(N.cap))return U.histBatalla();
     marcar(N.id);
     U.histMenu();
   }
@@ -243,7 +297,7 @@ window.HISTORIA = {
     const cap=N.cap;
     ambiente(N.id);musica('hist_'+N.id+'_hablar');
     $('#app').innerHTML=barra(`<button class="sec" onclick="UI.histSalir()">⬅️ Salir</button>`)+
-    `<div class="vn hs"><div class="arr"><h1 style="margin:0">${esc(cap.titulo)}</h1><div class="hs-bar"><button class="sec" onclick="UI.histSaltar()">⏭️ ${fase==='antes'?'Saltar a la pelea':'Saltar'}</button></div></div>
+    `<div class="vn hs"><div class="arr"><h1 style="margin:0">${esc(cap.titulo)}</h1><div class="hs-bar"><button class="sec" onclick="UI.histSaltar()">⏭️ ${fase==='antes'&&hayPelea(cap)?'Saltar a la pelea':'Saltar'}</button></div></div>
       <div class="esc" id="hsesc"></div>
       <div class="caja" id="hscaja" onclick="HS_tap()"><div class="nom" id="hsnom"></div><div class="txt" id="hstxt"></div><span class="sig" id="hssig">▼</span></div>
       <div class="opc"></div></div>`;
@@ -262,7 +316,7 @@ window.HISTORIA = {
     `<div class="hsm"><h1>📖 Modo historia</h1><div class="burnice">Megumi y Mantis, un viaje por el mundo… y alguien que los quiere de cena.</div>
     <div class="hs-cap">${ids.map(id=>{const c=H[id],bl=c.requiere&&!hecho(c.requiere);
       return bl?`<div class="hs-c bloq"><div><h2>${esc(c.titulo)}</h2><small>🔒 Termina "${esc(H[c.requiere].titulo)}" para abrirlo</small></div></div>`:
-      `<div class="hs-c"><div><h2>${esc(c.titulo)} ${hecho(id)?'<span class="hs-ok">✓</span>':''}</h2><small>${esc(c.sub||'')} · Megumi + Mantis vs. ${esc(c.rivales||'1 rival')}</small></div>
+      `<div class="hs-c"><div><h2>${esc(c.titulo)} ${hecho(id)?'<span class="hs-ok">✓</span>':''}</h2><small>${esc(c.sub||'')} · ${c.rivales===false?'Sin pelea':'Megumi + Mantis vs. '+esc(c.rivales||'1 rival')}</small></div>
       <button class="btn-burnice" onclick="UI.hist('${id}')">${hecho(id)?'🔁 Repetir':'▶ Empezar'}</button></div>`}).join('')}
       <div class="hs-c bloq"><div><h2>Capítulo ${ids.length}</h2><small>🔒 Próximamente</small></div></div></div>
     <div class="fila"><button class="sec" onclick="bazar('inicio')">⬅️ Bazar</button></div></div>`;
@@ -281,7 +335,7 @@ window.HISTORIA = {
     if(!N)return;
     if(tm){clearInterval(tm);tm=null}
     N.fin=null;
-    if(N.fase==='antes')U.histBatalla();else{marcar(N.id);U.histMenu()}
+    if(N.fase==='antes'&&hayPelea(N.cap))U.histBatalla();else{marcar(N.id);U.histMenu()}
   };
   // ---------- la pelea (2 contra 1) ----------
   U.histBatalla=async function(){
