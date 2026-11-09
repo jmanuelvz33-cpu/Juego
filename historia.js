@@ -4,13 +4,13 @@
 //  Cada línea es:  ["quién", "expresión", "texto"]
 //     quién      = clave del personaje (megumi, mantis, esbirro...) o "" para el narrador (sale en cursiva y sin nombre)
 //     expresión  = normal, feliz, triste, enojado, sorpresa, nervioso (o un número). Si falta esa imagen usa la normal.
-//  Imágenes: img/PERSONAJE_novela_NUMERO.png (o .webp), igual que en La mesa. El esbirro usa img/esbirro_novela_1.png
+//  Imágenes: primero busca en la carpeta img_historia/ y luego en img/:  PERSONAJE_novela_NUMERO.png (o .webp). El esbirro: esbirro_novela_1.png
 //  ["@batalla"] = aquí empieza la pelea. Lo de "antes" va antes de pelear y lo de "despues" al ganar.
 //  "reparto" = de izquierda a derecha, quién sale en pantalla (cada uno aparece cuando habla por primera vez).
 //
 //  FONDO Y MÚSICA DE CADA CAPÍTULO (todo opcional: lo que dejes vacío usa lo de siempre)
 //     fondo   = imagen de fondo para las escenas y la pelea. Puede ser un link o varios nombres a probar.
-//               Por defecto busca img/historia_ID_fondo.webp, .jpg o .png  (ej. img/historia_piloto_fondo.jpg)
+//               Por defecto busca img_historia/ID_fondo.webp, .jpg o .png  (ej. img_historia/piloto_fondo.jpg)
 //     musica.hablar  = canciones mientras se leen las escenas   (archivos en la carpeta musica_historia/)
 //     musica.batalla = canciones durante la pelea
 //        cada canción: {t:"Título", a:"Autor", f:"archivo.mp3", c:"portada.jpg"}  (c es opcional y va también en musica_historia/)
@@ -101,7 +101,7 @@ window.HISTORIA = {
     if(cap._ok)return;
     cap._ok=true;
     // fondo
-    let c=cap.fondo;c=c?(Array.isArray(c)?c:[c]):['webp','jpg','jpeg','png'].map(e=>`/img/historia_${id}_fondo.${e}`);
+    let c=cap.fondo;c=c?(Array.isArray(c)?c:[c]):['img_historia/'+id+'_fondo','img/historia_'+id+'_fondo'].flatMap(b=>['webp','jpg','jpeg','png'].map(e=>`/${b}.${e}`));
     cap._fondo='';
     for(const u of c){if(await imgOk(u)){cap._fondo=u;break}}
     // música: solo las canciones cuyo archivo existe; si no hay, usa la del juego
@@ -118,8 +118,8 @@ window.HISTORIA = {
 
   function cand(k,exp){
     const n=numExp(exp),l=[];
-    [n,1].filter((x,i,a)=>a.indexOf(x)===i).forEach(m=>l.push(`/img/${k}_novela_${m}.png`,`/img/${k}_novela_${m}.webp`));
-    l.push(`/img/${k}_normal.png`,`/img/${k}_normal.webp`);
+    ['img_historia','img'].forEach(c=>{[n,1].filter((x,i,a)=>a.indexOf(x)===i).forEach(m=>l.push(`/${c}/${k}_novela_${m}.png`,`/${c}/${k}_novela_${m}.webp`))});
+    ['img_historia','img'].forEach(c=>l.push(`/${c}/${k}_normal.png`,`/${c}/${k}_normal.webp`));
     const p=(typeof PJ!=='undefined')&&PJ.find(x=>x.key===k);
     if(p&&p.gif)l.push(p.gif);
     return l.filter(u=>!mal.has(u));
