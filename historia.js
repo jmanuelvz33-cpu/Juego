@@ -6,6 +6,7 @@
 //     expresión  = normal, feliz, triste, enojado, sorpresa, nervioso (o un número). Si falta esa imagen usa la normal.
 //  Imágenes: primero busca en la carpeta img_historia/ y luego en img/:  PERSONAJE_novela_NUMERO.png (o .webp). El esbirro: esbirro_novela_1.png
 //  ["@batalla"] = aquí empieza la pelea. Lo de "antes" va antes de pelear y lo de "despues" al ganar.
+//  "rivales" = texto del menú (ej. "2 rivales"). "requiere" = id del capítulo que hay que terminar antes.
 //  "reparto" = de izquierda a derecha, quién sale en pantalla (cada uno aparece cuando habla por primera vez).
 //
 //  FONDO Y MÚSICA DE CADA CAPÍTULO (todo opcional: lo que dejes vacío usa lo de siempre)
@@ -50,6 +51,56 @@ window.HISTORIA = {
       ["mantis", "normal", "Necesitas a alguien que te ayude."],
       ["megumi", "normal", "…Ven de una vez."],
       ["", "", "Ambos se van. Fin del capítulo."],
+    ],
+  },
+  cap1: {
+    titulo: "Capítulo 1",
+    sub: "Dos perdidos juntos",
+    rivales: "2 rivales",
+    requiere: "piloto",          // se desbloquea al terminar el piloto
+    reparto: ["megumi", "mantis"],
+    musica: {
+      hablar:  [{t: "Capítulo 1", a: "", f: "cap1_hablar.mp3"}],
+      batalla: [{t: "Capítulo 1 — batalla", a: "", f: "cap1_batalla.mp3"}],
+    },
+    nombres: {megumi: "Megumi", mantis: "Mantis"},
+    antes: [
+      ["", "", "Megumi se detiene, mira alrededor y suelta un suspiro corto."],
+      ["megumi", "normal", "…No vamos a ningún lado. Esto no tiene sentido."],
+      ["", "", "Mantis se sienta en el tronco y lo mira un momento en silencio."],
+      ["mantis", "normal", "Pues… al menos aquí no nos están atacando. Eso ya es algo, ¿no?"],
+      ["megumi", "normal", "…"],
+      ["mantis", "feliz", "Si quieres podemos quedarnos un rato. No tiene que ser nada raro."],
+      ["megumi", "triste", "La verdad es que no sé, a mí eso no me parece una buena idea. Solo quiero encontrar a mis compañeros, si es que cayeron conmigo aquí. Porque si no, estaré atrapado con una desconocida."],
+      ["mantis", "enojado", "Soy Mantis, en primer lugar. Y no seas así. En el fondo siento que tienes miedo de estar solo y de no encontrar a nadie. Podemos juntarnos, yo estoy dispuesta a ser amiga tuya si eso te sirve."],
+      ["megumi", "nervioso", "Apenas nos conocemos, pero supongo que vale la pena intentarlo. Al menos esta vez."],
+      ["", "", "Mantis aplaude suavemente."],
+      ["mantis", "feliz", "¡Bien! Pues, ¿de qué quieres hablar?"],
+      ["megumi", "normal", "…Está bien. Podemos ir juntos. Por ahora."],
+      ["", "", "Mantis sonríe un poco y da una palmada suave."],
+      ["mantis", "feliz", "Trato hecho. Aunque todavía no sé si somos un dúo o solo dos perdidos juntos."],
+      ["", "", "Megumi se queda callado un largo rato."],
+      ["megumi", "normal", "¿Cómo se llaman tus amigos?"],
+      ["mantis", "feliz", "Pues uno es un mapache llamado Rocket, es bueno con la tecnología, y otro llamado Quill, un gran amigo. Escucha música de su planeta, es muy bonita y…"],
+      ["", "", "Megumi la detiene."],
+      ["megumi", "enojado", "Te pedí nombres, no sus descripciones. Pues yo tengo a Itadori y a Nobara. Si tengo suerte, quizás encuentre a Gojo."],
+      ["mantis", "feliz", "¡Lo haremos! Dos es mejor que uno."],
+      ["", "", "De pronto se oyen movimientos entre los arbustos. Aparecen un lagarto zombie y un lobo."],
+      ["megumi", "sorpresa", "Esto parece sacado de un libro de fantasía."],
+      ["mantis", "normal", "Esto es normal comparado con lo que veo con los Guardianes. ¿Quieren huir?"],
+      ["megumi", "normal", "No es necesario."],
+      ["@batalla"],
+    ],
+    despues: [
+      ["", "", "Mantis se limpia el sudor de la frente y mira a Megumi con una sonrisa."],
+      ["mantis", "sorpresa", "Wow… tus invocaciones son de lo más interesantes. Destrozaste a un lobo usando a otro lobo."],
+      ["megumi", "normal", "Tengo más. Por ahora solo usaré esas."],
+      ["mantis", "feliz", "Igual me tienes a mí para curarte. Aunque… deberías cuidar un poco más tu defensa."],
+      ["megumi", "normal", "Ya lo mejoraré después."],
+      ["", "", "Mantis mira hacia adelante y se tensa un poco, como si notara algo."],
+      ["mantis", "nervioso", "Oye… encontré una señal de vida. Se siente tranquila, más lejos. ¿Vamos a buscarla?"],
+      ["megumi", "normal", "Tienes demasiada energía."],
+      ["", "", "Ambos se ponen en marcha. Fin del capítulo."],
     ],
   },
 };
@@ -209,9 +260,11 @@ window.HISTORIA = {
     const ids=Object.keys(H);
     $('#app').innerHTML=barra(`<button class="sec" onclick="bazar('inicio')">⬅️ Bazar</button>`)+
     `<div class="hsm"><h1>📖 Modo historia</h1><div class="burnice">Megumi y Mantis, un viaje por el mundo… y alguien que los quiere de cena.</div>
-    <div class="hs-cap">${ids.map((id,n)=>`<div class="hs-c"><div><h2>${esc(H[id].titulo)} ${hecho(id)?'<span class="hs-ok">✓</span>':''}</h2><small>${esc(H[id].sub||'')} · Megumi + Mantis vs. 1 rival</small></div>
-      <button class="btn-burnice" onclick="UI.hist('${id}')">${hecho(id)?'🔁 Repetir':'▶ Empezar'}</button></div>`).join('')}
-      <div class="hs-c bloq"><div><h2>Capítulo 1</h2><small>🔒 Próximamente</small></div></div></div>
+    <div class="hs-cap">${ids.map(id=>{const c=H[id],bl=c.requiere&&!hecho(c.requiere);
+      return bl?`<div class="hs-c bloq"><div><h2>${esc(c.titulo)}</h2><small>🔒 Termina "${esc(H[c.requiere].titulo)}" para abrirlo</small></div></div>`:
+      `<div class="hs-c"><div><h2>${esc(c.titulo)} ${hecho(id)?'<span class="hs-ok">✓</span>':''}</h2><small>${esc(c.sub||'')} · Megumi + Mantis vs. ${esc(c.rivales||'1 rival')}</small></div>
+      <button class="btn-burnice" onclick="UI.hist('${id}')">${hecho(id)?'🔁 Repetir':'▶ Empezar'}</button></div>`}).join('')}
+      <div class="hs-c bloq"><div><h2>Capítulo ${ids.length}</h2><small>🔒 Próximamente</small></div></div></div>
     <div class="fila"><button class="sec" onclick="bazar('inicio')">⬅️ Bazar</button></div></div>`;
   };
   U.hist=async function(id){
