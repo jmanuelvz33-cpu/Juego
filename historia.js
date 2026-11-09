@@ -69,7 +69,7 @@ window.HISTORIA = {
   .vn.hs .caja.nar{border-color:var(--line)}
   .vn.hs .caja.nar .nom{display:none}
   .vn.hs .caja.nar .txt{font-style:italic;color:#c9d1e0}
-  .vn.hs .esc img{animation:entra .35s ease-out}
+  .vn.hs .esc img:not([class*="x-"]){animation:entra .35s ease-out}
   .hs-bar{display:flex;gap:8px;justify-content:flex-end;align-items:center}
   .hs-cap{display:grid;gap:12px;margin:12px 0}
   .hs-c{position:relative;background:var(--card);border:1px solid var(--line);border-left:.35em solid var(--ac);padding:14px 16px;display:flex;align-items:center;gap:14px;justify-content:space-between;flex-wrap:wrap;
@@ -145,6 +145,7 @@ window.HISTORIA = {
       const k=im.dataset.k;
       if(k===quien&&im.dataset.e!==String(N.exp[k])){const l=cand(k,N.exp[k]);im.dataset.e=String(N.exp[k]);
         im.style.visibility='visible';im.dataset.c=JSON.stringify(l.slice(1));im.src=l[0]||''}
+      if(window.EXPR){if(k===quien)EXPR.aplicar(im,N.exp[k]);else{EXPR.limpiar(im)}}
       im.classList.toggle('at',!!quien&&k!==quien);
       im.classList.toggle('hl',!!quien&&k===quien);
     });
