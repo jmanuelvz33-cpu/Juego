@@ -7,15 +7,10 @@
 
    - Usa el MISMO motor y las MISMAS animaciones/efectos/voces del combate clásico
      (todo se engancha a  .lu[data-l][data-i] ), solo cambia cómo se dibuja.
-   - Solo se activa en pantallas horizontales (PC o celular girado). En vertical
-     se sigue viendo el combate clásico.
-   - Activar:  abre el juego con  ?ui=2   (se recuerda)    ·   volver:  ?ui=1  o el botón "↩ Clásico".
+   - Es el ÚNICO diseño de combate. En celular vertical se muestra un aviso para girar.
+   - Incluye la pantalla de VERSUS que sale antes de cada pelea (UI2.versus()).
    ===================================================================== */
 (function(){
-  const LSg=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
-  const LSs=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
-  const q=new URLSearchParams(location.search).get('ui');
-  if(q==='2')LSs('ui2','1');else if(q==='1')LSs('ui2','0');
 
   const CSS=`
   main:has(#c2){max-width:none;padding:0}
@@ -112,6 +107,40 @@
   #c2 .c2-help .tx{flex:1;min-width:0;margin-right:min(190px,26vw);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#e8eaf0}
   #c2 .c2-b{padding:.25em 1.2em .25em .7em;font-size:.85em;background:var(--card2);white-space:nowrap}
 
+    /* ===== VERSUS (antes de pelear) ===== */
+  #c2vs{position:fixed;inset:0;z-index:200;overflow:hidden;background:#05070d;color:#fff;cursor:pointer;
+    font-size:clamp(11px,2.6vh,24px);transition:opacity .3s}
+  #c2vs.fuera{opacity:0;pointer-events:none}
+  #c2vs .vb{position:absolute;inset:0;background:var(--arena) center/cover;opacity:.35;filter:blur(2px)}
+  #c2vs .lado{position:absolute;top:0;bottom:0;width:56%;display:flex;align-items:flex-end;justify-content:center;gap:1%;padding:0 3% 13vh}
+  #c2vs .l0{padding-right:14%}#c2vs .l1{padding-left:14%}
+  #c2vs .l0{left:0;clip-path:polygon(0 0,100% 0,82% 100%,0 100%);background:linear-gradient(100deg,#0a3a5acc,#0a1a2b99);animation:vs-in0 .55s cubic-bezier(.2,.9,.2,1) both}
+  #c2vs .l1{right:0;clip-path:polygon(18% 0,100% 0,100% 100%,0 100%);background:linear-gradient(260deg,#5a0a22cc,#2b0a1499);animation:vs-in1 .55s cubic-bezier(.2,.9,.2,1) both}
+  @keyframes vs-in0{from{transform:translateX(-100%)}}
+  @keyframes vs-in1{from{transform:translateX(100%)}}
+  #c2vs .p{flex:1 1 0;min-width:0;max-width:34%;height:66vh;display:flex;align-items:flex-end;justify-content:center;animation:vs-p .5s .35s both}
+  #c2vs .l1 .p{animation-delay:.45s}
+  @keyframes vs-p{from{opacity:0;transform:translateY(6%) scale(.96)}}
+  #c2vs .p img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 .7em #000)}
+  #c2vs .l1 .p img{transform:scaleX(-1)}
+  #c2vs .tm{position:absolute;bottom:4vh;font-family:var(--f-titulo);font-size:1.5em;letter-spacing:.12em;text-transform:uppercase;text-shadow:0 .1em .4em #000;
+    background:#000a;padding:.15em .9em;white-space:nowrap;max-width:44%;overflow:hidden;text-overflow:ellipsis;animation:vs-p .5s .6s both}
+  #c2vs .l0 .tm{left:4%;border-left:.2em solid #38d4ff}
+  #c2vs .l1 .tm{right:4%;border-right:.2em solid #ff3d6e}
+  #c2vs .vs{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) rotate(-6deg);font-family:var(--f-titulo);font-weight:900;font-size:6.5em;
+    line-height:1;letter-spacing:.04em;color:#fff;text-shadow:.04em .04em 0 #ff3d6e,-.04em -.04em 0 #38d4ff,0 0 .5em #000;animation:vs-vs .5s .5s cubic-bezier(.2,1.6,.4,1) both;z-index:3}
+  @keyframes vs-vs{from{opacity:0;transform:translate(-50%,-50%) rotate(-6deg) scale(3)}}
+  #c2vs .sk{position:absolute;bottom:1.2vh;left:0;right:0;text-align:center;font-size:.7em;letter-spacing:.2em;color:#fff9;animation:vs-p .4s 1s both}
+
+  /* aviso: gira el celular (solo en vertical y pantallas chicas) */
+  #c2giro{display:none}
+  @media (orientation:portrait) and (max-width:820px){
+    body:has(#c2) #c2giro,body:has(#c2vs) #c2giro{display:flex;position:fixed;inset:0;z-index:300;background:#05070dee;color:#fff;flex-direction:column;
+      align-items:center;justify-content:center;gap:.6em;text-align:center;font:700 18px/1.3 system-ui,sans-serif;padding:24px}
+    #c2giro i{font-size:56px;font-style:normal;animation:c2-gira 2s ease-in-out infinite}
+    @keyframes c2-gira{0%,20%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
+  }
+
   /* los ataques se lanzan hacia el rival (en este diseño: izquierda/derecha) */
   #c2 .lu.lunge0{animation:c2-l0 .3s ease-out forwards;z-index:6}
   #c2 .lu.lunge1{animation:c2-l1 .3s ease-out forwards;z-index:6}
@@ -119,8 +148,7 @@
   @keyframes c2-l1{to{transform:translateY(8%) scale(1.04)}}
   `;
   const st=document.createElement('style');st.textContent=CSS;document.head.appendChild(st);
-
-  const activo=()=>LSg('ui2')==='1'&&window.innerWidth>window.innerHeight;
+  {const g=document.createElement('div');g.id='c2giro';g.innerHTML='<i>📱</i><div>Gira tu celular<br><small style="font-weight:400;opacity:.8">Press Turn se juega en horizontal</small></div>';document.body.appendChild(g)}
 
   function colorDe(l){
     const b=String(l.boton||'');
@@ -205,23 +233,37 @@
     }
     h+=`<div class="c2-help"><b>AYUDA</b><span class="tx" id="c2h">${esc(defecto)}</span>
       ${MODO==='pvp'?'<button class="c2-b" onclick="rendirse()">🏳️ Rendirse</button>':''}
-      <button class="c2-b" onclick="UI2.clasico()">↩ Clásico</button></div></div>`;
+      </div></div>`;
     $('#app').innerHTML=h;
     CBT.post();
   }
 
+  // ---------- pantalla de VERSUS: tu equipo contra el rival, antes de pelear ----------
+  function versus(){
+    return new Promise(res=>{
+      try{
+        if(!S||!S.equipos){return res()}
+        const quien=(l,lado)=>`<div class="p"><img ${sprite(l,lado)} alt=""></div>`;
+        const e0=S.equipos[0],e1=S.equipos[1];
+        const ar=(typeof YO!=='undefined'&&YO.fondo_img)||(typeof U!=='undefined'&&U.arena)||'';
+        const d=document.createElement('div');d.id='c2vs';
+        if(ar&&typeof ar==='string')d.style.setProperty('--arena',`url("${ar}")`);
+        d.innerHTML=`<div class="vb"></div>
+          <div class="lado l0">${e0.luchadores.map(l=>quien(l,0)).join('')}<span class="tm">${esc(e0.nombre)}</span></div>
+          <div class="lado l1">${e1.luchadores.map(l=>quien(l,1)).join('')}<span class="tm">${esc(e1.nombre)}</span></div>
+          <div class="vs">VS</div><div class="sk">TOCA PARA SALTAR</div>`;
+        document.body.appendChild(d);
+        let ok=false;
+        const fin=()=>{if(ok)return;ok=true;d.classList.add('fuera');setTimeout(()=>{d.remove();res()},300)};
+        d.addEventListener('pointerdown',fin);
+        setTimeout(fin,2800);
+      }catch(e){res()}
+    });
+  }
+
   window.UI2={
-    activo,dibujar,
+    dibujar,versus,
     ayuda:t=>{const e=document.getElementById('c2h');if(e)e.textContent=t||defecto},
-    clasico:()=>{LSs('ui2','0');dibujarCombate(true)},
   };
 
-  // si giran el celular / cambian el tamaño, vuelve a dibujar con el diseño que corresponda
-  let modo=activo(),tm=null;
-  window.addEventListener('resize',()=>{
-    clearTimeout(tm);tm=setTimeout(()=>{
-      const m=activo();if(m===modo)return;modo=m;
-      try{if(S&&!S.terminado&&document.querySelector('#c2,.eq'))dibujarCombate(true)}catch(e){}
-    },200);
-  });
 })();
