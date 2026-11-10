@@ -150,6 +150,15 @@ CHARLAS = {
             "No me gustan las peleas, pero me gusta cuidar a los míos.",
         ],
     },
+    "urahara": {
+        "burnice": "Urahara tiene una tienda más rara que la mía y un sombrero que no me deja ver sus ojos. Intenté venderle gasolina. Me la intentó vender de vuelta, más cara. ¡Respeto!",
+        "lineas": [
+            "Bienvenido, bienvenido. Mira, toca, pregunta. Lo que rompas, lo pagas. Jeje.",
+            "Un plan sin plan B es solo un deseo con sombrero.",
+            "Si el reloj está lleno, no estorbo: aprovecho. Si está vacío, hago que parezca lleno.",
+            "No te preocupes, todo esto estaba previsto. Más o menos.",
+        ],
+    },
 }
 
 
