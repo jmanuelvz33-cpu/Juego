@@ -230,6 +230,7 @@
       <div class="grandes"><button onclick="dibujarEleccion()">⚔️ Jugar</button><button class="btn-burnice" onclick="bazar('inicio')">🔥 Bazar</button></div>
       <div id="extras"></div></div></div>`;
     UI.portadaFit&&UI.portadaFit();
+    window.PWA&&PWA.boton();
   };
 
   /* ---------- selección (rueda) ---------- */
