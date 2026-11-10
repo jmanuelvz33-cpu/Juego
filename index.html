@@ -2,6 +2,11 @@
 <html lang="es"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Press Turn — Prototipo web</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#060a10">
+<link rel="icon" href="/img/icon-192.png"><link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Press Turn"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,sans-serif}
@@ -463,4 +468,27 @@ function dibujarFin(){
   ${HIST?(gane?`<button onclick="UI.histPost()">▶ Continuar la historia</button>`:`<button onclick="UI.histBatalla()">🔁 Reintentar</button>`)+` <button class="sec" onclick="UI.histMenu()">📖 Capítulos</button>`:`<button onclick="inicio()">Otra pelea</button>`} <button class="btn-burnice" onclick="bazar('inicio')">🔥 Bazar</button></div></div></div>`;
 }
 inicio(true);
-</script></body></html>
+</script><script>
+/* ---------- PWA: instalar como app ---------- */
+(function(){
+  if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+  let ev=null;
+  const instalada=()=>matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.MSStream;
+  addEventListener('beforeinstallprompt',e=>{e.preventDefault();ev=e;PWA.boton()});
+  addEventListener('appinstalled',()=>{ev=null;const b=document.getElementById('pwaBtn');if(b)b.remove()});
+  window.PWA={
+    boton(){
+      const x=document.getElementById('extras');
+      if(!x||instalada()||document.getElementById('pwaBtn')||(!ev&&!ios))return;
+      const b=document.createElement('button');b.id='pwaBtn';b.className='sec';b.textContent='📲 Instalar app';
+      b.style.cssText='position:fixed;left:10px;bottom:8px;z-index:50;padding:6px 12px;font-size:.8rem;border-radius:20px;clip-path:none;background:#1c2536cc;border:1px solid #38d4ff88;backdrop-filter:blur(4px)';b.onclick=PWA.instalar;x.appendChild(b);
+    },
+    async instalar(){
+      if(ev){ev.prompt();try{await ev.userChoice}catch(e){}ev=null;const b=document.getElementById('pwaBtn');if(b)b.remove();return}
+      alert('Para instalar en iPhone/iPad:\n1) Toca el botón Compartir (el cuadrado con la flecha) en Safari.\n2) Elige «Añadir a pantalla de inicio».\nAsí se abre a pantalla completa como una app.')
+    }
+  };
+})();
+</script>
+</body></html>
