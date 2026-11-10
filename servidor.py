@@ -769,6 +769,16 @@ class H(BaseHTTPRequestHandler):
                 return self._json(GETS[ruta]({k: v[0] for k, v in q.items()}, self._sesion()))
             if ruta in ("/musica.js", "/reproductor.js", "/interfaz.js", "/pantallas.js", "/dialogos.js", "/novela.js", "/historia.js", "/combate2.js", "/estilo.css") or ruta.startswith(("/musica/", "/musica_historia/", "/img/", "/img_historia/", "/voces/", "/fuentes/")):
                 return self._estatico(ruta)
+            if ruta in ("/sw.js", "/manifest.webmanifest"):          # PWA: el service worker debe servirse desde la raíz
+                raw = (AQUI / ruta[1:]).read_bytes()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/javascript; charset=utf-8" if ruta == "/sw.js" else "application/manifest+json; charset=utf-8")
+                self.send_header("Cache-Control", "no-cache")
+                if ruta == "/sw.js":
+                    self.send_header("Service-Worker-Allowed", "/")
+                self.send_header("Content-Length", str(len(raw)))
+                self.end_headers()
+                return self.wfile.write(raw)
             if ruta in ("/", "/index.html"):
                 raw = (AQUI / "index.html").read_bytes()
                 self.send_response(200)
