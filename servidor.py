@@ -105,7 +105,7 @@ def _luchador(c, eq, i, l, mio=True):
         "color": "#%06x" % l.d["color"], "boton": l.d.get("boton", "azul"),
         "gif": l.gif, "hp": l.hp, "max_hp": l.max_hp, "pm": l.pm, "ulti": int(l.ulti),
         "ulti_lista": l.ulti >= 100, "vivo": l.vivo, "incapaz": l.incapaz, "guardia": l.guardia,
-        "hojas": l.hojas if l.d.get("hojas") else None, "sombras": l.sombras if l.d.get("sombras") else None,
+        "hojas": l.hojas if l.d.get("hojas") else None, "arena": l.arena if l.d.get("arena") else None, "arena_max": M.ARENA_MAX, "sombras": l.sombras if l.d.get("sombras") else None,
         "forma": (l.d.get("forma_nombre", "Mahoraga") if l.forma else None), "forma_hp": l.forma_hp,
         "forma_turnos": l.forma_turnos,
         "efectos": [M.EFECTOS_TXT[e] for e in l.efectos] + [M.BONOS_TXT[b] for b in l.bonos],
@@ -216,7 +216,7 @@ def api_personajes(_, ses):
             movs.append({"nombre": x["nombre"], "coste": x["coste"], "pm": x.get("pm", 0), "sombras": x.get("sombras", 0),
                          "dmg": x.get("dmg"), "prec": x.get("prec"), "desc": x.get("desc", "")})
         u = d["ulti"]
-        ficha = {"vida": d["vida"], "recurso": f"🌑 Sombras (máx. {M.SOMBRAS_MAX})" if d.get("sombras") else f"🔵 PM (máx. {M.PM_MAX})",
+        ficha = {"vida": d["vida"], "recurso": (f"🌑 Sombras (máx. {M.SOMBRAS_MAX})" if d.get("sombras") else f"⏳ Reloj de arena (máx. {M.ARENA_MAX})" if d.get("arena") else f"🔵 PM (máx. {M.PM_MAX})"),
                  "movs": movs, "ulti": {"nombre": u["nombre"], "coste": u["coste"], "desc": u.get("desc", "")}}
         if d.get("ulti_alt"):
             ficha["ulti_alt"] = {"nombre": d["ulti_alt"]["nombre"], "desc": d["ulti_alt"].get("desc", "")}
