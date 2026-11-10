@@ -255,10 +255,16 @@ CATS = {
 
 
 def _img_mascota(k):
-    """URL de img/mascotas/<k>.(png|webp|gif|jpg) si el archivo existe; si no, ''."""
-    for ext in ("png", "webp", "gif", "jpg", "jpeg"):
-        if (AQUI / "img" / "mascotas" / f"{k}.{ext}").exists():
-            return f"/img/mascotas/{k}.{ext}"
+    """Busca la imagen de la mascota en img/mascotas/. Tolera mayúsculas, espacios, guiones y cualquier
+    extensión de imagen (tusk_act_1.png, Tusk Act 1.PNG, tusk-act-1.webp...). Si no hay, ''."""
+    carpeta = AQUI / "img" / "mascotas"
+    if not carpeta.is_dir():
+        return ""
+    norm = lambda s: re.sub(r"[^a-z0-9]+", "", s.lower())
+    quiero = {norm(k), norm(C.COSMETICOS["mascotas"].get(k, {}).get("nombre", k))}
+    for f in sorted(carpeta.iterdir()):
+        if f.suffix.lower() in (".png", ".webp", ".gif", ".jpg", ".jpeg", ".avif") and norm(f.stem) in quiero:
+            return "/img/mascotas/" + urllib.parse.quote(f.name)
     return ""
 
 
@@ -725,12 +731,16 @@ class H(BaseHTTPRequestHandler):
     def _estatico(self, ruta):
         tipos = {".js": "application/javascript; charset=utf-8", ".mp3": "audio/mpeg", ".ogg": "audio/ogg",
                  ".m4a": "audio/mp4", ".wav": "audio/wav", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
-                 ".png": "image/png", ".webp": "image/webp",
+                 ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif", ".avif": "image/avif",
                  ".css": "text/css; charset=utf-8", ".ttf": "font/ttf", ".woff2": "font/woff2", ".otf": "font/otf"}
         if ruta.startswith(("/musica/", "/musica_historia/", "/img/", "/img_historia/", "/voces/", "/fuentes/")):
             carpeta = ruta.split("/")[1]
             nombre = urllib.parse.unquote(ruta.split("/", 2)[2])
-            arc = (AQUI / carpeta / Path(nombre).name)          # Path.name evita salirse de la carpeta
+            base = (AQUI / carpeta).resolve()
+            if carpeta == "img" and nombre.startswith("mascotas/"):     # única subcarpeta permitida
+                arc = (base / "mascotas" / Path(nombre).name)
+            else:
+                arc = (base / Path(nombre).name)          # Path.name evita salirse de la carpeta
         else:
             arc = AQUI / ruta.lstrip("/")
         tipo = tipos.get(arc.suffix.lower())
