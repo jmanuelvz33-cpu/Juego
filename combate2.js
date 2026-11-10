@@ -66,6 +66,9 @@
   #c2 .c2-hero img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 .8em #0009);animation:c2-resp 3.4s ease-in-out infinite;transform-origin:50% 100%}
   #c2 .c2-hero.off img{filter:brightness(.55) drop-shadow(0 0 .6em #0009);animation:none}
   #c2 .c2-hero .nm{position:absolute;left:50%;bottom:-.2em;transform:translateX(-50%);background:#000c;border-left:.3em solid var(--c,var(--gold));padding:.1em .8em;font-family:var(--f-titulo);font-weight:400;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;border-radius:0}
+  #c2 .c2-mas{position:absolute;left:35%;bottom:10vh;height:min(17vh,12vw);width:auto;z-index:4;pointer-events:none;filter:drop-shadow(0 .3em .4em #000a);animation:c2-mas 2.2s ease-in-out infinite;transform-origin:50% 100%}
+  #c2 .c2-mas.off{filter:brightness(.6) drop-shadow(0 .3em .4em #000a)}
+  @keyframes c2-mas{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-1.2vh) scale(1.03,.98)}}
   @keyframes c2-resp{0%,100%{transform:scale(1)}50%{transform:scale(1.012,1.018)}}
 
   /* tu equipo (derecha) */
@@ -230,6 +233,7 @@
       <div class="c2-reg">${CBT.registro(S)}</div>
       <div class="c2-en">${e1.luchadores.map(enemigo).join('')}</div>
       ${hero?`<div class="c2-hero ${miTurno?'':'off'}" style="--c:${colorDe(hero)}"><img ${sprite(hero,0)}><span class="nm">${emo(hero)} ${esc(hero.forma||hero.nombre)}</span></div>`:''}
+      ${YO.mascota_url?`<img class="c2-mas ${miTurno?'':'off'}" src="${esc(YO.mascota_url)}" alt="">`:''}
       <div class="c2-pt">${e0.luchadores.map(aliado).join('')}</div>`;
     if(miTurno&&a){
       h+=`<div class="c2-menu acc"><div class="c2-who">▶ ${esc(a.forma||a.nombre)}</div>
