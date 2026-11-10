@@ -254,7 +254,21 @@ CATS = {
 }
 
 
+def _img_mascota(k):
+    """URL de img/mascotas/<k>.(png|webp|gif|jpg) si el archivo existe; si no, ''."""
+    for ext in ("png", "webp", "gif", "jpg", "jpeg"):
+        if (AQUI / "img" / "mascotas" / f"{k}.{ext}").exists():
+            return f"/img/mascotas/{k}.{ext}"
+    return ""
+
+
+def _refrescar_mascotas():
+    for k, it in C.COSMETICOS["mascotas"].items():
+        it["img"] = _img_mascota(k)
+
+
 def _oferta():
+    _refrescar_mascotas()
     return X.oferta({c: v[0] for c, v in CATS.items()})
 
 
@@ -278,6 +292,7 @@ def api_yo(_, ses):
         return {"logueado": False, "login_disponible": bool(CLIENT_ID)}
     d = db().obtener(ses["id"])
     eq = d["equipado"]
+    _refrescar_mascotas()
     mi = C.COSMETICOS["mascotas"].get(eq.get("mascota"))
     marco = X.MARCOS.get(eq.get("color"))
     tit = X.TITULOS.get(eq.get("titulo"))
@@ -291,7 +306,7 @@ def api_yo(_, ses):
     return {"logueado": True, "id": ses["id"], "nombre": ses["n"], "avatar": ses.get("av"),
             "monedas": d["monedas"], "mascotas": d["mascotas"], "mascota": eq.get("mascota"),
             "imagen": eq.get("imagen"), "victorias": d.get("pvp_victorias", 0),
-            "derrotas": d.get("pvp_derrotas", 0), "mascota_url": _emoji_url(mi["normal"]) if mi else None,
+            "derrotas": d.get("pvp_derrotas", 0), "mascota_url": (mi["img"] or None) if mi else None,
             "marco": marco["css"] if marco else None, "titulo": tit["nombre"] if tit else None,
             "fondo_img": fon["img"] if fon and fon["img"] else None,
             "victoria_img": vic["img"] if vic and vic["img"] else None, "skins": skins,
@@ -305,10 +320,7 @@ def api_bazar(_, ses):
     for cat, (cat_, lista, ceq) in CATS.items():
         out = []
         for k, it in cat_.items():
-            if cat == "mascotas":
-                extra = {"emoji_url": _emoji_url(it["normal"]), "victoria_url": _emoji_url(it["victoria"])}
-            else:
-                extra = {k2: it[k2] for k2 in ("css", "img", "pj") if k2 in it}
+            extra = {k2: it[k2] for k2 in ("css", "img", "pj") if k2 in it}
             if d is None:
                 puesta = False
             elif cat == "skins":
@@ -332,6 +344,7 @@ def api_bazar(_, ses):
 def api_comprar(b, ses):
     if not ses:
         return {"error": "Inicia sesión con Discord para comprar."}
+    _refrescar_mascotas()
     cat = b.get("cat") or "mascotas"
     key = b.get("key")
     if cat not in CATS or key not in CATS[cat][0]:
