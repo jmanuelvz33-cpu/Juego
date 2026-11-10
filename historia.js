@@ -347,6 +347,7 @@ window.HISTORIA = {
     HIST={id,musica:'hist_'+id+'_batalla'};MODO='cpu';SEQ=0;SALA=null;
     G=r.id;S=r.estado;sel=0;tgt=null;tgtAli=null;CBT.reset();
     N=null;
+    await UI2.versus();
     dibujarCombate();CBT.inicio();
     if(r.pasos.length)await reproducir(r.pasos);
   };
