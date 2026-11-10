@@ -83,6 +83,11 @@
   #c2 .c2-p .n{font-weight:400;font-size:.95em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #c2 .c2-p .hn{font-size:.82em;color:#cbd2e4;line-height:1.1}
   #c2 .c2-p .t{font-size:.78em;color:#9aa3bd;min-height:0;line-height:1.1}
+  #c2 .c2-arena{display:inline-block;position:relative;width:1.5em;height:1.5em;border-radius:50%;vertical-align:middle;margin-right:.2em;
+    background:conic-gradient(from 0deg,#46e3b0 0 var(--p),#1b2233 var(--p) 100%);box-shadow:0 0 0 .1em #0b1020,0 0 .6em rgba(70,227,176,.35);transition:background .4s}
+  #c2 .c2-arena::before{content:"";position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(from 0deg,transparent 0 89deg,#0b1020 89deg 90deg)}
+  #c2 .c2-arena i{position:absolute;inset:.28em;border-radius:50%;background:#0b1020;font-style:normal;font-size:.7em;line-height:1.55em;text-align:center}
+  #c2 .c2-arena i::after{content:"⏳"}
   #c2 .c2-p .efs .ef{font-size:.85em}
 
   /* menú de acciones (izquierda) */
@@ -177,7 +182,8 @@
     const ex=[];
     if(l.sombras!=null)ex.push('🌑'.repeat(l.sombras));
     if(l.hojas!=null)ex.push('🍃'.repeat(l.hojas));
-    if(l.pm!=null&&l.sombras==null)ex.push(l.pm+' PM');
+    if(l.arena!=null)ex.push(`<span class="c2-arena" title="Reloj de arena ${l.arena}/${l.arena_max}" style="--p:${l.arena/l.arena_max*100}%"><i></i></span>`);
+    if(l.pm!=null&&l.sombras==null&&l.arena==null)ex.push(l.pm+' PM');
     const nom=l.forma?('👹 '+esc(l.forma)):(emo(l)+' '+esc(l.nombre));
     return {hp,mx,pct,ex,nom};
   }
