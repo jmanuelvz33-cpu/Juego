@@ -327,6 +327,7 @@ async function empezar(){
   const r=await api('/api/nueva',{equipo:elegidos,nivel});
   if(r.error)return alert(r.error);
   G=r.id;S=r.estado;sel=0;tgt=null;tgtAli=null;CBT.reset();
+  await UI2.versus();
   dibujarCombate();CBT.inicio();
   if(r.pasos.length)await reproducir(r.pasos);
 }
@@ -388,30 +389,6 @@ function actorActual(){
   if(!l||!l.acciones.length){l=eq.find(x=>x.acciones.length)||null;sel=l?l.i:0}
   return l;
 }
-function tarjeta(l,lado){
-  const cl=['lu'];
-  if(!l.vivo)cl.push('muerto');
-  if(lado==0&&l.i===sel&&S.turno===0)cl.push('sel');
-  if(lado==1&&l.i===tgt&&!tgtAli&&tgtAli!==0)cl.push('obj');
-  if(lado==0&&tgtAli===l.i)cl.push('ali');
-  if(S.actor===l.i&&l.vivo&&((S.turno===0)===(lado==0)))cl.push('ya');
-  const hp=l.forma?l.forma_hp:l.hp,mx=l.forma?90:l.max_hp,pct=Math.max(0,hp/mx*100);
-  if(l.vivo&&pct<30)cl.push('critico');
-  if(lado==1&&S.turno===0&&!S.terminado&&l.vivo&&!(S.blancos||[]).includes(l.i))cl.push('nob');
-  const extra=[];
-  if(l.sombras!=null)extra.push('🌑'.repeat(l.sombras));
-  if(l.hojas!=null)extra.push('🍃'.repeat(l.hojas));
-  if(l.pm!=null&&l.sombras==null)extra.push(l.pm+' PM');
-  const nom=l.forma?('👹 '+esc(l.forma)):(emo(l)+' '+esc(l.nombre));
-  return `<div class="${cl.join(' ')}" data-l="${lado}" data-i="${l.i}" onclick="clic(${lado},${l.i})">
-   <span class="num">${l.i+1}</span>${l.gif?`<img class="r" ${(l.vivo&&!l.forma&&pct<30&&!(lado==0&&YO.skins&&YO.skins[l.key]))?CBT.cara(l.key,'herido',l.gif):`src="${(lado==0&&YO.skins&&YO.skins[l.key])||l.gif}"`}>`:''}
-   <div class="n">${nom}</div>
-   ${CBT.barra('hp',lado,l.i,pct)}
-   <div>${l.vivo?CBT.num(lado,l.i,hp,mx):'💀'}</div>
-   ${CBT.barra('ult',lado,l.i,Math.min(100,l.ulti))}
-   <div class="t">${l.vivo?extra.join(' '):''} ${l.ulti_lista?'💥':''}</div>
-   ${l.vivo?CBT.chips(l):'<div class="efs"></div>'}</div>`;
-}
 function clic(lado,i){
   if(lock||!S||S.terminado||S.turno!==0)return;
   if(lado==0){
@@ -425,47 +402,13 @@ function clic(lado,i){
 }
 function elegirAli(i){tgtAli=i;dibujarCombate()}
 function elegirRival(i){tgt=i;tgtAli=null;dibujarCombate()}
-function ordenH(eq,lado){
-  const ya=(S.turno===0)===(lado==0)?S.actor:null;
-  return `<div class="orden">Orden: ${eq.luchadores.map(l=>`<span class="${!l.vivo?'x':(l.i===ya?'on':'')}">${l.i+1}.º ${esc(l.forma||l.nombre)}</span>`).join(' → ')}</div>`;
-}
 function dibujarCombate(forzar){
   if(!S)return;
   if(S.terminado&&!forzar){return dibujarFin()}
   musica(HIST&&HIST.musica?HIST.musica:'pelea');
-  if(window.UI2&&UI2.activo())return UI2.dibujar();   // diseño horizontal (prototipo): ?ui=2
-  const a=actorActual();
-  if(tgt==null||!S.blancos.includes(tgt))tgt=S.objetivo;
-  const miTurno=S.turno===0;
-  const soporte=a&&a.acciones.some(x=>x.apoyo||x.dual);
-  const e0=S.equipos[0],e1=S.equipos[1];
-  let h=`<div class="cab ${S.turno===1?'act':''}"><span>${esc(e1.nombre)} ${S.turno===1?'🔔':''}</span><span>${CBT.iconos(1,S.medios[1],S.turno===1)}</span></div>
-  ${ordenH(e1,1)}<div class="eq">${e1.luchadores.map(l=>tarjeta(l,1)).join('')}</div>
-  ${CBT.registro(S)}
-  <div class="cab ${miTurno?'act':''}"><span>${esc(e0.nombre)} ${miTurno?'🔔':''}</span><span>${miTurno?'Iconos: ':''}${CBT.iconos(0,S.medios[0],miTurno)}</span></div>
-  ${ordenH(e0,0)}<div class="eq">${e0.luchadores.map(l=>tarjeta(l,0)).join('')}</div>`;
-  if(miTurno&&a){
-    h+=`<div class="panel"><div>▶ Turno de <b>${emo(a)} ${esc(a.forma||a.nombre)}</b> (${a.i+1}.º) — elige objetivo y acción</div>
-    <div class="chips">${S.blancos.map(i=>`<button class="${tgtAli==null&&tgt===i?'on':''}" onclick="elegirRival(${i})">⚔️ ${esc(e1.luchadores[i].forma||e1.luchadores[i].nombre)}</button>`).join('')}
-    ${soporte?S.aliados.map(i=>`<button class="${tgtAli===i?'on':''}" onclick="elegirAli(${i})">💚 ${esc(e0.luchadores[i].nombre)}</button>`).join(''):''}</div>
-    <div class="acc">${a.acciones.map(x=>botonAcc(a,x)).join('')}
-    <button class="sec" onclick="terminar()">⏭️ Terminar turno</button>${MODO==='pvp'?'<button class="sec" onclick="rendirse()">🏳️ Rendirse</button>':''}</div>
-    <div class="hist">🔷 = 1 icono · 🔹 = ½ icono. Toca una carta tuya para cambiar de luchador y una rival para atacarla.</div></div>`;
-  }
-  if(MODO==='pvp'&&!miTurno)h+=`<div class="panel">⏳ Turno de <b>${esc(e1.nombre)}</b>… tienes 150 s en tu turno o pierdes por abandono. <button class="sec" onclick="rendirse()">🏳️ Rendirse</button></div>`;
-  $('#app').innerHTML=h;
-  CBT.post();
+  return UI2.dibujar();   // combate horizontal (único diseño)
 }
 function costeTxt(m){return ({1:'½',2:'1',4:'2'})[m]||(m/2)}
-function botonAcc(a,x){
-  const ic={normal:'⚔️',hab1:'✨',hab2:'💢',defender:'🛡️',ulti:'💥'}[x.k];
-  const nom=x.k==='ulti'&&!a.ulti_lista?`ÚLTI ${a.ulti}%`:x.nombre;
-  const b=String(a.boton||'');
-  const hex=/^#?[0-9a-f]{6}$/i.test(b)?'#'+b.replace('#',''):null;
-  const col=x.k==='defender'?'#6b7280':x.k==='ulti'?'#d9534f':COL[b.toLowerCase()]||hex||COL.azul;
-  const extra=(x.pm?` · ${x.pm}PM`:'')+(x.sombras?` · ${x.sombras}🌑`:'');
-  return `<button style="background:${col};border:2px solid color-mix(in srgb,${col} 45%,#fff)" data-ok="${x.ok?1:0}" ${x.ok&&!lock?'':'disabled'} onclick="hacer('${x.k}')" title="${esc(x.desc)}">${ic} ${esc(nom)}<small>${costeTxt(x.coste)} icono${extra}</small></button>`;
-}
 async function hacer(k){
   if(lock)return;const a=actorActual();if(!a)return;
   const x=a.acciones.find(y=>y.k===k);
