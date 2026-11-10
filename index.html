@@ -185,7 +185,7 @@ const CATN={mascotas:['🐾','Mascotas'],marcos:['🖼️','Marcos'],titulos:['�
 function tarjetaTienda(cat,it,modo){
   const of=BZ.oferta&&BZ.oferta.cat===cat&&BZ.oferta.key===it.key;
   let vis='';
-  if(cat==='mascotas')vis=it.emoji_url?`<img class="gi" src="${it.emoji_url}">`:'🐾';
+  if(cat==='mascotas')vis=it.img?`<img class="gi" src="${it.img}">`:'🐾';
   else if(cat==='marcos')vis=`<div class="ring" style="background:${it.css}"><i></i></div>`;
   else if(cat==='titulos')vis=`<div class="tt">«${esc(it.nombre)}»</div>`;
   else vis=it.img?`<div class="foto" style="background-image:url('${esc(it.img)}')"></div>`:'<span style="font-size:1.8rem">🖼️</span>';
@@ -207,7 +207,7 @@ function previa(cat,key){
   let cuerpo='';
   if(cat==='marcos')y.marco=it.css;
   if(cat==='titulos')y.titulo=it.nombre;
-  const masc=cat==='mascotas'?it.emoji_url:YO.mascota_url;
+  const masc=cat==='mascotas'?it.img:YO.mascota_url;
   if(['marcos','titulos','mascotas'].includes(cat)){
     cuerpo=`<div class="perfil" style="margin:8px 0">${UI.av(y,52)}<div><div class="nom">${esc(YO.logueado?YO.nombre:'Tu nombre')}</div>${y.titulo?`<div class="tit">«${esc(y.titulo)}»</div>`:''}<div class="sub">💀 ${YO.monedas||0}</div></div>${masc?`<img class="mas" src="${masc}">`:''}</div>`;
   }else if(cat==='fondos'){cuerpo=`<div style="height:200px;border-radius:12px;background:linear-gradient(rgba(10,12,18,.5),rgba(10,12,18,.5)),url('${esc(it.img)}') center/cover;display:flex;align-items:center;justify-content:center;color:#fff">⚔️ Así se vería tu combate</div>`}
