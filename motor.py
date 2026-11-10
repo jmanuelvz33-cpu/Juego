@@ -25,6 +25,15 @@ HOJAS_MAX = 3           # 🍃 hojas máximas de Mantis (las gana con su ataque 
 CURA_HOJAS = {1: 16, 2: 30, 3: 14}   # cura de Mantis según sus hojas: 1 = 16 a un aliado · 2 = 30 a un aliado · 3 = 14 a TODO el equipo
 ULTI_CURA = 0.4         # curar también carga la ÚLTI de quien cura (0.4 = 40% de lo que carga hacer daño)
 ULTI_HOJA = 20          # % de ÚLTI que gana Mantis cada vez que su ataque normal acierta
+ARENA_MAX = 4           # ⏳ medidor "reloj de arena" de Urahara (4 gajos). Mitad (2) = efecto de 2 turnos · lleno (4) = efecto potenciado
+ARENA_NORMAL = 2        # gajos que gana con su ataque normal cuando acierta
+ULTI_ARENA = 15         # % de ÚLTI que gana Urahara cada vez que su ataque normal acierta
+REIATSU = {"reiatsu": (0.15, 0.15, 0.10),       # reserva espiritual normal (medio reloj): +15% daño · -15% daño recibido · +10% esquiva
+           "reiatsu_max": (0.25, 0.25, 0.20)}   # reserva espiritual potenciada (reloj lleno): +25% · -25% · +20%
+REIATSU_TURNOS = {"reiatsu": 2, "reiatsu_max": 3}
+BANKAI_CRIT = 0.20      # 🌀 Bankai (Urahara): +20% de probabilidad de crítico a todo el equipo
+BANKAI_ESQUIVA = 0.20   # 🌀 Bankai: +20% de esquiva a todo el equipo
+BANKAI_TURNOS = 2
 MS_RONDA = 40           # muerte súbita: pasados tantos cambios de turno, el daño sube en cada turno (evita peleas eternas)
 MS_SUBE = 0.10          # cuánto sube el daño por cada cambio de turno extra (10% = +10% cada vez)
 FUSION_PREC = 0.15      # 🧵 Fusionado: el luchador fusionado falla 15% más (baja su precisión)
@@ -76,7 +85,10 @@ EFECTOS_TXT = {
     "regen": "💚 Regeneración",   # solo lo da Josuke a un compañero: se cura al inicio de su turno
 }
 BONOS_TXT = {"furia": "🔺 Furia (+25% daño)", "velocidad": "💨 Velocidad (+25% crítico)",
-             "frenesi": "🩸 Frenesí (+20% daño y roba vida a los que sangran)"}
+             "frenesi": "🩸 Frenesí (+20% daño y roba vida a los que sangran)",
+             "reiatsu": "🔷 Reiatsu (+15% daño, -15% daño recibido, +10% esquiva)",
+             "reiatsu_max": "🔷 Reiatsu máximo (+25% daño, -25% daño recibido, +20% esquiva)",
+             "bankai": "🌀 Bankai (+20% crítico y +20% esquiva)"}
 
 # ---------------- PERSONAJES ----------------
 # "gif" = retrato · "crit_gif" = animación de golpe fuerte / crítico · "ulti_gif" = animación de la ÚLTI
@@ -353,6 +365,31 @@ PERSONAJES = {
                  "gif": "https://i.imgur.com/FN5ttuM.gif", "grito": "¡Sus antenas brillan y todos se duermen!",
                  "desc": "Duerme a todo el equipo rival: no puede actuar en su próximo turno. Siempre acierta."},
     },
+    "urahara": {
+        "nombre": "Kisuke Urahara",
+        "emoji": "<:emoji_27:1569682511859294321>",     # <- pon aquí tu emoji de Urahara: <:nombre:ID>
+        "color": 0x2E8B6E,
+        "boton": "30C57B",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
+        "vida": 125,
+        "arena": True,      # usa el medidor ⏳ reloj de arena en vez de PM
+        "desc": "Bleach. Apoyo táctico: su bastón llena el reloj y con él refuerza al equipo o debilita la defensa rival; su Bankai los vuelve difíciles de tocar.",
+        "gif": "https://i.imgur.com/RgkN2Su.jpeg",            # <- retrato de Urahara (o sube img/urahara_normal.png)
+        "crit_gif": "https://i.imgur.com/kTBD5Pi.gif",
+        "victoria_img": "",
+        "mov": {
+            "normal": {"nombre": "Golpe de bastón", "tipo": "normal", "coste": COSTE_NORMAL,
+                       "dmg": (6, 9), "prec": 0.97, "reloj": ARENA_NORMAL,
+                       "desc": "Poco daño. Si acierta, el ⏳ reloj de arena gana 2 gajos (máx. 4) y la ÚLTI un poco."},
+            "hab1": {"nombre": "Gigai explosivo", "tipo": "reserva", "coste": COSTE_HABILIDAD, "arena": 2,
+                     "desc": "Gasta todo el ⏳ reloj (mínimo 2 gajos). Estalla un gigai portátil y todo el equipo gana 🔷 Reiatsu: más daño, menos daño recibido y más esquiva. Medio reloj: 2 turnos · reloj lleno: 3 turnos y efectos mayores."},
+            "hab2": {"nombre": "Red de Benihime", "tipo": "fuerte", "coste": COSTE_HABILIDAD, "arena": 2,
+                     "dmg": (14, 19), "prec": 0.90, "efecto": ("guardia_rota", 2, 1.0),
+                     "desc": "Gasta todo el ⏳ reloj (mínimo 2 gajos). Golpea y deja al rival con 🛡️ Guardia rota 2 turnos. Con el reloj lleno se la aplica a todos los rivales."},
+        },
+        "ulti": {"nombre": "Bankai: Kannonbiraki Benihime Aratame", "tipo": "bankai", "coste": COSTE_ULTI,
+                 "gif": "", "grito": "¡Bankai! La realidad se dobla a su favor.",
+                 "desc": "Todo el equipo gana 🌀 Bankai 2 turnos: +20% de crítico y +20% de esquiva."},
+    },
     # ---- Personaje SOLO del modo historia: no sale en la selección de equipo ----
     "esbirro": {
         "nombre": "Esbirro de Dio",
@@ -438,6 +475,7 @@ class Luchador:
         self.ulti = 0.0
         self.pm = PM_INICIAL
         self.hojas = 0        # 🍃 solo las usa Mantis
+        self.arena = 0        # ⏳ solo lo usa Urahara (reloj de arena)
         self.sombras = SOMBRAS_INICIAL if self.d.get("sombras") else 0   # 🌑 solo las usa Megumi
         self.forma = None     # "mahoraga" mientras Megumi está transformado
         self.forma_hp = 0
@@ -679,6 +717,8 @@ class Combate:
             return False
         if l.pm < m.get("pm", 0) or l.sombras < m.get("sombras", 0):
             return False
+        if l.arena < m.get("arena", 0):
+            return False
         if m["tipo"] == "cura" and (l.hojas < 1 or not self._heridos()):
             return False
         if m["tipo"] == "limpia" and (l.hojas < m.get("hojas", 1) or self._a_limpiar() is None):
@@ -709,6 +749,18 @@ class Combate:
     def _apoyo(self, l, k, objetivo=None):
         m = l.mov(k)
         cab = f"{l.d['emoji']} **{l.tag}** usa **{m['nombre']}**"
+        if m["tipo"] == "reserva":
+            lleno = l.arena >= ARENA_MAX
+            nombre = "reiatsu_max" if lleno else "reiatsu"
+            dur = REIATSU_TURNOS[nombre]
+            l.arena = 0
+            for x in self.actual.vivos:
+                x.bonos.pop("reiatsu", None)
+                x.bonos.pop("reiatsu_max", None)
+                x.bonos[nombre] = dur
+            l.ulti = min(100.0, l.ulti + 20)
+            self.log = (f"{cab}{' con el reloj LLENO' if lleno else ''}.\n{BONOS_TXT[nombre]} para todo el equipo durante {dur} turnos.")
+            return
         if m["tipo"] == "cura":
             n = min(l.hojas, HOJAS_MAX)
             l.hojas = 0
@@ -782,7 +834,7 @@ class Combate:
             l.guardia = True
             self.log = (f"🌀 **{l.tag}** se adapta: recibirá la mitad del daño, quien lo golpee perderá 1 icono "
                         f"y absorberá el primer efecto que le lancen.")
-        elif l.mov(k)["tipo"] in ("cura", "limpia"):
+        elif l.mov(k)["tipo"] in ("cura", "limpia", "reserva"):
             eq.medios -= l.mov(k)["coste"]
             self._apoyo(l, k, objetivo)
         elif self._es_curar_aliado(l, k, objetivo):
@@ -803,9 +855,9 @@ class Combate:
             self._cerrar_turno()
         return True
 
-    def _prec(self, a, m):
-        """Precisión real del movimiento (🧵 Fusionado la baja)."""
-        return max(0.05, m["prec"] - (FUSION_PREC if "fusion" in a.efectos else 0))
+    def _prec(self, a, m, t=None):
+        """Precisión real del movimiento (🧵 Fusionado y la esquiva del objetivo la bajan)."""
+        return max(0.05, m["prec"] - (FUSION_PREC if "fusion" in a.efectos else 0) - self._esquiva(t))
 
     def _mult_sangre(self, a, t):
         """🩸 Frenesí: más daño contra rivales que sangran."""
@@ -817,11 +869,34 @@ class Combate:
             mult *= FURIA_MULT
         if "debilidad" in a.efectos:
             mult *= DEBIL_MULT
+        for r in ("reiatsu_max", "reiatsu"):
+            if r in a.bonos:
+                mult *= 1 + REIATSU[r][0]
+                break
         return mult
+
+    def _esquiva(self, t):
+        """Probabilidad extra de que un ataque contra t falle (Reiatsu y Bankai)."""
+        e = 0.0
+        if t is None:
+            return e
+        for r in ("reiatsu_max", "reiatsu"):
+            if r in t.bonos:
+                e += REIATSU[r][2]
+                break
+        if "bankai" in t.bonos:
+            e += BANKAI_ESQUIVA
+        return e
+
+    def _mult_defensa(self, t):
+        for r in ("reiatsu_max", "reiatsu"):
+            if r in t.bonos:
+                return 1 - REIATSU[r][1]
+        return 1.0
 
     def _golpear(self, t, dmg, atacante):
         """Aplica daño y carga las ÚLTIS. Devuelve el daño real."""
-        dmg = max(1, round(dmg))
+        dmg = max(1, round(dmg * self._mult_defensa(t)))
         if t.forma:     # el daño va a la vida de Mahoraga, no a la de Megumi
             dmg = min(dmg, t.forma_hp)
             t.forma_hp -= dmg
@@ -862,7 +937,11 @@ class Combate:
         if m.get("bono"):
             a.bonos[m["bono"][0]] = max(m["bono"][1], a.bonos.get(m["bono"][0], 0))
             cab += f" y gana {BONOS_TXT[m['bono'][0]].split(' (')[0]}"
-        if random.random() > self._prec(a, m):
+        reloj = 0
+        if m.get("arena"):                 # Urahara: gasta todo el reloj, y el nivel decide el efecto
+            reloj = a.arena
+            a.arena = 0
+        if random.random() > self._prec(a, m, t):
             eq.medios = 0
             self.log = f"{cab}... ¡pero falla! 💨 **{eq.nombre} pierde todos sus turnos.**"
             return
@@ -881,7 +960,7 @@ class Combate:
         else:
             if t.guardia and rota:
                 notas.append(f"🛡️💔 La guardia de {t.tag} está rota y no lo protege.")
-            if random.random() < PROB_CRIT + (VEL_CRIT if "velocidad" in a.bonos else 0):
+            if random.random() < PROB_CRIT + (VEL_CRIT if "velocidad" in a.bonos else 0) + (BANKAI_CRIT if "bankai" in a.bonos else 0):
                 crit = True
                 dmg *= CRIT_MULT
                 eq.medios += m["coste"]
@@ -904,6 +983,11 @@ class Combate:
             extra = self._golpear(t, m["extra"], a)
             real += extra
             notas.append(f"⚡ +{extra} de daño eléctrico.")
+        if m.get("reloj"):
+            a.ulti = min(100.0, a.ulti + ULTI_ARENA)
+            if a.arena < ARENA_MAX:
+                a.arena = min(ARENA_MAX, a.arena + m["reloj"])
+                notas.append(f"⏳ {a.tag} llena el reloj ({a.arena}/{ARENA_MAX}).")
         if m.get("sombra") and a.sombras < SOMBRAS_MAX:
             a.sombras += 1
             notas.append(f"🌑 {a.tag} gana una sombra ({a.sombras}/{SOMBRAS_MAX}).")
@@ -917,6 +1001,10 @@ class Combate:
         elif t.hp > 0 and not (era_forma and not t.forma):
             if m.get("efecto"):
                 notas.append(self._aplicar_efecto(t, m["efecto"]))
+                if reloj >= ARENA_MAX:        # reloj lleno: el efecto llega a todos los rivales
+                    for x in self.rival.blancos:
+                        if x is not t and x.vivo:
+                            notas.append(self._aplicar_efecto(x, m["efecto"]))
             if m.get("efecto_extra"):
                 notas.append(self._aplicar_efecto(t, m["efecto_extra"]))
             if a.forma and a.adaptado:       # Mahoraga devuelve el efecto que absorbió
@@ -1010,6 +1098,12 @@ class Combate:
                 self.log += "\n" + "\n".join(notas)
             a.ulti = 0.0
             return
+        if u["tipo"] == "bankai":
+            for l in eq.vivos:
+                l.bonos["bankai"] = BANKAI_TURNOS
+            self.log = f"{cab}\n{BONOS_TXT['bankai']} para todo el equipo durante {BANKAI_TURNOS} turnos."
+            a.ulti = 0.0
+            return
         if u["tipo"] == "sueno":
             notas = [self._aplicar_efecto(t, u["efecto"]) for t in rv.blancos]
             self.log = f"{cab}\n" + "\n".join(n for n in notas if n)
@@ -1057,7 +1151,7 @@ class Combate:
             for k in ("normal", "hab1", "hab2", "defender", "ulti"):
                 if not self.puede(l, k):
                     continue
-                if k == "defender" or (k != "ulti" and l.mov(k)["tipo"] in ("cura", "limpia", "adapta")):
+                if k == "defender" or (k != "ulti" and l.mov(k)["tipo"] in ("cura", "limpia", "adapta", "reserva")):
                     res.append((l, k, None))
                 elif k != "ulti" and (l.mov(k).get("sana") or l.mov(k).get("regen")):
                     res += [(l, k, t) for t in rv.blancos]
@@ -1102,6 +1196,9 @@ class Combate:
             v = sum(prom * (ROTA_MULT if "guardia_rota" in x.efectos else 1) + (20 if prom >= x.hp else 0) for x in rv.blancos)
             v += min(sum(m["cura"]) / 2 * m["curas"] * len(eq.vivos), sum(x.max_hp - x.hp for x in eq.vivos))
             return v / (m["coste"] ** 0.8)
+        if m["tipo"] == "reserva":
+            lleno = l.arena >= ARENA_MAX
+            return ((20 if lleno else 12) + 3 * len(eq.vivos)) / (m["coste"] ** 0.8)
         if m["tipo"] == "cura":
             n = min(l.hojas, HOJAS_MAX)
             objetivos = eq.vivos if n >= 3 else [min(self._heridos(), key=lambda x: x.hp / x.max_hp)]
@@ -1115,6 +1212,9 @@ class Combate:
             v = 5 + (12 if "paralisis" in t.efectos else 0) + 5 * sum(e in t.efectos for e in ("quemadura", "veneno", "sangrado"))
             return v / (m["coste"] ** 0.8)
         if k == "ulti":
+            if m["tipo"] == "bankai":
+                v = 9 * len(eq.vivos) + 6
+                return v / (m["coste"] ** 0.8)
             if m["tipo"] == "sueno":
                 v = 14 * sum(1 for x in rv.vivos if not x.incapaz)
                 return v / (m["coste"] ** 0.8)
@@ -1138,7 +1238,7 @@ class Combate:
         guard = t.guardia and not rota
         if rota:
             prom *= ROTA_MULT
-        v = prom * self._prec(l, m) * (GUARDIA_MULT if guard else 1)
+        v = prom * self._prec(l, m, t) * (GUARDIA_MULT if guard else 1)
         if guard:
             v -= 6
         if prom >= t.hp:
@@ -1159,6 +1259,10 @@ class Combate:
             v += 2                      # el normal de Megumi junta sombras
         if k == "normal" and l.pm < PM_MAX:
             v += 2                      # el normal recupera PM
+        if m.get("reloj") and l.arena < ARENA_MAX:
+            v += 4                      # el normal de Urahara llena el reloj
+        if m.get("arena") and l.arena >= ARENA_MAX and m.get("efecto"):
+            v += 6 * max(0, len(rv.blancos) - 1)    # reloj lleno: la guardia rota llega a todos
         if m.get("hoja") and l.hojas < HOJAS_MAX:
             v += 2                      # el normal de Mantis junta hojas
         if m.get("bono") and m["bono"][0] not in l.bonos:
