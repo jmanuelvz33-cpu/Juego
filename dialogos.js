@@ -344,6 +344,38 @@ window.DIALOGOS = {
     ],
   },
 
+  // ---------------------------------------------------------------- URAHARA
+  urahara: {
+    hola: [
+      ["feliz", "Oh, un cliente… digo, un visitante. Pasa, pasa. Ojo, la silla no cobra. La charla, quizá."],
+      ["feliz", "¡Volviste! Qué bien, ya empezaba a pensar que mi plan para atraerte había fallado. Jeje."],
+      ["feliz", "Ahí está mi persona favorita de la mesa. Siéntate, tengo té y un par de secretos sin vender."],
+    ],
+    gane: ["feliz", "¡Ganamos! Todo salió según lo previsto… más o menos. Bueno, un poco de suerte también ayudó. No se lo cuentes a nadie."],
+    preguntas: [
+      { q: "¿Qué hay detrás de ese sombrero y ese abanico?",
+        r: [["feliz", "Sombra, estilo y mucho misterio. El abanico es para tapar la sonrisa. Lo demás, es un secreto de la casa."],
+            ["normal", "A veces, lo que no se ve es lo que gana la pelea. Un buen abanico esconde una sonrisa… y a veces algo más."],
+            ["feliz", "Te lo enseñaría todo, pero un buen tendero nunca regala la mercancía. A ti te hago descuento, eso sí."]] },
+      { q: "¿Cómo planeas tus peleas?",
+        r: [["feliz", "Con calma. Primero miro, luego espero, y cuando todos creen que no hago nada… ahí hago mi movimiento."],
+            ["normal", "Cada golpe del bastón es un granito de arena. Llenas el reloj y, cuando llega el momento, lo vuelcas todo de una vez."],
+            ["feliz", "Siempre tengo un plan A, un plan B y un plan C. El plan D es salir corriendo. Y tú vas a tenerlo contigo."]] },
+      { q: "¿Es verdad que cobras por todo?",
+        r: [["feliz", "¡Por supuesto! Una tienda no se mantiene sola. Pero para ti, el primer consejo es gratis."],
+            ["feliz", "Casi todo. La amistad no tiene precio… pero sí tiene recargo por urgencia. Es broma. Casi."],
+            ["feliz", "A ti ya no te cobro. Pero si alguien pregunta, di que pagaste el doble. Mi reputación primero."]] },
+      { q: "¿Qué es lo que más te gusta inventar?",
+        r: [["sorpresa", "¡Ah, eso sí te lo cuento! Cosas inútiles que a veces salvan vidas. El gigai portátil es mi favorito. Explota bonito."],
+            ["feliz", "Lo que nadie me pide. Lo útil ya lo hacen otros. Yo hago lo que aún no existe y luego busco para qué sirve."],
+            ["feliz", "Ahora mismo estoy trabajando en algo para ti. No te diré qué es. Solo que no explota. Creo."]] },
+      { q: "¿Por qué siempre pareces tan relajado?",
+        r: [["feliz", "Porque preocuparse antes de tiempo arruina el té. Cuando toca pelear, ya habrá tiempo."],
+            ["triste", "A veces la calma es una máscara. Hay cosas que prefiero cargar yo solo. Pero eso no se pregunta en la primera cita."],
+            ["normal", "Contigo es más fácil quitarme la máscara. Sigo teniendo mis planes, claro, pero ahora también tengo con quién compartirlos."]] },
+    ],
+  },
+
   // ---------------------------------------------------------------- BURNICE (preguntas al azar: salen 5 de estas cada vez)
   burnice: {
     hola: [
