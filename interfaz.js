@@ -15,7 +15,7 @@ window.INTERFAZ = {
   // Qué tan oscuro se pone el fondo para que se lea (0 = nada, 0.9 = muy oscuro)
   FONDO_OSCURO: 0.55,
   // Arenas de combate
-  ARENAS: ["https://i.imgur.com/k7q8drn.jpeg", "https://i.imgur.com/cWvjH88.jpeg", "https://i.imgur.com/zHuiiuS.jpeg"],
+  ARENAS: ["https://i.imgur.com/rZIk2Ne.gif", "https://i.imgur.com/F0xbQOM.gif", "https://i.imgur.com/UvwD1dO.jpeg"],
   // Imagen de Burnice dándote la bienvenida (pantalla de inicio)
   BIENVENIDA_IMG: "https://i.imgur.com/6mv1T6q.jpeg",
   // Fondo opcional de la pantalla de inicio
@@ -42,7 +42,7 @@ window.INTERFAZ = {
   // A qué rol pertenece cada personaje (embestidor / amparo / control)
   ROL: {
     reze: "embestidor", yuki: "embestidor", yoruichi: "embestidor", megumi: "embestidor",
-    josuke: "amparo", mantis: "amparo", storm: "amparo",
+    josuke: "amparo", mantis: "amparo", storm: "amparo", urahara: "amparo",
     jolyne: "control", ochako: "control", denji: "control",
   },
 
@@ -57,6 +57,7 @@ window.INTERFAZ = {
     megumi:   ["Mejor que no despierte lo que llevo dentro.", "Si voy a caer, no caeré solo."],
     josuke:   ["¡Nadie se burla de mi peinado!", "Tranquilo, yo te arreglo eso."],
     denji:    ["¡Solo quiero comer algo rico y ganar!", "¡Voy a cortarlos a todos!"],
+    urahara:  ["Todo está saliendo según lo previsto… más o menos.", "Un buen plan siempre tiene un plan B. Y un abanico."],
     mantis:   ["Siento su dolor… déjenme ayudar.", "Yo cuido al equipo, ustedes ganen."],
   },
 };
