@@ -1,20 +1,11 @@
 """Contenido del Bazar (generado por extraer_web.py desde el Juego.py del bot)."""
 COSMETICOS = {}
+# Mascotas: la imagen va en img/mascotas/<clave>.png (o .webp / .gif), cuadrada 256x256 con fondo transparente.
+# Si el archivo no existe, la mascota sale como "Próximamente" en el Bazar.
 COSMETICOS["mascotas"] = {
-    "neko_arc": {"nombre": "Neko Arc", "precio": 0,   # GRATIS (para probar la tienda)
-                 "normal": "<a:Neko_arc:1563336473892233276>", "victoria": "<:emoji_9:1561325907631931433>"},
-    "gallica": {"nombre": "Gallica", "precio": 180,
-                "normal": "<:emoji_10:1561326867246747668>", "victoria": "<:emoji_11:1561326890319618270>"},
-    "gardevoir": {"nombre": "Gardevoir", "precio": 200,
-                  "normal": "<:emoji_12:1561328024509751416>", "victoria": "<:emoji_13:1561328057002889247>"},
-    "reze": {"nombre": "Reze", "precio": 220,
-             "normal": "<:emoji_14:1561328700463517819>", "victoria": "<:emoji_15:1561328735272308847>"},
-    "sylveon": {"nombre": "Sylveon", "precio": 220,
-                "normal": "<:emoji_20:1561458968457515099>", "victoria": "<:emoji_21:1561459004440584232>"},
-    "tusk_act_1": {"nombre": "Tusk Act 1", "precio": 200,
-                   "normal": "<:emoji_18:1561458857895534684>", "victoria": "<:emoji_19:1561458936358506627>"},
-    "ralsei": {"nombre": "Ralsei", "precio": 250,
-               "normal": "<:emoji_16:1561329244972388353>", "victoria": "<:emoji_17:1561329269072994455>"},
+    "tusk_act_1": {"nombre": "Tusk Act 1", "precio": 200},
+    "tyrunt":     {"nombre": "Tyrunt",     "precio": 200},
+    "agumon":     {"nombre": "Agumon",     "precio": 200},
 }
 
 
