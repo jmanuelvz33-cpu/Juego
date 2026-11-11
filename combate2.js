@@ -239,6 +239,7 @@
       h+=`<div class="c2-menu acc"><div class="c2-who">▶ ${esc(a.forma||a.nombre)}</div>
         ${a.acciones.map(x=>boton(a,x)).join('')}
         <button class="c2-m sec" onclick="terminar()" onmouseenter="UI2.ayuda('Pasa el turno sin gastar más iconos.')" onmouseleave="UI2.ayuda()"><span>⏭️</span><span class="nm">Terminar turno</span></button>
+        ${pend2?`<div class="c2-who">🪢 Estampar contra…</div><div class="c2-ali">${S.blancos.filter(i=>i!==tgt).map(i=>`<button onclick="hacer(pend2,${i})">${esc(e1.luchadores[i].nombre)}</button>`).join('')}</div>`:''}
         ${soporte?`<div class="c2-ali"><span class="ic">💚</span>${S.aliados.map(i=>`<button class="${tgtAli===i?'on':''}" onclick="elegirAli(${i})">${esc(e0.luchadores[i].nombre)}</button>`).join('')}</div>`:''}</div>`;
     }
     h+=`<div class="c2-help"><b>AYUDA</b><span class="tx" id="c2h">${esc(defecto)}</span>
