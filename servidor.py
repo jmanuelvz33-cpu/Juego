@@ -89,15 +89,17 @@ def _mov(l, k):
 def _luchador(c, eq, i, l, mio=True):
     acc = []
     if mio and eq is c.actual and not eq.es_cpu and not c.terminado() and l in c.disponibles():
-        ks = ("hab1", "hab2") if l.forma else ("normal", "hab1", "hab2", "defender", "ulti")
+        ks = ("hab1", "hab2") if l.forma else M.CLAVES + ("defender", "ulti")
         for k in ks:
+            if k in ("hab3", "hab4") and l.mov(k).get("no"):
+                continue                # solo los personajes reworkeados tienen 4 habilidades
             if k == "defender":
                 d = {"k": "defender", "nombre": "Defender", "coste": M.COSTE_DEFENDER, "pm": 0, "sombras": 0,
                      "desc": "Recibes la mitad de daño y el rival pierde 1 icono al golpearte.", "tipo": "defender"}
             else:
                 d = _mov(l, k)
             d["ok"] = bool(c.puede(l, k))
-            d["dual"] = k in ("normal", "hab1", "hab2") and bool(l.mov(k).get("sana") or l.mov(k).get("regen"))
+            d["dual"] = k in M.CLAVES and bool(l.mov(k).get("sana") or l.mov(k).get("regen"))
             d["apoyo"] = d["tipo"] in ("cura", "limpia")
             acc.append(d)
     return {
@@ -211,12 +213,14 @@ def api_personajes(_, ses):
         if d.get("oculto"):
             continue
         movs = []
-        for m in ("normal", "hab1", "hab2"):
+        for m in M.CLAVES:
+            if m not in d["mov"]:
+                continue
             x = d["mov"][m]
             movs.append({"nombre": x["nombre"], "coste": x["coste"], "pm": x.get("pm", 0), "sombras": x.get("sombras", 0),
                          "dmg": x.get("dmg"), "prec": x.get("prec"), "desc": x.get("desc", "")})
         u = d["ulti"]
-        ficha = {"vida": d["vida"], "recurso": (f"🌑 Sombras (máx. {M.SOMBRAS_MAX})" if d.get("sombras") else f"⏳ Reloj de arena (máx. {M.ARENA_MAX})" if d.get("arena") else f"🔵 PM (máx. {M.PM_MAX})"),
+        ficha = {"vida": d["vida"], "recurso": (f"🌑 Sombras (máx. {M.SOMBRAS_MAX})" if d.get("sombras") else f"🍃 Hojas (máx. {M.HOJAS_MAX}, empieza con todas)" if d.get("hojas") else f"⏳ Reloj de arena (máx. {M.ARENA_MAX})" if d.get("arena") else f"🔵 PM (máx. {M.PM_MAX})"),
                  "movs": movs, "ulti": {"nombre": u["nombre"], "coste": u["coste"], "desc": u.get("desc", "")}}
         if d.get("ulti_alt"):
             ficha["ulti_alt"] = {"nombre": d["ulti_alt"]["nombre"], "desc": d["ulti_alt"].get("desc", "")}
@@ -638,7 +642,7 @@ def _ejecutar_accion(c, b):
     try:
         a = c.actual.luchadores[int(b["actor"])]
         k = b["k"]
-        if k not in ("normal", "hab1", "hab2", "defender", "ulti") or not c.puede(a, k):
+        if k not in M.CLAVES + ("defender", "ulti") or not c.puede(a, k):
             return {"error": "Esa acción ya no está disponible."}
         obj = None
         if k != "defender":
