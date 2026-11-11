@@ -21,8 +21,18 @@ PM_REGEN = 2            # PM que recupera cada luchador vivo al empezar el turno
 PM_NORMAL = 1           # PM que gana un luchador cuando su ataque normal acierta
 PM_DEFENDER = 1         # PM que gana al defenderse
 VEL_CRIT = 0.25         # 💨 Velocidad: probabilidad extra de crítico (Yoruichi)
-HOJAS_MAX = 3           # 🍃 hojas máximas de Mantis (las gana con su ataque normal y las gasta al curar)
-CURA_HOJAS = {1: 16, 2: 30, 3: 14}   # cura de Mantis según sus hojas: 1 = 16 a un aliado · 2 = 30 a un aliado · 3 = 14 a TODO el equipo
+CLAVES = ("normal", "hab1", "hab2", "hab3", "hab4")   # las 4 habilidades + el ataque normal (hab3 y hab4 solo las tienen los personajes reworkeados)
+NO_MOV = {"nombre": "—", "tipo": "normal", "coste": 99, "no": True}
+LIMPIABLES = ("paralisis", "quemadura", "veneno", "sangrado", "congelado")   # lo que quita el Toque empático de Mantis
+HOJAS_MAX = 4           # 🍃 hojas máximas de Mantis (las gana con su ataque normal y las gasta con sus habilidades)
+HOJAS_INICIAL = 4       # Mantis empieza la pelea con todas sus hojas
+CURA_HOJAS = {1: 16, 2: 30, 3: 14, 4: 20}   # cura de Mantis según sus hojas: 1 = 16 a un aliado · 2 = 30 a un aliado · 3 = 14 a TODO el equipo · 4 = 20 a TODO el equipo
+ANTENAS_MULT = 2.0      # ✨ Antenas afiladas (Mantis): su ataque normal hace el doble de daño (su normal es el más flojo del juego)
+ANTENAS_HOJA = 1        # ... y gana 1 hoja extra
+DIOSA_MULT = 1.15       # ⚡ Diosa del trueno (Ororo): su ataque normal golpea 2 veces y además hace +15% de daño
+CONTROL_MULT = 1.5      # 🧲 Control metal: el rival controlado golpea con su ataque normal a +50% de daño
+CONGELADO_MULT = 1.25   # ❄️ Congelado (Ororo): el luchador congelado recibe +25% de daño
+VIENTO_ESQUIVA = 0.15   # 🌬️ Viento a favor (Ororo): +15% de esquiva a su equipo
 ULTI_CURA = 0.4         # curar también carga la ÚLTI de quien cura (0.4 = 40% de lo que carga hacer daño)
 ULTI_HOJA = 20          # % de ÚLTI que gana Mantis cada vez que su ataque normal acierta
 ARENA_MAX = 4           # ⏳ medidor "reloj de arena" de Urahara (4 gajos). Mitad (2) = efecto de 2 turnos · lleno (4) = efecto potenciado
@@ -66,6 +76,7 @@ HISTORIAL = 2           # turnos anteriores que se muestran
 CPU_EFECTO_MULT = 1.4     # la CPU valora más las habilidades que dan efecto (quemadura, parálisis...)
 CPU_HAB_BONO = 2.0        # pequeño extra por usar habilidades en vez de solo el ataque normal
 CPU_ULTI_MULT = 1.8       # cuando la ÚLTI está lista, la CPU la usa
+CPU_POTENCIA = 0.75      # cuánto valora la CPU preparar un bono propio (Antenas afiladas, Diosa del trueno)
 CPU_REPITE = 0.85         # repetir el mismo ataque que acaba de usar vale menos (variedad)
 CPU_NIVELES = {"facil": 0.55, "normal": 0.85, "dificil": 1.0}   # 1.0 = CPU perfecta
 RECOMPENSA_CPU = {"facil": 3, "normal": 8, "dificil": 12}       # Monedas del Alma por ganarle a la CPU
@@ -80,6 +91,7 @@ EFECTOS_TXT = {
     "guardia_rota": "🛡️ Guardia rota",
     "enredado": "🪢 Enredado",     # solo lo causa Megumi: no puede actuar y luego queda debilitado
     "sangrado": "🩸 Sangrado",    # solo lo causa Denji: daño al inicio de cada turno de su dueño
+    "congelado": "❄️ Congelado",   # solo lo causa la Ventisca de Ororo: no puede actuar y recibe +25% de daño
     "sueno": "💤 Sueño",          # solo lo causa la ÚLTI de Mantis: no puede actuar su próximo turno
     "fusion": "🧵 Fusionado",      # solo lo causa Josuke: el luchador baja su precisión
     "regen": "💚 Regeneración",   # solo lo da Josuke a un compañero: se cura al inicio de su turno
@@ -88,7 +100,10 @@ BONOS_TXT = {"furia": "🔺 Furia (+25% daño)", "velocidad": "💨 Velocidad (+
              "frenesi": "🩸 Frenesí (+20% daño y roba vida a los que sangran)",
              "reiatsu": "🔷 Reiatsu (+15% daño, -15% daño recibido, +10% esquiva)",
              "reiatsu_max": "🔷 Reiatsu máximo (+25% daño, -25% daño recibido, +20% esquiva)",
-             "bankai": "🌀 Bankai (+20% crítico y +20% esquiva)"}
+             "bankai": "🌀 Bankai (+20% crítico y +20% esquiva)",
+             "antenas": "🌿 Antenas afiladas (su ataque normal hace el doble de daño y gana 1 hoja extra)",
+             "diosa": "⚡ Diosa del trueno (su ataque normal golpea 2 veces y hace +15% de daño)",
+             "viento": "🌬️ Viento a favor (+15% de esquiva)"}
 
 # ---------------- PERSONAJES ----------------
 # "gif" = retrato · "crit_gif" = animación de golpe fuerte / crítico · "ulti_gif" = animación de la ÚLTI
@@ -149,7 +164,7 @@ PERSONAJES = {
         "color": 0x5DADE2,
         "boton": "50B2CB",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": VIDA,
-        "desc": "Ororo Munroe (X-Men). Apoyo y área: debilita al rival y lanza tormentas a todo el equipo.",
+        "desc": "Ororo Munroe (X-Men). Clima y área: debilita, congela, protege con el viento y lanza tormentas a todo el equipo.",
         "gif": "https://i.imgur.com/y1z0rAi.jpeg",
         "crit_gif": "https://i.imgur.com/lneGV70.gif",
         "victoria_img": "https://i.imgur.com/zK9gwvM.jpeg",
@@ -159,8 +174,15 @@ PERSONAJES = {
             "hab1": {"nombre": "Niebla helada", "tipo": "estado", "coste": COSTE_HABILIDAD, "pm": 2,
                      "dmg": (5, 8), "prec": 0.90, "efecto": ("debilidad", 2, 0.85),
                      "desc": "Poco daño. El rival hace 25% menos de daño durante 2 turnos (85%)."},
-            "hab2": {"nombre": "Viento cortante", "tipo": "fuerte", "coste": COSTE_HABILIDAD, "pm": 4,
-                     "dmg": (22, 30), "prec": 0.85},
+            "hab2": {"nombre": "Viento cortante", "tipo": "estado", "coste": COSTE_HABILIDAD, "pm": 3,
+                     "dmg": (14, 19), "prec": 0.92, "bono_equipo": ("viento", 2),
+                     "desc": "Golpe medio. Todo su equipo gana 🌬️ Viento a favor: +15% de esquiva durante 2 turnos."},
+            "hab3": {"nombre": "Ventisca", "tipo": "ventisca", "coste": COSTE_HABILIDAD, "pm": 4,
+                     "dmg": (12, 16), "prec": 0.92, "congela": 0.40,
+                     "desc": "Daño a todos los rivales. 40% de ❄️ congelar a uno: pierde su próximo turno y recibe +25% de daño mientras esté congelado."},
+            "hab4": {"nombre": "Diosa del trueno", "tipo": "potencia", "coste": COSTE_HABILIDAD, "pm": 3,
+                     "bono": ("diosa", 2),
+                     "desc": "Durante 2 turnos su ataque normal (Rayo) golpea 2 veces y hace +15% de daño."},
         },
         "ulti": {"nombre": "Tormenta", "tipo": "area", "coste": COSTE_ULTI,
                  "dmg": (11, 15), "efecto": ("debilidad", 2, 0.50),
@@ -347,7 +369,7 @@ PERSONAJES = {
         "boton": "30C57B",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": 125,        # menos vida que el resto (130): hay que protegerla
         "hojas": True,      # usa 🍃 hojas (las gana con el ataque normal)
-        "desc": "Guardianes de la Galaxia (Marvel). Apoyo: junta hojas para curar y su ÚLTI duerme al rival.",
+        "desc": "Guardianes de la Galaxia (Marvel). Apoyo y control: empieza con 4 hojas, cura, controla la mente del rival y su ÚLTI duerme al equipo.",
         "gif": "https://i.imgur.com/arZOwk3.jpeg",            # <- retrato de Mantis
         "crit_gif": "https://i.imgur.com/4rDkOAu.gif",       # <- animación de golpe fuerte / crítico
         "victoria_img": "https://i.imgur.com/pD8UBHP.jpeg",   # <- imagen de victoria
@@ -356,9 +378,15 @@ PERSONAJES = {
                        "dmg": (6, 9), "prec": 0.97, "hoja": 1,
                        "desc": "Poco daño. Si acierta, gana 1 🍃 hoja (máximo 3)."},
             "hab1": {"nombre": "Sanar", "tipo": "cura", "coste": COSTE_HABILIDAD,
-                     "desc": "Gasta todas sus 🍃 hojas. Elige a quién curar en el menú de objetivos. 1 hoja: cura 16 · 2 hojas: cura 30 · 3 hojas: cura 14 a todo el equipo."},
+                     "desc": "Gasta todas sus 🍃 hojas. Elige a quién curar en el menú de objetivos. 1 hoja: cura 16 · 2 hojas: cura 30 · 3 hojas: cura 14 a todo el equipo · 4 hojas: cura 20 a todo el equipo."},
             "hab2": {"nombre": "Toque empático", "tipo": "limpia", "coste": COSTE_HABILIDAD, "hojas": 1,
-                     "desc": "Gasta 1 🍃 hoja. Le quita la quemadura, el veneno o la parálisis al compañero que elijas."},
+                     "desc": "Gasta 1 🍃 hoja. Le quita la quemadura, el veneno, el sangrado, la parálisis o el hielo al compañero que elijas."},
+            "hab3": {"nombre": "Control metal", "tipo": "estado", "coste": COSTE_HABILIDAD, "hojas": 2,
+                     "dmg": (4, 7), "prec": 0.92, "control": True,
+                     "desc": "Gasta 2 🍃 hojas. Golpea a un rival y toma el control de su mente: ataca a sus compañeros. Si está solo se ataca a sí mismo (si es curandero, cura a tu equipo)."},
+            "hab4": {"nombre": "Antenas afiladas", "tipo": "potencia", "coste": COSTE_NORMAL, "hojas": 1,
+                     "bono": ("antenas", 3),
+                     "desc": "Cuesta medio icono y 1 🍃 hoja. Durante 3 turnos su Golpe de antena hace el doble de daño y gana 1 hoja extra."},
         },
         "ulti": {"nombre": "Sueño profundo", "tipo": "sueno", "coste": COSTE_ULTI,
                  "efecto": ("sueno", 1, 1.0),
@@ -367,14 +395,14 @@ PERSONAJES = {
     },
     "urahara": {
         "nombre": "Kisuke Urahara",
-        "emoji": "<:emoji_27:1569682511859294321>",     # <- pon aquí tu emoji de Urahara: <:nombre:ID>
+        "emoji": "🎩",     # <- pon aquí tu emoji de Urahara: <:nombre:ID>
         "color": 0x2E8B6E,
         "boton": "30C57B",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": 125,
         "arena": True,      # usa el medidor ⏳ reloj de arena en vez de PM
         "desc": "Bleach. Apoyo táctico: su bastón llena el reloj y con él refuerza al equipo o debilita la defensa rival; su Bankai los vuelve difíciles de tocar.",
-        "gif": "https://i.imgur.com/RgkN2Su.jpeg",            # <- retrato de Urahara (o sube img/urahara_normal.png)
-        "crit_gif": "https://i.imgur.com/kTBD5Pi.gif",
+        "gif": "",            # <- retrato de Urahara (o sube img/urahara_normal.png)
+        "crit_gif": "",
         "victoria_img": "",
         "mov": {
             "normal": {"nombre": "Golpe de bastón", "tipo": "normal", "coste": COSTE_NORMAL,
@@ -474,7 +502,7 @@ class Luchador:
         self.guardia = False
         self.ulti = 0.0
         self.pm = PM_INICIAL
-        self.hojas = 0        # 🍃 solo las usa Mantis
+        self.hojas = HOJAS_INICIAL if self.d.get("hojas") else 0        # 🍃 solo las usa Mantis (empieza con todas)
         self.arena = 0        # ⏳ solo lo usa Urahara (reloj de arena)
         self.sombras = SOMBRAS_INICIAL if self.d.get("sombras") else 0   # 🌑 solo las usa Megumi
         self.forma = None     # "mahoraga" mientras Megumi está transformado
@@ -484,8 +512,8 @@ class Luchador:
 
     @property
     def incapaz(self):
-        """No puede actuar: paralizado, dormido o enredado."""
-        return "paralisis" in self.efectos or "sueno" in self.efectos or "enredado" in self.efectos
+        """No puede actuar: paralizado, dormido, enredado o congelado."""
+        return any(e in self.efectos for e in ("paralisis", "sueno", "enredado", "congelado"))
 
     @property
     def gif(self):
@@ -508,13 +536,13 @@ class Luchador:
 
     def mov(self, k):
         if self.forma:
-            return self.d["forma_mov"][k]
+            return self.d["forma_mov"].get(k, NO_MOV)
         if k == "ulti":
             alt = self.d.get("ulti_alt")
             if alt and self.sombras >= SOMBRAS_MAX:
                 return alt          # con el medidor lleno la ÚLTI es Mahoraga
             return self.d["ulti"]
-        return self.d["mov"][k]
+        return self.d["mov"].get(k, NO_MOV)
 
 
 class Equipo:
@@ -572,7 +600,7 @@ class Combate:
         return next(e for e in self.equipos if e.vivos)
 
     def _tiene_jugada(self, l):
-        return any(self._puede_base(l, k) for k in ("normal", "hab1", "hab2", "defender", "ulti"))
+        return any(self._puede_base(l, k) for k in CLAVES + ("defender", "ulti"))
 
     def actor(self):
         """Quien juega ahora. El orden del equipo es fijo (1 → 2 → 3): cada acción pasa el turno al siguiente."""
@@ -717,7 +745,7 @@ class Combate:
             return False
         if l.pm < m.get("pm", 0) or l.sombras < m.get("sombras", 0):
             return False
-        if l.arena < m.get("arena", 0):
+        if l.arena < m.get("arena", 0) or l.hojas < m.get("hojas", 0):
             return False
         if m["tipo"] == "cura" and (l.hojas < 1 or not self._heridos()):
             return False
@@ -738,7 +766,7 @@ class Combate:
 
     def _a_limpiar(self):
         """Compañero al que Toque empático le sirve más (parálisis primero), o None si nadie lo necesita."""
-        malos = [x for x in self.actual.vivos if any(e in x.efectos for e in ("paralisis", "quemadura", "veneno", "sangrado"))]
+        malos = [x for x in self.actual.vivos if any(e in x.efectos for e in LIMPIABLES)]
         if not malos:
             return None
         return max(malos, key=lambda x: ("paralisis" in x.efectos, len(x.efectos), -x.hp))
@@ -749,6 +777,12 @@ class Combate:
     def _apoyo(self, l, k, objetivo=None):
         m = l.mov(k)
         cab = f"{l.d['emoji']} **{l.tag}** usa **{m['nombre']}**"
+        if m["tipo"] == "potencia":          # se da un bono a sí mismo (Antenas afiladas, Diosa del trueno)
+            l.hojas -= m.get("hojas", 0)
+            nombre, dur = m["bono"]
+            l.bonos[nombre] = max(dur, l.bonos.get(nombre, 0))
+            self.log = f"{cab}.\n{BONOS_TXT[nombre]} durante {dur} turnos."
+            return
         if m["tipo"] == "reserva":
             lleno = l.arena >= ARENA_MAX
             nombre = "reiatsu_max" if lleno else "reiatsu"
@@ -783,8 +817,8 @@ class Combate:
         else:
             l.hojas -= m.get("hojas", 1)
             t = objetivo if (objetivo is not None and objetivo in self.actual.vivos and any(
-                e in objetivo.efectos for e in ("paralisis", "quemadura", "veneno", "sangrado"))) else self._a_limpiar()
-            quitados = [e for e in ("paralisis", "quemadura", "veneno", "sangrado") if e in t.efectos]
+                e in objetivo.efectos for e in LIMPIABLES)) else self._a_limpiar()
+            quitados = [e for e in LIMPIABLES if e in t.efectos]
             for e in quitados:
                 del t.efectos[e]
             self._cargar_cura(l, 10)
@@ -793,7 +827,7 @@ class Combate:
     # ----- Josuke: sus golpes también curan -----
     def _es_curar_aliado(self, l, k, objetivo):
         m = l.mov(k)
-        return (k in ("normal", "hab1", "hab2") and objetivo is not None and objetivo in self.actual.vivos
+        return (k in CLAVES and objetivo is not None and objetivo in self.actual.vivos
                 and bool(m.get("sana") or m.get("regen")))
 
     def _curar_aliado(self, l, k, t):
@@ -834,9 +868,14 @@ class Combate:
             l.guardia = True
             self.log = (f"🌀 **{l.tag}** se adapta: recibirá la mitad del daño, quien lo golpee perderá 1 icono "
                         f"y absorberá el primer efecto que le lancen.")
-        elif l.mov(k)["tipo"] in ("cura", "limpia", "reserva"):
+        elif l.mov(k)["tipo"] in ("cura", "limpia", "reserva", "potencia"):
             eq.medios -= l.mov(k)["coste"]
+            l.pm -= l.mov(k).get("pm", 0)
             self._apoyo(l, k, objetivo)
+        elif l.mov(k)["tipo"] == "ventisca":
+            eq.medios -= l.mov(k)["coste"]
+            l.pm -= l.mov(k).get("pm", 0)
+            self._ventisca(l, k)
         elif self._es_curar_aliado(l, k, objetivo):
             eq.medios -= l.mov(k)["coste"]
             l.pm -= l.mov(k).get("pm", 0)
@@ -845,6 +884,7 @@ class Combate:
             eq.medios -= l.mov(k)["coste"]
             l.pm -= l.mov(k).get("pm", 0)
             l.sombras -= l.mov(k).get("sombras", 0)
+            l.hojas -= l.mov(k).get("hojas", 0)
             self._atacar(l, k, objetivo)
         self._volcar_avisos()
         if self.terminado():
@@ -886,7 +926,17 @@ class Combate:
                 break
         if "bankai" in t.bonos:
             e += BANKAI_ESQUIVA
+        if "viento" in t.bonos:
+            e += VIENTO_ESQUIVA
         return e
+
+    def _mult_normal(self, a):
+        """Antenas afiladas (Mantis) y Diosa del trueno (Ororo): el ataque normal pega más fuerte."""
+        return (ANTENAS_MULT if "antenas" in a.bonos else 1.0) * (DIOSA_MULT if "diosa" in a.bonos else 1.0)
+
+    def _golpes(self, a, m, k):
+        """Golpes de un movimiento (la Diosa del trueno de Ororo duplica los de su ataque normal)."""
+        return m.get("golpes", 1) * (2 if (k == "normal" and "diosa" in a.bonos) else 1)
 
     def _mult_defensa(self, t):
         for r in ("reiatsu_max", "reiatsu"):
@@ -896,6 +946,8 @@ class Combate:
 
     def _golpear(self, t, dmg, atacante):
         """Aplica daño y carga las ÚLTIS. Devuelve el daño real."""
+        if "congelado" in t.efectos and not t.forma:
+            dmg *= CONGELADO_MULT           # ❄️ el hielo hace que cada golpe duela más
         dmg = max(1, round(dmg * self._mult_defensa(t)))
         if t.forma:     # el daño va a la vida de Mahoraga, no a la de Megumi
             dmg = min(dmg, t.forma_hp)
@@ -945,7 +997,10 @@ class Combate:
             eq.medios = 0
             self.log = f"{cab}... ¡pero falla! 💨 **{eq.nombre} pierde todos sus turnos.**"
             return
-        dmg = sum(random.randint(*m["dmg"]) for _ in range(m.get("golpes", 1))) * self._mult_ataque(a)
+        golpes = self._golpes(a, m, k)
+        dmg = sum(random.randint(*m["dmg"]) for _ in range(golpes)) * self._mult_ataque(a)
+        if k == "normal":
+            dmg *= self._mult_normal(a)
         notas = []
         rota = "guardia_rota" in t.efectos
         if rota:
@@ -994,8 +1049,12 @@ class Combate:
         if m.get("hoja"):
             a.ulti = min(100.0, a.ulti + ULTI_HOJA)
             if a.hojas < HOJAS_MAX:
-                a.hojas = min(HOJAS_MAX, a.hojas + m["hoja"])
+                a.hojas = min(HOJAS_MAX, a.hojas + m["hoja"] + (ANTENAS_HOJA if "antenas" in a.bonos else 0))
                 notas.append(f"🍃 {a.tag} gana una hoja ({a.hojas}/{HOJAS_MAX}).")
+        if m.get("bono_equipo"):                          # Viento a favor: todo el equipo gana el bono
+            for x in eq.vivos:
+                x.bonos[m["bono_equipo"][0]] = max(m["bono_equipo"][1], x.bonos.get(m["bono_equipo"][0], 0))
+            notas.append(f"{BONOS_TXT[m['bono_equipo'][0]]} para todo el equipo durante {m['bono_equipo'][1]} turnos.")
         if t.hp <= 0 and not t.forma:
             notas.append(f"💀 **{t.tag}** cae.")
         elif t.hp > 0 and not (era_forma and not t.forma):
@@ -1007,11 +1066,13 @@ class Combate:
                             notas.append(self._aplicar_efecto(x, m["efecto"]))
             if m.get("efecto_extra"):
                 notas.append(self._aplicar_efecto(t, m["efecto_extra"]))
+            if m.get("control"):                       # Control metal: el rival ataca a los suyos
+                notas += self._control(a, t)
             if a.forma and a.adaptado:       # Mahoraga devuelve el efecto que absorbió
                 nombre_ad, dur_ad = a.adaptado
                 a.adaptado = None
                 notas.append("🌀 " + self._aplicar_efecto(t, (nombre_ad, dur_ad, 1.0)))
-        self.log = f"{cab} y causa **{real}** de daño" + (f" ({m['golpes']} golpes)." if m.get("golpes") else ".")
+        self.log = f"{cab} y causa **{real}** de daño" + (f" ({golpes} golpes)." if golpes > 1 else ".")
         notas = [n for n in notas if n]
         if notas:
             self.log += "\n" + "\n".join(notas)
@@ -1024,6 +1085,72 @@ class Combate:
                          "desc": ("💥 ¡CRÍTICO!\n" if crit else "ゴゴゴゴ\n") + f"**{a.tag}**",
                          "gif": gif, "seg": SUSPENSO_SEG,
                          "color": 0xE74C3C if crit else a.d["color"]}
+
+    def _golpe_forzado(self, t, v):
+        """El luchador t (controlado) golpea con su ataque normal a v. La guardia reduce el daño; no hay crítico ni pérdida de iconos."""
+        m = t.d["mov"]["normal"]
+        dmg = sum(random.randint(*m["dmg"]) for _ in range(m.get("golpes", 1))) * self._mult_ataque(t) * CONTROL_MULT
+        if "guardia_rota" in v.efectos:
+            dmg *= ROTA_MULT
+        elif v.guardia:
+            dmg *= GUARDIA_MULT
+        return self._golpear(v, dmg, t)
+
+    def _control(self, a, t):
+        """🧲 Control metal (Mantis): t ataca a sus compañeros. Si está solo se ataca a sí mismo; si es curandero, cura al equipo de Mantis."""
+        if t.forma or not t.vivo:
+            return []
+        eq, rv = self.actual, self.rival
+        notas = [f"🧲 **{t.tag}** queda bajo el control de **{a.tag}**."]
+        ulti0 = t.ulti
+        otros = [x for x in rv.blancos if x is not t]
+        cura = max((mv.get("sana", 0) for mv in t.d["mov"].values()), default=0)
+        if otros:
+            for v in otros:
+                real = self._golpe_forzado(t, v)
+                notas.append(f"💢 **{t.tag}** golpea a **{v.tag}**: -{real}.")
+                if v.hp <= 0 and not v.forma:
+                    notas.append(f"💀 **{v.tag}** cae.")
+        elif cura:
+            h = min(eq.vivos, key=lambda x: x.hp / x.max_hp)
+            antes = h.hp
+            h.hp = min(h.max_hp, h.hp + cura)
+            notas.append(f"💚 **{t.tag}** cura a **{h.tag}**: +{h.hp - antes}.")
+        else:
+            real = self._golpe_forzado(t, t)
+            notas.append(f"💢 **{t.tag}** se golpea a sí mismo: -{real}.")
+            if t.hp <= 0:
+                notas.append(f"💀 **{t.tag}** cae.")
+        t.ulti = ulti0                      # golpear bajo control no le carga la ÚLTI
+        return notas
+
+    def _ventisca(self, a, k):
+        """❄️ Ventisca (Ororo): daño a todos los rivales y posibilidad de congelar a uno."""
+        m = a.mov(k)
+        cab = f"{a.d['emoji']} **{a.tag}** usa **{m['nombre']}**"
+        lineas, notas, tocados = [], [], []
+        for t in list(self.rival.blancos):
+            if random.random() > self._prec(a, m, t):
+                lineas.append(f"{t.tag} esquiva")
+                continue
+            dmg = random.randint(*m["dmg"]) * self._mult_ataque(a) * self._mult_sangre(a, t)
+            if "guardia_rota" in t.efectos:
+                dmg *= ROTA_MULT
+            elif t.guardia:
+                dmg *= GUARDIA_MULT
+            real = self._golpear(t, dmg, a)
+            lineas.append(f"{t.tag} -{real}")
+            if t.hp <= 0 and not t.forma:
+                notas.append(f"💀 **{t.tag}** cae.")
+            elif t.hp > 0 and not t.forma:
+                tocados.append(t)
+        if tocados and random.random() < m["congela"]:
+            v = random.choice(tocados)
+            notas.append(self._aplicar_efecto(v, ("congelado", 1, 1.0)) + " No puede actuar y recibe +25% de daño.")
+        self.log = f"{cab}\n🌨️ " + ", ".join(lineas) + "."
+        notas = [n for n in notas if n]
+        if notas:
+            self.log += "\n" + "\n".join(notas)
 
     def _ulti(self, a, objetivo):
         eq, rv = self.actual, self.rival
@@ -1148,10 +1275,10 @@ class Combate:
         rv = self.rival
         res = []
         for l in self.disponibles():
-            for k in ("normal", "hab1", "hab2", "defender", "ulti"):
+            for k in CLAVES + ("defender", "ulti"):
                 if not self.puede(l, k):
                     continue
-                if k == "defender" or (k != "ulti" and l.mov(k)["tipo"] in ("cura", "limpia", "adapta", "reserva")):
+                if k == "defender" or (k != "ulti" and l.mov(k)["tipo"] in ("cura", "limpia", "adapta", "reserva", "potencia", "ventisca")):
                     res.append((l, k, None))
                 elif k != "ulti" and (l.mov(k).get("sana") or l.mov(k).get("regen")):
                     res += [(l, k, t) for t in rv.blancos]
@@ -1199,6 +1326,27 @@ class Combate:
         if m["tipo"] == "reserva":
             lleno = l.arena >= ARENA_MAX
             return ((20 if lleno else 12) + 3 * len(eq.vivos)) / (m["coste"] ** 0.8)
+        if m["tipo"] == "potencia":          # preparar un bono: vale si no lo tiene ya
+            if m["bono"][0] in l.bonos:
+                return 0.5
+            if m.get("hojas") and l.hojas - m["hojas"] < 2:
+                return 0.5              # las hojas valen más para curar o controlar: solo la prepara si le sobran
+            nm = l.d["mov"]["normal"]
+            base = sum(nm["dmg"]) / 2 * self._mult_ataque(l) * nm["prec"]       # lo que pega un normal
+            activos = max(0, m["bono"][1] - 1)                                   # turnos completos que aprovecha
+            if m["bono"][0] == "diosa":
+                extra = base * (2 * DIOSA_MULT - 1) * 2 * activos                # el doble de golpes y +25% (~2 normales por turno)
+            else:                                                                # antenas: +50% y 1 hoja extra
+                extra = (base * (ANTENAS_MULT - 1) + 2.5 * ANTENAS_HOJA) * 2 * activos
+            return (extra * CPU_POTENCIA) / (m["coste"] ** 0.8)
+        if m["tipo"] == "ventisca":
+            prom = sum(m["dmg"]) / 2 * mult
+            v = 0
+            for x in rv.blancos:
+                d = prom * self._prec(l, m, x) * (ROTA_MULT if "guardia_rota" in x.efectos else (GUARDIA_MULT if x.guardia else 1))
+                v += d + (20 * self._prec(l, m, x) if d >= x.hp else 0) + 8 * (1 - x.hp / x.max_hp) * 0.5
+            v += 22 * m["congela"] * (1 + 0.15 * (len(rv.blancos) - 1))
+            return v / (m["coste"] ** 0.8)
         if m["tipo"] == "cura":
             n = min(l.hojas, HOJAS_MAX)
             objetivos = eq.vivos if n >= 3 else [min(self._heridos(), key=lambda x: x.hp / x.max_hp)]
@@ -1209,7 +1357,7 @@ class Combate:
             return v / (m["coste"] ** 0.8)
         if m["tipo"] == "limpia":
             t = self._a_limpiar()
-            v = 5 + (12 if "paralisis" in t.efectos else 0) + 5 * sum(e in t.efectos for e in ("quemadura", "veneno", "sangrado"))
+            v = 5 + (12 if ("paralisis" in t.efectos or "congelado" in t.efectos) else 0) + 5 * sum(e in t.efectos for e in ("quemadura", "veneno", "sangrado"))
             return v / (m["coste"] ** 0.8)
         if k == "ulti":
             if m["tipo"] == "bankai":
@@ -1233,7 +1381,11 @@ class Combate:
                 if m.get("flota") and t is not None:
                     v += 8
             return v / (m["coste"] ** 0.8)
-        prom = (m["dmg"][0] + m["dmg"][1]) / 2 * mult * m.get("golpes", 1) * self._mult_sangre(l, t)
+        prom = (m["dmg"][0] + m["dmg"][1]) / 2 * mult * self._golpes(l, m, k) * self._mult_sangre(l, t)
+        if k == "normal":
+            prom *= self._mult_normal(l)
+        if "congelado" in t.efectos:
+            prom *= CONGELADO_MULT
         rota = "guardia_rota" in t.efectos
         guard = t.guardia and not rota
         if rota:
@@ -1265,6 +1417,21 @@ class Combate:
             v += 6 * max(0, len(rv.blancos) - 1)    # reloj lleno: la guardia rota llega a todos
         if m.get("hoja") and l.hojas < HOJAS_MAX:
             v += 2                      # el normal de Mantis junta hojas
+        if m.get("control"):            # Control metal: el rival golpea a los suyos (o se golpea / cura a Mantis si está solo)
+            nm = t.d["mov"]["normal"]
+            golpe = sum(nm["dmg"]) / 2 * nm.get("golpes", 1) * self._mult_ataque(t) * CONTROL_MULT * 0.9
+            otros = [x for x in rv.blancos if x is not t]
+            curas = max((mv.get("sana", 0) for mv in t.d["mov"].values()), default=0)
+            if otros:
+                v += golpe * len(otros)
+            elif curas:
+                v -= 2                  # un curandero solo cura a mi equipo: no conviene
+            else:
+                v += golpe
+        if m.get("bono_equipo") and m["bono_equipo"][0] not in l.bonos:
+            v += 4 + 1.5 * len(eq.vivos)      # el Viento a favor protege a todo el equipo
+        if m.get("hojas") and l.hojas - m["hojas"] < 1 and any(x.hp < x.max_hp * 0.5 for x in eq.vivos):
+            v -= 6                      # guarda hojas para curar si el equipo está mal
         if m.get("bono") and m["bono"][0] not in l.bonos:
             v += {"furia": 10, "velocidad": 5, "frenesi": 7}.get(m["bono"][0], 5)   # preparar vale la pena
         return v / (m["coste"] ** 0.8)
@@ -1283,7 +1450,7 @@ class Combate:
             p = max(0.1, self.valor(*o))
             if o[1] == "ulti":
                 p *= CPU_ULTI_MULT
-            elif o[1] in ("hab1", "hab2"):
+            elif o[1] in CLAVES[1:]:
                 p += CPU_HAB_BONO
             if ult.get(o[0].key) == o[1] and o[1] != "defender":
                 p *= CPU_REPITE
