@@ -99,6 +99,7 @@ def _luchador(c, eq, i, l, mio=True):
             else:
                 d = _mov(l, k)
             d["ok"] = bool(c.puede(l, k))
+            d["doble"] = bool(l.mov(k).get("estampa"))      # pide elegir un segundo rival
             d["dual"] = k in M.CLAVES and bool(l.mov(k).get("sana") or l.mov(k).get("regen"))
             d["apoyo"] = d["tipo"] in ("cura", "limpia")
             acc.append(d)
@@ -654,7 +655,10 @@ def _ejecutar_accion(c, b):
                 obj = c.rival.luchadores[int(b["objetivo"])]
                 if not obj.vivo or obj not in c.rival.blancos:
                     obj = None
-        c.ejecutar(a, k, obj)
+        obj2 = None
+        if b.get("objetivo2") is not None:
+            obj2 = c.rival.luchadores[int(b["objetivo2"])]
+        c.ejecutar(a, k, obj, obj2)
     except (KeyError, ValueError, IndexError, TypeError):
         return {"error": "Acción inválida."}
     return None
