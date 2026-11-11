@@ -160,7 +160,7 @@ function fmt(t){
 const emo=(p)=>p.emoji_url?`<img class="emo" src="${p.emoji_url}">`:esc(p.emoji||'');
 const medios=m=>'🔷'.repeat(m>>1)+'🔹'.repeat(m&1)||'—';
 const COL={azul:'#4f7cff',verde:'#3fb56b',rojo:'#d9534f',gris:'#6b7280'};
-let PJ=[],elegidos=[],nivel='normal',G=null,S=null,sel=0,tgt=null,tgtAli=null,lock=false,MODO='cpu',SEQ=0,SALA=null,reto=null,HIST=null;
+let PJ=[],elegidos=[],nivel='normal',G=null,S=null,sel=0,tgt=null,tgtAli=null,pend2=null,lock=false,MODO='cpu',SEQ=0,SALA=null,reto=null,HIST=null;
 const LS={g:k=>{try{return localStorage.getItem(k)}catch(e){return null}},s:(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
 
 async function api(ruta,datos){
@@ -398,7 +398,7 @@ function clic(lado,i){
   if(lock||!S||S.terminado||S.turno!==0)return;
   if(lado==0){
     const l=S.equipos[0].luchadores[i];
-    if(l.acciones.length){sel=i;tgtAli=null}
+    if(l.acciones.length){sel=i;tgtAli=null;pend2=null}
   }else{
     if(!S.blancos.includes(i))return;
     tgt=i;tgtAli=null;
@@ -414,12 +414,14 @@ function dibujarCombate(forzar){
   return UI2.dibujar();   // combate horizontal (único diseño)
 }
 function costeTxt(m){return ({1:'½',2:'1',4:'2'})[m]||(m/2)}
-async function hacer(k){
+async function hacer(k,o2){
   if(lock)return;const a=actorActual();if(!a)return;
   const x=a.acciones.find(y=>y.k===k);
+  if(x.doble&&o2==null&&S.blancos.filter(i=>i!==tgt).length){pend2=k;dibujarCombate();return}   // pide elegir el segundo rival
+  pend2=null;
   const apoyo=tgtAli!=null&&(x.apoyo||x.dual);
   lock=true;
-  const r=await api(MODO==='pvp'?'/api/pvp/accion':'/api/accion',{id:G,desde:SEQ,actor:a.i,k,objetivo:tgt,aliado:apoyo||x.apoyo?tgtAli:null,apoyo});
+  const r=await api(MODO==='pvp'?'/api/pvp/accion':'/api/accion',{id:G,desde:SEQ,actor:a.i,k,objetivo:tgt,objetivo2:o2==null?null:o2,aliado:apoyo||x.apoyo?tgtAli:null,apoyo});
   if(r.error){lock=false;alert(r.error);return}
   tgtAli=null;CBT.atk(0,a.i);
   await reproducir(MODO==='pvp'?aPasos(r.eventos):r.pasos);
