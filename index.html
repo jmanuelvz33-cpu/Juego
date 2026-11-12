@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="es"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -417,7 +418,10 @@ function costeTxt(m){return ({1:'½',2:'1',4:'2'})[m]||(m/2)}
 async function hacer(k,o2){
   if(lock)return;const a=actorActual();if(!a)return;
   const x=a.acciones.find(y=>y.k===k);
-  if(x.doble&&o2==null&&S.blancos.filter(i=>i!==tgt).length){pend2=k;dibujarCombate();return}   // pide elegir el segundo rival
+  if(x.doble&&o2==null){   // pide elegir un segundo rival (o el modo, en Conejos)
+    if(x.conejos){if(S.blancos.length>1){pend2=k;dibujarCombate();return}o2=-2}
+    else if(S.blancos.filter(i=>i!==tgt).length){pend2=k;dibujarCombate();return}
+  }
   pend2=null;
   const apoyo=tgtAli!=null&&(x.apoyo||x.dual);
   lock=true;
