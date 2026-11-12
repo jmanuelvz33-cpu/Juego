@@ -42,6 +42,13 @@ CONTRA_REFLEJO = 1.0    # parte del daño que devuelve (1.0 = entero)
 CONTRA_CURA = 15        # ... se lo devuelve entero al atacante y cura 15 a un compañero al azar
 GARUDA_REBOTE = 0.6     # ⚽ Pelota garuda (Yuki): el segundo rival recibe 60% del daño
 LINEA_MAX = 3           # ⬛ Línea negra (Yuki): medidor propio, de 0 a 3
+RAJIN_PARALISIS = 0.35   # ⚡ Rajin Sekein (Yoruichi): probabilidad de paralizar con cada golpe
+RAJIN_DUR = 2            # turnos que dura (el resto del turno en que se activa + el siguiente)
+BOLAS_CURA = 5           # 🔮 Bolas de reiatsu (Urahara): vida que recupera cada aliado
+BOLAS_RELOJ = 3          # gajos que gana el reloj
+BOLAS_ULTI = 10          # % de ÚLTI que gana
+TRAMPA_GASTA = 2         # 🪤 Trampa (Urahara): gajos del reloj que gasta (no gasta todo)
+PUNTERIA_PREC = 0.15     # 🎯 Puntería: +15% de precisión a todo el equipo
 CONTROL_MULT = 1.5      # 🧲 Control metal: el rival controlado golpea con su ataque normal a +50% de daño
 CONGELADO_MULT = 1.25   # ❄️ Congelado (Ororo): el luchador congelado recibe +25% de daño
 VIENTO_ESQUIVA = 0.15   # 🌬️ Viento a favor (Ororo): +15% de esquiva a su equipo
@@ -125,7 +132,9 @@ BONOS_TXT = {"furia": "🔺 Furia (+25% daño)", "velocidad": "💨 Velocidad (+
              "rabia": "🩸 Rabia de sangre (+10% de probabilidad de crítico)",
              "antenas": "🌿 Antenas afiladas (su ataque normal hace el doble de daño y gana 1 hoja extra)",
              "diosa": "⚡ Diosa del trueno (su ataque normal golpea 2 veces y hace +15% de daño)",
-             "viento": "🌬️ Viento a favor (+15% de esquiva)"}
+             "viento": "🌬️ Viento a favor (+15% de esquiva)",
+             "rajin": "⚡ Rajin Sekein (cada golpe tiene 35% de paralizar)",
+             "punteria": "🎯 Puntería (+15% de precisión)"}
 
 # ---------------- PERSONAJES ----------------
 # "gif" = retrato · "crit_gif" = animación de golpe fuerte / crítico · "ulti_gif" = animación de la ÚLTI
@@ -296,9 +305,15 @@ PERSONAJES = {
             "hab1": {"nombre": "Shunpo", "tipo": "estado", "coste": COSTE_HABILIDAD, "pm": 2,
                      "dmg": (4, 7), "prec": 0.95, "bono": ("velocidad", 1),
                      "desc": "Poco daño. Ella gana 💨 Velocidad: +25% de crítico el resto del turno."},
-            "hab2": {"nombre": "Shunko", "tipo": "fuerte", "coste": COSTE_HABILIDAD, "pm": 4,
-                     "dmg": (19, 26), "prec": 0.88, "efecto": ("paralisis", 1, 0.35),
+            "hab2": {"nombre": "Shunko", "tipo": "estado", "coste": COSTE_HABILIDAD, "pm": 3,
+                     "dmg": (16, 21), "prec": 0.90, "efecto": ("paralisis", 1, 0.35),
                      "desc": "Golpe de rayo. 35% de paralizar al rival."},
+            "hab3": {"nombre": "Paso de clones", "tipo": "clones", "coste": COSTE_HABILIDAD, "pm": 5,
+                     "dmg": (7, 9), "prec": 0.93, "bono": ("velocidad", 2), "doble_txt": "Luego, a…",
+                     "desc": "Corre tan rápido que deja clones: golpea a un rival, luego a otro y por último a todos. Poco daño por golpe, cuesta muchos PM. Después gana 💨 Velocidad (2 turnos)."},
+            "hab4": {"nombre": "Rajin Sekein", "tipo": "potencia", "coste": COSTE_NORMAL, "pm": 2,
+                     "requiere_bono": "velocidad", "bono": ("rajin", RAJIN_DUR),
+                     "desc": "Solo con 💨 Velocidad. Toma su forma con orejas y cola: 2 turnos en los que cada golpe suyo tiene 35% de paralizar."},
         },
         "ulti": {"nombre": "Destello de los 3 pasos", "tipo": "area", "coste": COSTE_ULTI,
                  "dmg": (11, 15), "primer_crit": True, "devuelve": 2,
@@ -456,14 +471,14 @@ PERSONAJES = {
     },
     "urahara": {
         "nombre": "Kisuke Urahara",
-        "emoji": "🎩",     # <- pon aquí tu emoji de Urahara: <:nombre:ID>
+        "emoji": "<:emoji_27:1569682511859294321>",     # <- pon aquí tu emoji de Urahara: <:nombre:ID>
         "color": 0x2E8B6E,
         "boton": "30C57B",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": 125,
         "arena": True,      # usa el medidor ⏳ reloj de arena en vez de PM
         "desc": "Bleach. Apoyo táctico: su bastón llena el reloj y con él refuerza al equipo o debilita la defensa rival; su Bankai los vuelve difíciles de tocar.",
-        "gif": "",            # <- retrato de Urahara (o sube img/urahara_normal.png)
-        "crit_gif": "",
+        "gif": "https://i.imgur.com/flTYzPY.jpeg",            # <- retrato de Urahara (o sube img/urahara_normal.png)
+        "crit_gif": "https://i.imgur.com/kTBD5Pi.gif",
         "victoria_img": "",
         "mov": {
             "normal": {"nombre": "Golpe de bastón", "tipo": "normal", "coste": COSTE_NORMAL,
@@ -474,6 +489,12 @@ PERSONAJES = {
             "hab2": {"nombre": "Red de Benihime", "tipo": "fuerte", "coste": COSTE_HABILIDAD, "arena": 2,
                      "dmg": (14, 19), "prec": 0.90, "efecto": ("guardia_rota", 2, 1.0),
                      "desc": "Gasta todo el ⏳ reloj (mínimo 2 gajos). Golpea y deja al rival con 🛡️ Guardia rota 2 turnos. Con el reloj lleno se la aplica a todos los rivales."},
+            "hab3": {"nombre": "Bolas de reiatsu", "tipo": "bolas", "coste": COSTE_HABILIDAD,
+                     "dmg": (5, 7), "prec": 0.95, "cura": BOLAS_CURA,
+                     "desc": "Lanza bolas de energía espiritual: poco daño a un rival, cura un poquito a todo el equipo y el ⏳ reloj gana 3 gajos y la ÚLTI un poco."},
+            "hab4": {"nombre": "Trampa de Kisuke", "tipo": "trampa", "coste": COSTE_NORMAL, "arena": TRAMPA_GASTA,
+                     "dmg_todos": (7, 10), "prec": 0.92,
+                     "desc": "Gasta 2 gajos del ⏳ reloj. Una trampa hiere un poco a todos los rivales y todo el equipo gana 🎯 Puntería (+15% de precisión) 2 turnos."},
         },
         "ulti": {"nombre": "Bankai: Kannonbiraki Benihime Aratame", "tipo": "bankai", "coste": COSTE_ULTI,
                  "gif": "", "grito": "¡Bankai! La realidad se dobla a su favor.",
@@ -810,6 +831,8 @@ class Combate:
             return False
         if k == "normal" and "apagon" in l.efectos:
             return False                                  # 🔌 Apagón: sin ataque normal
+        if m.get("requiere_bono") and m["requiere_bono"] not in l.bonos:
+            return False                                  # Rajin Sekein: solo con Velocidad
         if m.get("requiere") == "sangrado" and not any("sangrado" in x.efectos for x in self.rival.vivos):
             return False                                  # Rabia de sangre: solo si algún rival sangra
         if l.pm < m.get("pm", 0) or l.sombras < m.get("sombras", 0):
@@ -972,6 +995,17 @@ class Combate:
             eq.medios -= l.mov(k)["coste"]
             l.pm -= l.mov(k).get("pm", 0)
             self._apoyo(l, k, objetivo)
+        elif l.mov(k)["tipo"] == "clones":
+            eq.medios -= l.mov(k)["coste"]
+            l.pm -= l.mov(k).get("pm", 0)
+            self._clones(l, k, objetivo)
+        elif l.mov(k)["tipo"] == "bolas":
+            eq.medios -= l.mov(k)["coste"]
+            self._bolas(l, k, objetivo)
+        elif l.mov(k)["tipo"] == "trampa":
+            eq.medios -= l.mov(k)["coste"]
+            l.arena -= TRAMPA_GASTA
+            self._trampa(l, k)
         elif l.mov(k)["tipo"] == "ventisca":
             eq.medios -= l.mov(k)["coste"]
             l.pm -= l.mov(k).get("pm", 0)
@@ -1006,7 +1040,8 @@ class Combate:
 
     def _prec(self, a, m, t=None):
         """Precisión real del movimiento (🧵 Fusionado y la esquiva del objetivo la bajan)."""
-        return max(0.05, m["prec"] - (FUSION_PREC if "fusion" in a.efectos else 0) - self._esquiva(t))
+        return min(1.0, max(0.05, m["prec"] + (PUNTERIA_PREC if "punteria" in a.bonos else 0)
+                            - (FUSION_PREC if "fusion" in a.efectos else 0) - self._esquiva(t)))
 
     def _mult_sangre(self, a, t):
         """🩸 Frenesí: más daño contra rivales que sangran."""
@@ -1220,6 +1255,8 @@ class Combate:
                             notas.append(self._aplicar_efecto(x, m["efecto"]))
             if m.get("efecto_extra"):
                 notas.append(self._aplicar_efecto(t, m["efecto_extra"]))
+            if "rajin" in a.bonos and "paralisis" not in t.efectos:      # ⚡ Rajin Sekein
+                notas.append(self._aplicar_efecto(t, ("paralisis", 1, RAJIN_PARALISIS)))
             if m.get("control"):                       # Control metal: el rival ataca a los suyos
                 notas += self._control(a, t)
             if m.get("roba_ulti") and not t.forma:     # 🧵 Hilos ladrones: le roba carga de ÚLTI
@@ -1311,6 +1348,86 @@ class Combate:
         notas = [n for n in notas if n]
         if notas:
             self.log += "\n" + "\n".join(notas)
+
+    def _clones(self, a, k, t1):
+        """💨 Paso de clones (Yoruichi): golpea a un rival, luego a otro y por último a todos. Después gana Velocidad."""
+        m = a.mov(k)
+        rv = self.rival.blancos
+        t1 = t1 if (t1 is not None and t1.vivo and t1 in rv) else self.objetivo_por_defecto()
+        t2 = getattr(self, "_obj2", None)
+        otros = [x for x in rv if x is not t1]
+        if not isinstance(t2, Luchador) or t2 not in otros:
+            t2 = min(otros, key=lambda x: x.hp) if otros else t1
+        self._obj2 = None
+        secuencia = [t1, t2] + list(rv)
+        lineas, notas = [], []
+        for x in secuencia:
+            if not x.vivo and not x.forma:
+                lineas.append(f"{x.tag} ya cayó")
+                continue
+            if random.random() > self._prec(a, m, x):
+                lineas.append(f"{x.tag} esquiva")
+                continue
+            dmg = random.randint(*m["dmg"]) * self._mult_ataque(a) * self._mult_sangre(a, x)
+            real = self._golpear(x, self._reducir(x, dmg), a)
+            lineas.append(f"{x.tag} -{real}")
+            if x.hp <= 0 and not x.forma:
+                notas.append(f"💀 **{x.tag}** cae.")
+            elif "rajin" in a.bonos and not x.forma and "paralisis" not in x.efectos:
+                notas.append(self._aplicar_efecto(x, ("paralisis", 1, RAJIN_PARALISIS)))
+        if a.vivo:
+            a.bonos["velocidad"] = max(m["bono"][1], a.bonos.get("velocidad", 0))
+            notas.append(f"{BONOS_TXT['velocidad'].split(' (')[0]}: +25% de crítico durante {m['bono'][1]} turnos.")
+        self.log = (f"{a.d['emoji']} **{a.tag}** usa **{m['nombre']}**\n💨 " + ", ".join(lineas) + ".")
+        notas = [n for n in notas if n]
+        if notas:
+            self.log += "\n" + "\n".join(notas)
+
+    def _bolas(self, a, k, t):
+        """🔮 Bolas de reiatsu (Urahara): poco daño a un rival, cura al equipo y carga el reloj."""
+        m = a.mov(k)
+        t = t if (t is not None and t.vivo and t in self.rival.blancos) else self.objetivo_por_defecto()
+        cab = f"{a.d['emoji']} **{a.tag}** usa **{m['nombre']}** sobre **{t.tag}**"
+        notas = []
+        if random.random() > self._prec(a, m, t):
+            texto = f"{cab}... la bola no alcanza a {t.tag}."
+        else:
+            dmg = random.randint(*m["dmg"]) * self._mult_ataque(a) * self._mult_sangre(a, t)
+            real = self._golpear(t, self._reducir(t, dmg), a)
+            texto = f"{cab} y causa **{real}** de daño."
+            if t.hp <= 0 and not t.forma:
+                notas.append(f"💀 **{t.tag}** cae.")
+        curas = []
+        for x in self.actual.vivos:
+            c = min(m["cura"], x.max_hp - x.hp)
+            if c > 0:
+                x.hp += c
+                curas.append(f"{x.tag} +{c}")
+        if curas:
+            notas.append("💚 " + ", ".join(curas) + ".")
+        a.ulti = min(100.0, a.ulti + BOLAS_ULTI)
+        if a.arena < ARENA_MAX:
+            a.arena = min(ARENA_MAX, a.arena + BOLAS_RELOJ)
+            notas.append(f"⏳ {a.tag} llena el reloj ({a.arena}/{ARENA_MAX}).")
+        self.log = texto + ("\n" + "\n".join(notas) if notas else "")
+
+    def _trampa(self, a, k):
+        """🪤 Trampa (Urahara): hiere un poco a todos los rivales; todo el equipo gana Puntería."""
+        m = a.mov(k)
+        lineas, notas = [], []
+        for t in list(self.rival.blancos):
+            if random.random() > self._prec(a, m, t):
+                lineas.append(f"{t.tag} la esquiva")
+                continue
+            dmg = random.randint(*m["dmg_todos"]) * self._mult_ataque(a) * self._mult_sangre(a, t)
+            real = self._golpear(t, self._reducir(t, dmg), a)
+            lineas.append(f"{t.tag} -{real}")
+            if t.hp <= 0 and not t.forma:
+                notas.append(f"💀 **{t.tag}** cae.")
+        for x in self.actual.vivos:
+            x.bonos["punteria"] = max(2, x.bonos.get("punteria", 0))
+        notas.append(f"{BONOS_TXT['punteria']} para todo el equipo durante 2 turnos.")
+        self.log = f"{a.d['emoji']} **{a.tag}** usa **{m['nombre']}**\n🪤 " + ", ".join(lineas) + "." + "\n" + "\n".join(n for n in notas if n)
 
     def _apagon(self, a, k):
         """🔌 Apagón (Reze): ningún rival puede usar su ataque normal en su próximo turno."""
@@ -1516,7 +1633,7 @@ class Combate:
             for k in CLAVES + ("defender", "ulti"):
                 if not self.puede(l, k):
                     continue
-                if k == "defender" or (k != "ulti" and l.mov(k)["tipo"] in ("cura", "limpia", "adapta", "reserva", "potencia", "ventisca", "apagon", "barrera")):
+                if k == "defender" or (k != "ulti" and l.mov(k)["tipo"] in ("cura", "limpia", "adapta", "reserva", "potencia", "ventisca", "apagon", "barrera", "trampa")):
                     res.append((l, k, None))
                 elif k != "ulti" and (l.mov(k).get("sana") or l.mov(k).get("regen")):
                     res += [(l, k, t) for t in rv.blancos]
@@ -1561,6 +1678,25 @@ class Combate:
             v = sum(prom * (ROTA_MULT if "guardia_rota" in x.efectos else 1) + (20 if prom >= x.hp else 0) for x in rv.blancos)
             v += min(sum(m["cura"]) / 2 * m["curas"] * len(eq.vivos), sum(x.max_hp - x.hp for x in eq.vivos))
             return v / (m["coste"] ** 0.8)
+        if m["tipo"] == "clones":            # Paso de clones: un golpe a cada uno de los dos elegidos y otro a todos
+            prom = sum(m["dmg"]) / 2 * mult
+            golpes = [t] + [x for x in rv.blancos if x is not t][:1] + list(rv.blancos)
+            v = sum(prom * self._prec(l, m, x) * (ROTA_MULT if "guardia_rota" in x.efectos else (GUARDIA_MULT if x.guardia else 1)) for x in golpes)
+            v += 8 * (1 - t.hp / t.max_hp) * 0.5 + (5 if "velocidad" not in l.bonos else 0)
+            if "rajin" in l.bonos:
+                v += 2.5 * len(golpes) * RAJIN_PARALISIS
+            v -= m["pm"] * 0.9
+            return v / (m["coste"] ** 0.8)
+        if m["tipo"] == "bolas":             # Bolas de reiatsu: pega poco, cura al equipo y carga el reloj
+            prom = sum(m["dmg"]) / 2 * mult * self._prec(l, m, t)
+            cura = sum(min(m["cura"], x.max_hp - x.hp) for x in eq.vivos)
+            v = prom + cura * 0.9 + (3.5 if l.arena < ARENA_MAX else 0) + 2 + 8 * (1 - t.hp / t.max_hp) * 0.5
+            return v / (m["coste"] ** 0.8)
+        if m["tipo"] == "trampa":            # Trampa: daño a todos y Puntería al equipo
+            v = sum(sum(m["dmg_todos"]) / 2 * mult * self._prec(l, m, x) for x in rv.blancos)
+            v += (14 + 4 * len(eq.vivos)) if "punteria" not in l.bonos else 0.5
+            v -= 2
+            return v / (m["coste"] ** 0.8)
         if m["tipo"] == "reserva":
             lleno = l.arena >= ARENA_MAX
             return ((20 if lleno else 12) + 3 * len(eq.vivos)) / (m["coste"] ** 0.8)
@@ -1569,6 +1705,8 @@ class Combate:
                 return 0.5
             if m.get("hojas") and l.hojas - m["hojas"] < 2:
                 return 0.5              # las hojas valen más para curar o controlar: solo la prepara si le sobran
+            if m["bono"][0] == "rajin":
+                return (10 + 3 * len(rv.blancos)) / (m["coste"] ** 0.8)
             if m["bono"][0] == "peinado":
                 heridos = sum(1 for x in eq.vivos if x.hp < x.max_hp)
                 return (2 + 4 * heridos) / (m["coste"] ** 0.8)
@@ -1722,6 +1860,10 @@ class Combate:
             v -= 6                      # guarda hojas para curar si el equipo está mal
         if m.get("bono") and m["bono"][0] not in l.bonos:
             v += {"furia": 10, "velocidad": 5, "frenesi": 7}.get(m["bono"][0], 5)   # preparar vale la pena
+            r4 = l.d["mov"].get("hab4", {})
+            if m["bono"][0] == "velocidad" and r4.get("requiere_bono") == "velocidad" and l.pm - m.get("pm", 0) >= r4.get("pm", 0) \
+                    and eq.medios >= m["coste"] + r4["coste"]:
+                v += 8                  # Shunpo abre la puerta a Rajin Sekein
         return v / (m["coste"] ** 0.8)
 
     def jugada_cpu(self):
