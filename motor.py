@@ -205,6 +205,9 @@ PERSONAJES = {
     "storm": {
         "nombre": "Storm",
         "emoji": "<:emoji_16:1563289388190924943>",
+        "emojis": {   # emoji de cada botón (Discord): "<:nombre:ID>". Vacío = emoji por defecto
+            "normal": "", "hab1": "", "hab2": "", "hab3": "", "hab4": "", "defender": "", "ulti": "",
+        },
         "color": 0x5DADE2,
         "boton": "50B2CB",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": VIDA,
@@ -260,6 +263,9 @@ PERSONAJES = {
     "yuki": {
         "nombre": "Yuki Tsukumo",
         "emoji": "<:emoji_21:1563551373629325574>",
+        "emojis": {   # emoji de cada botón (Discord): "<:nombre:ID>". Vacío = emoji por defecto
+            "normal": "", "hab1": "", "hab2": "", "hab3": "", "hab4": "", "defender": "", "ulti": "",
+        },
         "color": 0x8E44AD,
         "boton": "D2693C",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": VIDA,
@@ -441,6 +447,9 @@ PERSONAJES = {
 
         "nombre": "Mantis",
         "emoji": "<:emoji_23:1564807292795224146>",     # <- pon aquí tu emoji de Mantis: <:nombre:ID>
+        "emojis": {   # emoji de cada botón (Discord): "<:nombre:ID>". Vacío = emoji por defecto
+            "normal": "", "hab1": "", "hab2": "", "hab3": "", "hab4": "", "defender": "", "ulti": "",
+        },
         "color": 0x27AE60,
         "boton": "30C57B",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": 125,        # menos vida que el resto (130): hay que protegerla
@@ -471,14 +480,14 @@ PERSONAJES = {
     },
     "urahara": {
         "nombre": "Kisuke Urahara",
-        "emoji": "<:emoji_27:1569682511859294321>",     # <- pon aquí tu emoji de Urahara: <:nombre:ID>
+        "emoji": "🎩",     # <- pon aquí tu emoji de Urahara: <:nombre:ID>
         "color": 0x2E8B6E,
         "boton": "30C57B",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": 125,
         "arena": True,      # usa el medidor ⏳ reloj de arena en vez de PM
         "desc": "Bleach. Apoyo táctico: su bastón llena el reloj y con él refuerza al equipo o debilita la defensa rival; su Bankai los vuelve difíciles de tocar.",
-        "gif": "https://i.imgur.com/flTYzPY.jpeg",            # <- retrato de Urahara (o sube img/urahara_normal.png)
-        "crit_gif": "https://i.imgur.com/kTBD5Pi.gif",
+        "gif": "",            # <- retrato de Urahara (o sube img/urahara_normal.png)
+        "crit_gif": "",
         "victoria_img": "",
         "mov": {
             "normal": {"nombre": "Golpe de bastón", "tipo": "normal", "coste": COSTE_NORMAL,
