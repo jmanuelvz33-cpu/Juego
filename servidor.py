@@ -82,8 +82,9 @@ def _emoji_url(txt):
 
 def _mov(l, k):
     m = l.mov(k)
+    e = (l.d.get("emojis") or {}).get(k) or ""
     return {"k": k, "nombre": m["nombre"], "coste": m["coste"], "pm": m.get("pm", 0), "sombras": m.get("sombras", 0),
-            "desc": m.get("desc", ""), "tipo": m["tipo"]}
+            "desc": m.get("desc", ""), "tipo": m["tipo"], "emoji": e, "emoji_url": _emoji_url(e)}
 
 
 def _luchador(c, eq, i, l, mio=True):
@@ -96,6 +97,8 @@ def _luchador(c, eq, i, l, mio=True):
             if k == "defender":
                 d = {"k": "defender", "nombre": "Defender", "coste": M.COSTE_DEFENDER, "pm": 0, "sombras": 0,
                      "desc": "Recibes la mitad de daño y el rival pierde 1 icono al golpearte.", "tipo": "defender"}
+                e = (l.d.get("emojis") or {}).get("defender") or ""
+                d["emoji"], d["emoji_url"] = e, _emoji_url(e)
             else:
                 d = _mov(l, k)
             d["ok"] = bool(c.puede(l, k))
