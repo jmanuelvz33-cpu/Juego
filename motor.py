@@ -23,7 +23,7 @@ PM_DEFENDER = 1         # PM que gana al defenderse
 VEL_CRIT = 0.25         # 💨 Velocidad: probabilidad extra de crítico (Yoruichi)
 CLAVES = ("normal", "hab1", "hab2", "hab3", "hab4")   # las 4 habilidades + el ataque normal (hab3 y hab4 solo las tienen los personajes reworkeados)
 NO_MOV = {"nombre": "—", "tipo": "normal", "coste": 99, "no": True}
-LIMPIABLES = ("paralisis", "quemadura", "veneno", "sangrado", "congelado")   # lo que quita el Toque empático de Mantis
+LIMPIABLES = ("paralisis", "quemadura", "veneno", "sangrado", "congelado", "ciego")   # lo que quita el Toque empático de Mantis
 HOJAS_MAX = 4           # 🍃 hojas máximas de Mantis (las gana con su ataque normal y las gasta con sus habilidades)
 HOJAS_INICIAL = 4       # Mantis empieza la pelea con todas sus hojas
 CURA_HOJAS = {1: 16, 2: 30, 3: 14, 4: 20}   # cura de Mantis según sus hojas: 1 = 16 a un aliado · 2 = 30 a un aliado · 3 = 14 a TODO el equipo · 4 = 20 a TODO el equipo
@@ -40,6 +40,8 @@ PEINADO_MULT = 1.5      # 💈 Peinarse el pelo (Josuke): sus curas valen +50%
 CONTRA_ESCUDO = 0.5     # 💢 "¿Qué dijiste de mi cabello?": recibe la mitad del daño del primer golpe...
 CONTRA_REFLEJO = 1.0    # parte del daño que devuelve (1.0 = entero)
 CONTRA_CURA = 15        # ... se lo devuelve entero al atacante y cura 15 a un compañero al azar
+GARUDA_REBOTE = 0.6     # ⚽ Pelota garuda (Yuki): el segundo rival recibe 60% del daño
+LINEA_MAX = 3           # ⬛ Línea negra (Yuki): medidor propio, de 0 a 3
 CONTROL_MULT = 1.5      # 🧲 Control metal: el rival controlado golpea con su ataque normal a +50% de daño
 CONGELADO_MULT = 1.25   # ❄️ Congelado (Ororo): el luchador congelado recibe +25% de daño
 VIENTO_ESQUIVA = 0.15   # 🌬️ Viento a favor (Ororo): +15% de esquiva a su equipo
@@ -104,6 +106,7 @@ EFECTOS_TXT = {
     "guardia_rota": "🛡️ Guardia rota",
     "enredado": "🪢 Enredado",     # solo lo causa Megumi: no puede actuar y luego queda debilitado
     "sangrado": "🩸 Sangrado",    # solo lo causa Denji: daño al inicio de cada turno de su dueño
+    "ciego": "🕶️ Ciego",           # solo lo causa Yuki: no ve el nombre ni el icono de sus habilidades
     "apagon": "🔌 Apagón",         # solo lo causa Reze: no puede usar su ataque normal en su próximo turno
     "congelado": "❄️ Congelado",   # solo lo causa la Ventisca de Ororo: no puede actuar y recibe +25% de daño
     "sueno": "💤 Sueño",          # solo lo causa la ÚLTI de Mantis: no puede actuar su próximo turno
@@ -251,19 +254,26 @@ PERSONAJES = {
         "color": 0x8E44AD,
         "boton": "D2693C",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": VIDA,
-        "desc": "Jujutsu Kaisen. Golpe pesado: prepara su Masa Virtual y luego golpea muy fuerte.",
+        "linea": True,       # usa la ⬛ línea negra
+        "desc": "Jujutsu Kaisen. Golpes pesados: carga su línea negra con Masa virtual y la gasta en patadas que pueden dejar ciego al rival.",
         "gif": "https://i.imgur.com/eJQK7p6.jpeg",            # <- retrato de Yuki
         "crit_gif": "https://i.imgur.com/lieBufC.gif",       # <- animación de golpe fuerte / crítico
         "victoria_img": "https://i.imgur.com/KrjerJx.jpeg",   # <- imagen de victoria
         "mov": {
             "normal": {"nombre": "Golpe de masa", "tipo": "normal", "coste": COSTE_NORMAL,
                        "dmg": (9, 13), "prec": 0.93},
-            "hab1": {"nombre": "Masa virtual", "tipo": "estado", "coste": COSTE_HABILIDAD, "pm": 2,
-                     "dmg": (4, 7), "prec": 0.95, "bono": ("furia", 2),
-                     "desc": "Poco daño. Ella gana 🔺 Furia (+25% de daño) durante 2 turnos."},
-            "hab2": {"nombre": "Garuda", "tipo": "fuerte", "coste": COSTE_HABILIDAD, "pm": 4,
-                     "dmg": (26, 34), "prec": 0.80,
-                     "desc": "El golpe fuerte más pesado, pero el que más falla."},
+            "hab1": {"nombre": "Masa virtual", "tipo": "estado", "coste": COSTE_NORMAL, "pm": 1,
+                     "dmg": (6, 9), "prec": 0.93, "linea": 1,
+                     "desc": "Cuesta medio icono. Poco daño y, si acierta, sube 1 punto su ⬛ línea negra (máx. 3), que potencia su Doble patada."},
+            "hab2": {"nombre": "Pelota garuda", "tipo": "fuerte", "coste": COSTE_HABILIDAD, "pm": 3,
+                     "dmg": (15, 20), "prec": 0.85, "estampa": GARUDA_REBOTE, "doble_txt": "Lanzar contra…",
+                     "desc": "Golpea a un rival y después lanzas la pelota contra otro que tú eliges (ese recibe 60% del daño)."},
+            "hab3": {"nombre": "Doble patada", "tipo": "estado", "coste": COSTE_HABILIDAD, "pm": 3,
+                     "dmg": (10, 13), "prec": 0.90, "patadas": True,
+                     "desc": "Dos patadas y gasta la ⬛ línea negra. Con la línea en 2 el segundo golpe deja 🕶️ ciego al rival (no ve sus habilidades en su próximo turno). Con la línea llena (3) son tres patadas."},
+            "hab4": {"nombre": "Apuñalada", "tipo": "estado", "coste": COSTE_HABILIDAD, "pm": 3,
+                     "dmg": (12, 16), "prec": 0.90, "efecto": ("sangrado", 2, 0.80),
+                     "desc": "Apuñala al rival y lo deja 🩸 sangrando (80%)."},
         },
         "ulti": {"nombre": "Furia estelar", "tipo": "unico", "coste": COSTE_ULTI,
                  "dmg": (55, 70),
@@ -321,6 +331,13 @@ PERSONAJES = {
                      "dmg": (19, 26), "prec": 0.88, "extra": 5,
                      "crit_gif": "https://i.imgur.com/24h6twV.gif",         # <- animación de crítico de Nue
                      "desc": "Cuesta 2 🌑. El pájaro eléctrico golpea fuerte y suma 5 de daño eléctrico que la guardia no reduce."},
+            "hab3": {"nombre": "Conejos", "tipo": "conejos", "coste": COSTE_HABILIDAD, "sombras": 1,
+                     "dmg": (4, 6), "golpes": 3, "prec": 0.92,
+                     "dmg_todos": (5, 8), "efecto_todos": ("debilidad", 1, 0.35), "doble_txt": "Conejos…",
+                     "desc": "Cuesta 1 🌑. Eliges: solo a un rival (3 mordiscos seguidos) o a todos (1 mordisco a cada uno, con 35% de debilitarlos)."},
+            "hab4": {"nombre": "Serpiente", "tipo": "estado", "coste": COSTE_HABILIDAD, "sombras": 1,
+                     "dmg": (8, 12), "prec": 0.90, "efecto": ("veneno", 3, 0.90),
+                     "desc": "Cuesta 1 🌑. La serpiente muerde y deja ☠️ veneno 3 turnos (90%)."},
         },
         "ulti": {"nombre": "Elefante máximo", "tipo": "area", "coste": COSTE_ULTI,
                  "dmg": (15, 21),
@@ -394,7 +411,7 @@ PERSONAJES = {
                      "dmg": (17, 24), "prec": 0.85, "efecto": ("sangrado", 3, 1.0), "efecto_extra": ("guardia_rota", 1, 1.0),
                      "desc": "Golpe fuerte: deja 🩸 Sangrado y baja la defensa del rival hasta que termine el turno (🛡️ Guardia rota: tus compañeros le pegan 30% más). No se acumula."},
             "hab3": {"nombre": "Cuerda de motosierra", "tipo": "estado", "coste": COSTE_HABILIDAD, "pm": 3,
-                     "dmg": (13, 17), "prec": 0.90, "estampa": True,
+                     "dmg": (13, 17), "prec": 0.90, "estampa": True, "doble_txt": "Estampar contra…",
                      "desc": "Agarra a un rival con una cuerda y tú eliges a otro: lo estampa contra él y ambos sufren daño."},
             "hab4": {"nombre": "Rabia de sangre", "tipo": "potencia", "coste": COSTE_NORMAL, "pm": 3,
                      "bono": ("rabia", 3), "requiere": "sangrado", "cura_propia": 8,
@@ -439,13 +456,13 @@ PERSONAJES = {
     },
     "urahara": {
         "nombre": "Kisuke Urahara",
-        "emoji": "<:emoji_27:1569682511859294321>",     # <- pon aquí tu emoji de Urahara: <:nombre:ID>
+        "emoji": "🎩",     # <- pon aquí tu emoji de Urahara: <:nombre:ID>
         "color": 0x2E8B6E,
         "boton": "30C57B",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": 125,
         "arena": True,      # usa el medidor ⏳ reloj de arena en vez de PM
         "desc": "Bleach. Apoyo táctico: su bastón llena el reloj y con él refuerza al equipo o debilita la defensa rival; su Bankai los vuelve difíciles de tocar.",
-        "gif": "https://i.imgur.com/flTYzPY.jpeg",            # <- retrato de Urahara (o sube img/urahara_normal.png)
+        "gif": "",            # <- retrato de Urahara (o sube img/urahara_normal.png)
         "crit_gif": "",
         "victoria_img": "",
         "mov": {
@@ -554,6 +571,7 @@ class Luchador:
         self.forma_turnos = 0
         self.adaptado = None  # efecto que Mahoraga absorbió con Adaptación (nombre, duración)
         self.barrera = 0      # 🕸️ vida que le queda a su Barrera de hilos
+        self.linea = 0        # ⬛ línea negra de Yuki (0 a LINEA_MAX)
 
     @property
     def incapaz(self):
@@ -853,6 +871,11 @@ class Combate:
                 if curado:
                     self.log += f"\n🩸 **{l.tag}** recupera {curado} de vida."
             return
+        if m["tipo"] == "linea":             # ⬛ Masa virtual: sube la línea negra
+            antes = l.linea
+            l.linea = min(LINEA_MAX, l.linea + m["linea"])
+            self.log = f"{cab}.\n⬛ Línea negra: {'⬛' * l.linea}{'⬜' * (LINEA_MAX - l.linea)} ({l.linea}/{LINEA_MAX})" + (" · ¡llena!" if l.linea >= LINEA_MAX else "")
+            return
         if m["tipo"] == "barrera":           # 🕸️ Barrera de hilos sobre un compañero
             t = objetivo if (objetivo is not None and objetivo in self.actual.vivos and not objetivo.forma) else self._a_barrera()
             t.barrera = m["barrera"]
@@ -945,7 +968,7 @@ class Combate:
             l.guardia = True
             self.log = (f"🌀 **{l.tag}** se adapta: recibirá la mitad del daño, quien lo golpee perderá 1 icono "
                         f"y absorberá el primer efecto que le lancen.")
-        elif l.mov(k)["tipo"] in ("cura", "limpia", "reserva", "potencia", "barrera"):
+        elif l.mov(k)["tipo"] in ("cura", "limpia", "reserva", "potencia", "barrera", "linea"):
             eq.medios -= l.mov(k)["coste"]
             l.pm -= l.mov(k).get("pm", 0)
             self._apoyo(l, k, objetivo)
@@ -957,6 +980,11 @@ class Combate:
             eq.medios -= l.mov(k)["coste"]
             l.pm -= l.mov(k).get("pm", 0)
             self._apagon(l, k)
+        elif l.mov(k)["tipo"] == "conejos" and (objetivo2 == -1 or (objetivo2 is None and len(self.rival.blancos) >= 2)):
+            eq.medios -= l.mov(k)["coste"]
+            l.pm -= l.mov(k).get("pm", 0)
+            l.sombras -= l.mov(k).get("sombras", 0)
+            self._conejos(l, k)
         elif self._es_curar_aliado(l, k, objetivo):
             eq.medios -= l.mov(k)["coste"]
             l.pm -= l.mov(k).get("pm", 0)
@@ -1019,6 +1047,8 @@ class Combate:
 
     def _golpes(self, a, m, k):
         """Golpes de un movimiento (la Diosa del trueno de Ororo duplica los de su ataque normal)."""
+        if m.get("patadas"):                 # Doble patada de Yuki: con la línea negra llena es triple
+            return 3 if a.linea >= LINEA_MAX else 2
         return m.get("golpes", 1) * (2 if (k == "normal" and "diosa" in a.bonos) else 1)
 
     def _mult_defensa(self, t):
@@ -1110,6 +1140,7 @@ class Combate:
         if k == "normal":
             dmg *= self._mult_normal(a)
         dmg_base = dmg                      # daño sin guardia ni crítico (lo usan las chispas y la estampida)
+        linea0 = a.linea                    # línea negra antes de la patada
         notas = []
         rota = "guardia_rota" in t.efectos
         if rota:
@@ -1145,8 +1176,15 @@ class Combate:
             a.pm = min(PM_MAX, a.pm + PM_NORMAL)
         if m.get("chispas"):                              # 🎆 Pirotecnia: chispas a los demás rivales (y, con mala suerte, a un aliado)
             notas += self._chispas(a, t, dmg_base, m["chispas"])
-        if m.get("estampa"):                              # 🪢 Cuerda de motosierra: estampa a t contra otro rival
-            notas += self._estampar(a, t, dmg_base)
+        if m.get("estampa"):                              # 🪢 Cuerda de motosierra / ⚽ Pelota garuda: el golpe sigue contra otro rival
+            notas += self._estampar(a, t, dmg_base, m)
+        if m.get("linea"):                                # ⬛ Masa virtual: sube la línea negra
+            a.linea = min(LINEA_MAX, a.linea + m["linea"])
+            notas.append(f"⬛ Línea negra: {'⬛' * a.linea}{'⬜' * (LINEA_MAX - a.linea)}" + (" · ¡llena!" if a.linea >= LINEA_MAX else ""))
+        if m.get("patadas"):                              # ⬛ Doble patada: gasta la línea negra
+            a.linea = 0
+            if linea0 == 2 and t.hp > 0 and not t.forma:   # a la mitad: el segundo golpe deja ciego
+                notas.append(self._aplicar_efecto(t, ("ciego", 1, 1.0)) + " No ve sus habilidades en su próximo turno.")
         if m.get("bono_prob") and random.random() < m["bono_prob"][2]:
             a.bonos[m["bono_prob"][0]] = max(m["bono_prob"][1], a.bonos.get(m["bono_prob"][0], 0))
             notas.append(f"{BONOS_TXT[m['bono_prob'][0]]} durante {m['bono_prob'][1]} turnos.")
@@ -1240,16 +1278,39 @@ class Combate:
         a.ulti = ulti0                        # el fuego amigo no carga la ÚLTI
         return notas
 
-    def _estampar(self, a, t, base):
+    def _estampar(self, a, t, base, m):
         otros = [x for x in self.rival.blancos if x is not t and x.vivo]
         v = getattr(self, "_obj2", None)
-        if v is None or v not in otros:
+        if not isinstance(v, Luchador) or v not in otros:
             v = min(otros, key=lambda x: x.hp) if otros else None
         self._obj2 = None
+        rebote = m["estampa"] if isinstance(m["estampa"], float) else 1.0
         if v is None:
-            return [f"🪢 No hay otro rival contra quien estamparlo."]
-        real = self._golpear(v, self._reducir(v, base) * self._mult_sangre(a, v), a)
-        return [f"🪢 **{t.tag}** es estampado contra **{v.tag}**: -{real}." + (f"\n💀 **{v.tag}** cae." if v.hp <= 0 and not v.forma else "")]
+            return ["⚽ No hay otro rival al que lanzarlo." if rebote < 1 else "🪢 No hay otro rival contra quien estamparlo."]
+        real = self._golpear(v, self._reducir(v, base * rebote) * self._mult_sangre(a, v), a)
+        txt = f"⚽ La pelota rebota contra **{v.tag}**: -{real}." if rebote < 1 else f"🪢 **{t.tag}** es estampado contra **{v.tag}**: -{real}."
+        return [txt + (f"\n💀 **{v.tag}** cae." if v.hp <= 0 and not v.forma else "")]
+
+    def _conejos(self, a, k):
+        """🐰 Conejos (Megumi), modo 'a todos': un mordisco a cada rival, con posibilidad de debilitarlos."""
+        m = a.mov(k)
+        cab = f"{a.d['emoji']} **{a.tag}** usa **{m['nombre']}** (a todos)"
+        lineas, notas = [], []
+        for t in list(self.rival.blancos):
+            if random.random() > self._prec(a, m, t):
+                lineas.append(f"{t.tag} esquiva")
+                continue
+            dmg = random.randint(*m["dmg_todos"]) * self._mult_ataque(a) * self._mult_sangre(a, t)
+            real = self._golpear(t, self._reducir(t, dmg), a)
+            lineas.append(f"{t.tag} -{real}")
+            if t.hp <= 0 and not t.forma:
+                notas.append(f"💀 **{t.tag}** cae.")
+            elif t.hp > 0 and not t.forma and m.get("efecto_todos"):
+                notas.append(self._aplicar_efecto(t, m["efecto_todos"]))
+        self.log = f"{cab}\n🐰 " + ", ".join(lineas) + "."
+        notas = [n for n in notas if n]
+        if notas:
+            self.log += "\n" + "\n".join(notas)
 
     def _apagon(self, a, k):
         """🔌 Apagón (Reze): ningún rival puede usar su ataque normal en su próximo turno."""
@@ -1532,6 +1593,10 @@ class Combate:
                 return 0
             amenaza = sum(sum(y.d["mov"]["normal"]["dmg"]) / 2 for y in rv.blancos)
             return (m["barrera"] * CPU_BARRERA + 8 * (1 - x.hp / x.max_hp) + amenaza * 0.4) / (m["coste"] ** 0.8)
+        if m["tipo"] == "linea":
+            if l.linea >= LINEA_MAX:
+                return 0.5
+            return (3 + 2.5 * l.linea) / (m["coste"] ** 0.8)       # cuanto más llena, más cerca de la triple patada
         if m["tipo"] == "apagon":           # quita el ataque normal de los rivales (la CPU se ve obligada a gastar PM)
             v = 0
             for x in rv.blancos:
@@ -1639,9 +1704,16 @@ class Combate:
             v += (robo + robo * m["roba_ulti"][1] / m["roba_ulti"][0]) * CPU_ROBO
         if m.get("desteje"):
             v += 4 * len(t.bonos) + (3 if t.guardia else 0)
-        if m.get("estampa"):            # el segundo golpe de la estampida
+        if m.get("linea") and l.linea < LINEA_MAX:
+            v += 2.5 * (l.linea + 1)    # cuanto más llena la línea, más cerca de la triple patada
+        if m.get("patadas"):
+            v += {2: 6, 3: 10}.get(l.linea, 0)    # con la línea a la mitad deja ciego; llena, son tres patadas
+        if m.get("dmg_todos") and len(rv.blancos) >= 2:     # Conejos: ¿mejor a todos que a uno?
+            area = sum(sum(m["dmg_todos"]) / 2 * self._prec(l, m, x) + 4 * 0.35 for x in rv.blancos)
+            v = max(v, area)
+        if m.get("estampa"):            # el segundo golpe de la estampida / rebote
             if len([x for x in rv.blancos if x is not t]):
-                v += prom * 0.9
+                v += prom * 0.9 * (m["estampa"] if isinstance(m["estampa"], float) else 1.0)
         if m.get("bono_prob") and m["bono_prob"][0] not in l.bonos:
             v += 2
         if m.get("bono_equipo") and m["bono_equipo"][0] not in l.bonos:
