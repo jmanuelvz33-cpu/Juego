@@ -186,6 +186,7 @@
     if(l.sombras!=null)ex.push('🌑'.repeat(l.sombras));
     if(l.hojas!=null)ex.push('🍃'.repeat(l.hojas));
     if(l.arena!=null)ex.push(`<span class="c2-arena" title="Reloj de arena ${l.arena}/${l.arena_max}" style="--p:${l.arena/l.arena_max*100}%"><i></i></span>`);
+    if(l.linea!=null)ex.push(`<span title="Línea negra ${l.linea}/${l.linea_max}">${'⬛'.repeat(l.linea)}${'⬜'.repeat(l.linea_max-l.linea)}</span>`);
     if(l.pm!=null&&l.sombras==null&&l.arena==null)ex.push(l.pm+' PM');
     const nom=l.forma?('👹 '+esc(l.forma)):(emo(l)+' '+esc(l.nombre));
     return {hp,mx,pct,ex,nom};
@@ -212,6 +213,7 @@
     const nom=x.k==='ulti'&&!a.ulti_lista?`ÚLTI ${a.ulti}%`:x.nombre;
     const col=x.k==='defender'?'#6b7280':x.k==='ulti'?'var(--bad)':colorDe(a);
     const ex=(x.pm?` · ${x.pm}PM`:'')+(x.sombras?` · ${x.sombras}🌑`:'');
+    if(x.ciego)return `<button class="c2-m ${x.k}" style="--c:${col}" data-ok="${x.ok?1:0}" ${x.ok&&!lock?'':'disabled'} onclick="hacer('${x.k}')"><span>&nbsp;</span><span class="nm">&nbsp;</span><small>&nbsp;</small></button>`;   // 🕶️ ciego: botones vacíos
     return `<button class="c2-m ${x.k}" style="--c:${col}" data-ok="${x.ok?1:0}" ${x.ok&&!lock?'':'disabled'}
       onclick="hacer('${x.k}')" onmouseenter="UI2.ayuda(this.dataset.d)" onfocus="UI2.ayuda(this.dataset.d)" onmouseleave="UI2.ayuda()" data-d="${esc(x.desc||'')}">
       <span>${ic}</span><span class="nm">${esc(nom)}</span><small>${costeTxt(x.coste)}${ex}</small></button>`;
@@ -239,7 +241,9 @@
       h+=`<div class="c2-menu acc"><div class="c2-who">▶ ${esc(a.forma||a.nombre)}</div>
         ${a.acciones.map(x=>boton(a,x)).join('')}
         <button class="c2-m sec" onclick="terminar()" onmouseenter="UI2.ayuda('Pasa el turno sin gastar más iconos.')" onmouseleave="UI2.ayuda()"><span>⏭️</span><span class="nm">Terminar turno</span></button>
-        ${pend2?`<div class="c2-who">🪢 Estampar contra…</div><div class="c2-ali">${S.blancos.filter(i=>i!==tgt).map(i=>`<button onclick="hacer(pend2,${i})">${esc(e1.luchadores[i].nombre)}</button>`).join('')}</div>`:''}
+        ${pend2?(()=>{const ac=(a.acciones||[]).find(y=>y.k===pend2)||{};
+          if(ac.conejos)return `<div class="c2-who">🐰 Conejos…</div><div class="c2-ali"><button onclick="hacer(pend2,-2)">Solo a ${esc(e1.luchadores[tgt!=null?tgt:S.blancos[0]].nombre)}</button><button onclick="hacer(pend2,-1)">A todos</button></div>`;
+          return `<div class="c2-who">🎯 ${esc(ac.doble||'Contra…')}</div><div class="c2-ali">${S.blancos.filter(i=>i!==tgt).map(i=>`<button onclick="hacer(pend2,${i})">${esc(e1.luchadores[i].nombre)}</button>`).join('')}</div>`})():''}
         ${soporte?`<div class="c2-ali"><span class="ic">💚</span>${S.aliados.map(i=>`<button class="${tgtAli===i?'on':''}" onclick="elegirAli(${i})">${esc(e0.luchadores[i].nombre)}</button>`).join('')}</div>`:''}</div>`;
     }
     h+=`<div class="c2-help"><b>AYUDA</b><span class="tx" id="c2h">${esc(defecto)}</span>
