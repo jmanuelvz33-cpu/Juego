@@ -206,7 +206,7 @@ PERSONAJES = {
         "nombre": "Storm",
         "emoji": "<:emoji_16:1563289388190924943>",
         "emojis": {   # emoji de cada botón (Discord): "<:nombre:ID>". Vacío = emoji por defecto
-            "normal": "", "hab1": "", "hab2": "", "hab3": "", "hab4": "", "defender": "", "ulti": "",
+            "normal": "<:emoji_12:1570564519573463060>", "hab1": "<:emoji_13:1570564541518053407>", "hab2": "<:emoji_15:1570564593212854322>", "hab3": "<:emoji_14:1570564567157710999>", "hab4": "<:emoji_16:1570564617871298761>", "defender": "", "ulti": "",
         },
         "color": 0x5DADE2,
         "boton": "50B2CB",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
