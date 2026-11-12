@@ -101,7 +101,7 @@ def _luchador(c, eq, i, l, mio=True):
             d["ok"] = bool(c.puede(l, k))
             d["doble"] = bool(l.mov(k).get("estampa"))      # pide elegir un segundo rival
             d["dual"] = k in M.CLAVES and bool(l.mov(k).get("sana") or l.mov(k).get("regen"))
-            d["apoyo"] = d["tipo"] in ("cura", "limpia")
+            d["apoyo"] = d["tipo"] in ("cura", "limpia", "barrera")
             acc.append(d)
     return {
         "i": i, "key": l.key, "nombre": l.nombre, "emoji": l.d["emoji"], "emoji_url": _emoji_url(l.d["emoji"]),
@@ -111,8 +111,8 @@ def _luchador(c, eq, i, l, mio=True):
         "hojas": l.hojas if l.d.get("hojas") else None, "arena": l.arena if l.d.get("arena") else None, "arena_max": M.ARENA_MAX, "sombras": l.sombras if l.d.get("sombras") else None,
         "forma": (l.d.get("forma_nombre", "Mahoraga") if l.forma else None), "forma_hp": l.forma_hp,
         "forma_turnos": l.forma_turnos,
-        "efectos": [M.EFECTOS_TXT[e] for e in l.efectos] + [M.BONOS_TXT[b] for b in l.bonos],
-        "efectos_det": [{"t": M.EFECTOS_TXT[e], "n": n} for e, n in l.efectos.items()] + [{"t": M.BONOS_TXT[b], "n": n} for b, n in l.bonos.items()],
+        "efectos": [M.EFECTOS_TXT[e] for e in l.efectos] + [_txt_bono(l, b) for b in l.bonos],
+        "efectos_det": [{"t": M.EFECTOS_TXT[e], "n": n} for e, n in l.efectos.items()] + [{"t": _txt_bono(l, b), "n": n} for b, n in l.bonos.items()],
         "acciones": acc,
     }
 
@@ -639,6 +639,11 @@ def _pvp_actuar(b, ses, f):
     return _vista(s, yo, int(b.get("desde", 0) or 0))
 
 
+def _txt_bono(l, b):
+    """Texto de un bono; la Barrera de hilos muestra la vida que le queda."""
+    return f"🕸️ Barrera de hilos: {l.barrera} de vida" if b == "barrera" else M.BONOS_TXT[b]
+
+
 def _ejecutar_accion(c, b):
     try:
         a = c.actual.luchadores[int(b["actor"])]
@@ -649,7 +654,7 @@ def _ejecutar_accion(c, b):
         if k != "defender":
             m = a.mov(k)
             ali = b.get("aliado")
-            if m["tipo"] in ("cura", "limpia") or (b.get("apoyo") and ali is not None):
+            if m["tipo"] in ("cura", "limpia", "barrera") or (b.get("apoyo") and ali is not None):
                 obj = c.actual.luchadores[int(ali)] if ali is not None else None
             elif b.get("objetivo") is not None:
                 obj = c.rival.luchadores[int(b["objetivo"])]
