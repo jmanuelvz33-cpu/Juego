@@ -33,6 +33,13 @@ DIOSA_MULT = 1.15       # ⚡ Diosa del trueno (Ororo): su ataque normal golpea 
 FUERZA_MULT = 1.15      # 💪 Fuerza (Reze): +15% de daño
 CHISPAS = (0.4, 0.15)   # 🎆 Pirotecnia (Reze): las chispas hacen 40% del daño a los otros rivales y cada aliado tiene 15% de comérselas
 RABIA_CRIT = 0.10       # 🩸 Rabia de sangre (Denji): +10% de probabilidad de crítico
+BARRERA_HP = 24         # 🕸️ Barrera de hilos (Jolyne): vida propia de la barrera
+BARRERA_DUR = 3         # ... dura hasta romperse o 3 turnos de su equipo
+ROBO_ULTI = (25, 15)    # 🧵 Hilos ladrones (Jolyne): le quita 25 de ÚLTI al rival y ella se queda con 15
+PEINADO_MULT = 1.5      # 💈 Peinarse el pelo (Josuke): sus curas valen +50%
+CONTRA_ESCUDO = 0.5     # 💢 "¿Qué dijiste de mi cabello?": recibe la mitad del daño del primer golpe...
+CONTRA_REFLEJO = 1.0    # parte del daño que devuelve (1.0 = entero)
+CONTRA_CURA = 15        # ... se lo devuelve entero al atacante y cura 15 a un compañero al azar
 CONTROL_MULT = 1.5      # 🧲 Control metal: el rival controlado golpea con su ataque normal a +50% de daño
 CONGELADO_MULT = 1.25   # ❄️ Congelado (Ororo): el luchador congelado recibe +25% de daño
 VIENTO_ESQUIVA = 0.15   # 🌬️ Viento a favor (Ororo): +15% de esquiva a su equipo
@@ -79,6 +86,9 @@ HISTORIAL = 2           # turnos anteriores que se muestran
 CPU_EFECTO_MULT = 1.4     # la CPU valora más las habilidades que dan efecto (quemadura, parálisis...)
 CPU_HAB_BONO = 2.0        # pequeño extra por usar habilidades en vez de solo el ataque normal
 CPU_ULTI_MULT = 1.8       # cuando la ÚLTI está lista, la CPU la usa
+CPU_CONTRA = 0.35        # cuánto valora la CPU el Contraataque de Josuke (por punto de daño enemigo)
+CPU_ROBO = 0.15          # cuánto valora la CPU robar ÚLTI (por punto)
+CPU_BARRERA = 0.5        # cuánto valora la CPU la vida de una Barrera de hilos
 CPU_POTENCIA = 0.75      # cuánto valora la CPU preparar un bono propio (Antenas afiladas, Diosa del trueno)
 CPU_REPITE = 0.85         # repetir el mismo ataque que acaba de usar vale menos (variedad)
 CPU_NIVELES = {"facil": 0.55, "normal": 0.85, "dificil": 1.0}   # 1.0 = CPU perfecta
@@ -105,6 +115,9 @@ BONOS_TXT = {"furia": "🔺 Furia (+25% daño)", "velocidad": "💨 Velocidad (+
              "reiatsu": "🔷 Reiatsu (+15% daño, -15% daño recibido, +10% esquiva)",
              "reiatsu_max": "🔷 Reiatsu máximo (+25% daño, -25% daño recibido, +20% esquiva)",
              "bankai": "🌀 Bankai (+20% crítico y +20% esquiva)",
+             "barrera": "🕸️ Barrera de hilos (absorbe daño)",
+             "peinado": "💈 Peinado perfecto (sus curas valen +50%)",
+             "contra": "💢 Contraataque (el próximo golpe que reciba se lo devuelve al atacante)",
              "fuerza": "💪 Fuerza (+15% de daño)",
              "rabia": "🩸 Rabia de sangre (+10% de probabilidad de crítico)",
              "antenas": "🌿 Antenas afiladas (su ataque normal hace el doble de daño y gana 1 hoja extra)",
@@ -132,8 +145,15 @@ PERSONAJES = {
             "hab1": {"nombre": "Hilos", "tipo": "estado", "coste": COSTE_HABILIDAD, "pm": 2,
                      "dmg": (5, 8), "prec": 0.90, "efecto": ("paralisis", 1, 0.80),
                      "desc": "Poco daño. Paraliza al rival: pierde su próximo turno (80%)."},
-            "hab2": {"nombre": "Deshilar", "tipo": "fuerte", "coste": COSTE_HABILIDAD, "pm": 4,
-                     "dmg": (22, 30), "prec": 0.85},
+            "hab2": {"nombre": "Deshilar", "tipo": "fuerte", "coste": COSTE_HABILIDAD, "pm": 3,
+                     "dmg": (20, 27), "prec": 0.90, "desteje": True,
+                     "desc": "Golpe medio. Deshila al rival: le arranca todos sus bonos (y su barrera) y le quita la guardia."},
+            "hab3": {"nombre": "Barrera de hilos", "tipo": "barrera", "coste": COSTE_HABILIDAD, "pm": 3,
+                     "barrera": BARRERA_HP,
+                     "desc": "Elige a un compañero (o a ella): una barrera de hilos con 24 de vida propia absorbe el daño que le hagan. Dura hasta romperse o 3 turnos."},
+            "hab4": {"nombre": "Hilos ladrones", "tipo": "estado", "coste": COSTE_HABILIDAD, "pm": 3,
+                     "dmg": (4, 7), "prec": 0.85, "roba_ulti": ROBO_ULTI,
+                     "desc": "Poco daño. Le roba 25% de ÚLTI al rival y ella se queda con 15%."},
         },
         "ulti": {"nombre": "Cinta de Möbius", "tipo": "equipo", "coste": COSTE_ULTI,
                  "cura": 15, "bono": ("furia", 2), "limpia": True,
@@ -341,6 +361,12 @@ PERSONAJES = {
             "hab2": {"nombre": "Puño restaurador", "tipo": "fuerte", "coste": 4, "pm": 4,
                      "dmg": (18, 25), "prec": 0.85, "sana": 26,
                      "desc": "Rival: golpe fuerte, sin efecto. Compañero: lo cura 26, mucho más que los otros."},
+            "hab3": {"nombre": "Peinarse el pelo", "tipo": "potencia", "coste": COSTE_NORMAL, "pm": 2,
+                     "bono": ("peinado", 3),
+                     "desc": "Cuesta medio icono. Durante 3 turnos todas sus curas valen +50%."},
+            "hab4": {"nombre": "¿Qué dijiste de mi cabello?", "tipo": "potencia", "coste": COSTE_HABILIDAD, "pm": 3,
+                     "bono": ("contra", 2),
+                     "desc": "Se prepara: el próximo golpe que reciba le hace la mitad de daño, se lo devuelve entero al atacante y cura 15 a un compañero al azar."},
         },
         "ulti": {"nombre": "Crazy Diamond: ¡DORARARARA!", "tipo": "crazy", "coste": COSTE_ULTI,
                  "dmg": (4, 6), "golpes": 3, "cura": (4, 6), "curas": 3,
@@ -527,6 +553,7 @@ class Luchador:
         self.forma_hp = 0
         self.forma_turnos = 0
         self.adaptado = None  # efecto que Mahoraga absorbió con Adaptación (nombre, duración)
+        self.barrera = 0      # 🕸️ vida que le queda a su Barrera de hilos
 
     @property
     def incapaz(self):
@@ -708,6 +735,8 @@ class Combate:
                     dic[k] -= 1
                     if dic[k] <= 0:
                         del dic[k]
+            if l.barrera and "barrera" not in l.bonos:
+                l.barrera = 0
 
     def _cerrar_turno(self):
         self._decrementar(self.actual)
@@ -773,6 +802,8 @@ class Combate:
             return False
         if m["tipo"] == "limpia" and (l.hojas < m.get("hojas", 1) or self._a_limpiar() is None):
             return False
+        if m["tipo"] == "barrera" and self._a_barrera() is None:
+            return False
         if k == "ulti" and l.ulti < 100:
             return False
         return True
@@ -793,6 +824,18 @@ class Combate:
             return None
         return max(malos, key=lambda x: ("paralisis" in x.efectos, len(x.efectos), -x.hp))
 
+    def _a_barrera(self):
+        """Compañero que más necesita una Barrera de hilos (el que no tiene una y está más herido), o None."""
+        cand = [x for x in self.actual.vivos if not x.forma and "barrera" not in x.bonos]
+        return min(cand, key=lambda x: x.hp / x.max_hp) if cand else None
+
+    def _mult_cura(self, l):
+        """💈 Peinarse el pelo: las curas de Josuke valen más."""
+        return PEINADO_MULT if "peinado" in l.bonos else 1.0
+
+    def _mismo_equipo(self, a, b):
+        return any(a in e.luchadores and b in e.luchadores for e in self.equipos)
+
     def _cargar_cura(self, l, curado):
         l.ulti = min(100.0, l.ulti + curado * ULTI_HECHO * ULTI_CURA)
 
@@ -809,6 +852,12 @@ class Combate:
                 l.hp += curado
                 if curado:
                     self.log += f"\n🩸 **{l.tag}** recupera {curado} de vida."
+            return
+        if m["tipo"] == "barrera":           # 🕸️ Barrera de hilos sobre un compañero
+            t = objetivo if (objetivo is not None and objetivo in self.actual.vivos and not objetivo.forma) else self._a_barrera()
+            t.barrera = m["barrera"]
+            t.bonos["barrera"] = max(BARRERA_DUR, t.bonos.get("barrera", 0))
+            self.log = f"{cab} sobre **{t.tag}**.\n🕸️ Barrera de hilos: absorbe hasta {t.barrera} de daño (máx. {BARRERA_DUR} turnos)."
             return
         if m["tipo"] == "reserva":
             lleno = l.arena >= ARENA_MAX
@@ -862,7 +911,7 @@ class Combate:
         cab = f"{l.d['emoji']} **{l.tag}** usa **{m['nombre']}** sobre **{t.tag}**"
         if m.get("sana"):
             antes = t.hp
-            t.hp = min(t.max_hp, t.hp + m["sana"])
+            t.hp = min(t.max_hp, t.hp + round(m["sana"] * self._mult_cura(l)))
             self.log = f"{cab}.\n💚 {t.tag} +{t.hp - antes}."
             self._cargar_cura(l, t.hp - antes)
             if k == "normal":
@@ -896,7 +945,7 @@ class Combate:
             l.guardia = True
             self.log = (f"🌀 **{l.tag}** se adapta: recibirá la mitad del daño, quien lo golpee perderá 1 icono "
                         f"y absorberá el primer efecto que le lancen.")
-        elif l.mov(k)["tipo"] in ("cura", "limpia", "reserva", "potencia"):
+        elif l.mov(k)["tipo"] in ("cura", "limpia", "reserva", "potencia", "barrera"):
             eq.medios -= l.mov(k)["coste"]
             l.pm -= l.mov(k).get("pm", 0)
             self._apoyo(l, k, objetivo)
@@ -983,6 +1032,11 @@ class Combate:
         if "congelado" in t.efectos and not t.forma:
             dmg *= CONGELADO_MULT           # ❄️ el hielo hace que cada golpe duela más
         dmg = max(1, round(dmg * self._mult_defensa(t)))
+        reflejo = 0
+        if "contra" in t.bonos and not t.forma and atacante is not None and atacante is not t and not self._mismo_equipo(t, atacante):
+            del t.bonos["contra"]           # 💢 solo reacciona al primer golpe
+            reflejo = round(dmg * CONTRA_REFLEJO)
+            dmg = max(1, round(dmg * CONTRA_ESCUDO))
         if t.forma:     # el daño va a la vida de Mahoraga, no a la de Megumi
             dmg = min(dmg, t.forma_hp)
             t.forma_hp -= dmg
@@ -991,12 +1045,32 @@ class Combate:
             if t.forma_hp <= 0:
                 self._terminar_forma(t, "es derrotado")
             return dmg
+        absorbido = 0
+        if t.barrera > 0:                   # 🕸️ la barrera se come el daño primero
+            absorbido = min(dmg, t.barrera)
+            t.barrera -= absorbido
+            dmg -= absorbido
+            self._avisos.append(f"🕸️ La barrera de **{t.tag}** absorbe {absorbido}" + (" y se rompe." if t.barrera <= 0 else f" (le quedan {t.barrera})."))
+            if t.barrera <= 0:
+                t.bonos.pop("barrera", None)
         dmg = min(dmg, t.hp)
         t.hp -= dmg
-        if SUENO_DESPIERTA:
+        if dmg and SUENO_DESPIERTA:
             t.efectos.pop("sueno", None)
-        self._cargar(atacante, dmg, True)
+        self._cargar(atacante, dmg + absorbido, True)
         self._cargar(t, dmg, False)
+        if reflejo:                         # ... y se lo devuelve entero a quien lo golpeó
+            dev = self._golpear(atacante, reflejo, t)
+            self._avisos.append(f"💢 **{t.tag}**: «¿Qué dijiste de mi cabello?» ¡Le devuelve el golpe a **{atacante.tag}**: -{dev}!")
+            if atacante.hp <= 0 and not atacante.forma:
+                self._avisos.append(f"💀 **{atacante.tag}** cae.")
+            amigos = [x for x in self.equipos[0].luchadores + self.equipos[1].luchadores
+                      if x is not t and x.vivo and not x.forma and self._mismo_equipo(t, x)] or ([t] if t.vivo else [])
+            if amigos:
+                h = random.choice(amigos)
+                curado = min(round(CONTRA_CURA * self._mult_cura(t)), h.max_hp - h.hp)
+                h.hp += curado
+                self._avisos.append(f"💚 **{h.tag}** recupera {curado}.")
         return dmg
 
     def _aplicar_efecto(self, t, ef):
@@ -1110,6 +1184,22 @@ class Combate:
                 notas.append(self._aplicar_efecto(t, m["efecto_extra"]))
             if m.get("control"):                       # Control metal: el rival ataca a los suyos
                 notas += self._control(a, t)
+            if m.get("roba_ulti") and not t.forma:     # 🧵 Hilos ladrones: le roba carga de ÚLTI
+                robo = min(t.ulti, m["roba_ulti"][0])
+                if robo > 0:
+                    t.ulti -= robo
+                    a.ulti = min(100.0, a.ulti + robo * m["roba_ulti"][1] / m["roba_ulti"][0])
+                    notas.append(f"🧵 **{a.tag}** le roba {round(robo)}% de ÚLTI a **{t.tag}**.")
+                else:
+                    notas.append(f"🧵 **{t.tag}** no tiene ÚLTI que robar.")
+            if m.get("desteje") and not t.forma:       # ✂️ Deshilar: le arranca los bonos y la guardia
+                quitados = [BONOS_TXT[b].split(" (")[0] for b in t.bonos]
+                t.bonos.clear()
+                t.barrera = 0
+                if t.guardia:
+                    t.guardia = False
+                    quitados.append("🛡️ Guardia")
+                notas.append(f"✂️ **{a.tag}** deshila a **{t.tag}**: pierde " + ", ".join(quitados) + "." if quitados else f"✂️ **{t.tag}** no tenía nada que deshilar.")
             if a.forma and a.adaptado:       # Mahoraga devuelve el efecto que absorbió
                 nombre_ad, dur_ad = a.adaptado
                 a.adaptado = None
@@ -1303,7 +1393,7 @@ class Combate:
             curas, total = [], 0
             for t in eq.vivos:
                 antes = t.hp
-                t.hp = min(t.max_hp, t.hp + sum(random.randint(*u["cura"]) for _ in range(u["curas"])))
+                t.hp = min(t.max_hp, t.hp + round(sum(random.randint(*u["cura"]) for _ in range(u["curas"])) * self._mult_cura(a)))
                 total += t.hp - antes
                 curas.append(f"{t.tag} +{t.hp - antes}")
             self._cargar_cura(a, total)
@@ -1365,7 +1455,7 @@ class Combate:
             for k in CLAVES + ("defender", "ulti"):
                 if not self.puede(l, k):
                     continue
-                if k == "defender" or (k != "ulti" and l.mov(k)["tipo"] in ("cura", "limpia", "adapta", "reserva", "potencia", "ventisca", "apagon")):
+                if k == "defender" or (k != "ulti" and l.mov(k)["tipo"] in ("cura", "limpia", "adapta", "reserva", "potencia", "ventisca", "apagon", "barrera")):
                     res.append((l, k, None))
                 elif k != "ulti" and (l.mov(k).get("sana") or l.mov(k).get("regen")):
                     res += [(l, k, t) for t in rv.blancos]
@@ -1418,6 +1508,12 @@ class Combate:
                 return 0.5
             if m.get("hojas") and l.hojas - m["hojas"] < 2:
                 return 0.5              # las hojas valen más para curar o controlar: solo la prepara si le sobran
+            if m["bono"][0] == "peinado":
+                heridos = sum(1 for x in eq.vivos if x.hp < x.max_hp)
+                return (2 + 4 * heridos) / (m["coste"] ** 0.8)
+            if m["bono"][0] == "contra":
+                amenaza = sum(sum(y.d["mov"]["normal"]["dmg"]) / 2 * y.d["mov"]["normal"].get("golpes", 1) for y in rv.blancos)
+                return (2 + amenaza * CPU_CONTRA + 2 * sum(1 for x in eq.vivos if x.hp < x.max_hp)) / (m["coste"] ** 0.8)
             if m["bono"][0] == "rabia":
                 faltan = l.max_hp - l.hp
                 sangran = sum("sangrado" in x.efectos for x in rv.vivos)
@@ -1430,6 +1526,12 @@ class Combate:
             else:                                                                # antenas: +50% y 1 hoja extra
                 extra = (base * (ANTENAS_MULT - 1) + 2.5 * ANTENAS_HOJA) * 2 * activos
             return (extra * CPU_POTENCIA) / (m["coste"] ** 0.8)
+        if m["tipo"] == "barrera":
+            x = self._a_barrera()
+            if x is None:
+                return 0
+            amenaza = sum(sum(y.d["mov"]["normal"]["dmg"]) / 2 for y in rv.blancos)
+            return (m["barrera"] * CPU_BARRERA + 8 * (1 - x.hp / x.max_hp) + amenaza * 0.4) / (m["coste"] ** 0.8)
         if m["tipo"] == "apagon":           # quita el ataque normal de los rivales (la CPU se ve obligada a gastar PM)
             v = 0
             for x in rv.blancos:
@@ -1485,6 +1587,8 @@ class Combate:
             prom *= self._mult_normal(l)
         if "congelado" in t.efectos:
             prom *= CONGELADO_MULT
+        if "contra" in t.bonos and not t.forma:
+            prom *= -0.6                  # cuidado: golpear a quien tiene Contraataque se vuelve en tu contra
         rota = "guardia_rota" in t.efectos
         guard = t.guardia and not rota
         if rota:
@@ -1530,6 +1634,11 @@ class Combate:
         if m.get("chispas"):            # chispas a los demás rivales, con riesgo para los compañeros
             otros = [x for x in rv.blancos if x is not t]
             v += prom * m["chispas"][0] * len(otros) - prom * m["chispas"][0] * m["chispas"][1] * (len(eq.vivos) - 1)
+        if m.get("roba_ulti"):          # robar ÚLTI vale lo que le quitas al rival y lo que ganas
+            robo = min(t.ulti, m["roba_ulti"][0])
+            v += (robo + robo * m["roba_ulti"][1] / m["roba_ulti"][0]) * CPU_ROBO
+        if m.get("desteje"):
+            v += 4 * len(t.bonos) + (3 if t.guardia else 0)
         if m.get("estampa"):            # el segundo golpe de la estampida
             if len([x for x in rv.blancos if x is not t]):
                 v += prom * 0.9
