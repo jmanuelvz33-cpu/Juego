@@ -264,7 +264,7 @@ PERSONAJES = {
         "nombre": "Yuki Tsukumo",
         "emoji": "<:emoji_21:1563551373629325574>",
         "emojis": {   # emoji de cada botón (Discord): "<:nombre:ID>". Vacío = emoji por defecto
-            "normal": "", "hab1": "", "hab2": "", "hab3": "", "hab4": "", "defender": "", "ulti": "",
+            "normal": "<:emoji_26:1570573182337949818>", "hab1": "<:emoji_31:1570573359203491941>", "hab2": "<:emoji_29:1570573275828986029>", "hab3": "<:emoji_30:1570573336201662704>", "hab4": "<:emoji_27:1570573204622155908>", "defender": "<:emoji_28:1570573225661042700>", "ulti": "<:emoji_32:1570573397560262899>",
         },
         "color": 0x8E44AD,
         "boton": "D2693C",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
