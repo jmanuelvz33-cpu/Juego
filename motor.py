@@ -448,7 +448,7 @@ PERSONAJES = {
         "nombre": "Mantis",
         "emoji": "<:emoji_23:1564807292795224146>",     # <- pon aquí tu emoji de Mantis: <:nombre:ID>
         "emojis": {   # emoji de cada botón (Discord): "<:nombre:ID>". Vacío = emoji por defecto
-            "normal": "", "hab1": "", "hab2": "", "hab3": "", "hab4": "", "defender": "", "ulti": "",
+            "normal": "<:emoji_19:1570568581786370219>", "hab1": "<:emoji_20:1570568616410218588>", "hab2": "<:emoji_21:1570568647817166989>", "hab3": "<:emoji_22:1570568681254027435>", "hab4": "<:emoji_25:1570569019092893807>", "defender": "<:emoji_23:1570568712887607388>", "ulti": "<:emoji_24:1570568750443266068>",
         },
         "color": 0x27AE60,
         "boton": "30C57B",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
