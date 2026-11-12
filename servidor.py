@@ -99,7 +99,11 @@ def _luchador(c, eq, i, l, mio=True):
             else:
                 d = _mov(l, k)
             d["ok"] = bool(c.puede(l, k))
-            d["doble"] = bool(l.mov(k).get("estampa"))      # pide elegir un segundo rival
+            mv = l.mov(k)
+            d["doble"] = mv.get("doble_txt") or False                  # pide elegir un segundo rival (o el modo, en Conejos)
+            d["conejos"] = mv["tipo"] == "conejos"
+            if "ciego" in l.efectos and k != "defender":               # 🕶️ ciego: ve los botones, pero vacíos
+                d.update({"nombre": "", "desc": "", "ciego": True, "pm": 0, "sombras": 0})
             d["dual"] = k in M.CLAVES and bool(l.mov(k).get("sana") or l.mov(k).get("regen"))
             d["apoyo"] = d["tipo"] in ("cura", "limpia", "barrera")
             acc.append(d)
@@ -109,6 +113,7 @@ def _luchador(c, eq, i, l, mio=True):
         "gif": l.gif, "hp": l.hp, "max_hp": l.max_hp, "pm": l.pm, "ulti": int(l.ulti),
         "ulti_lista": l.ulti >= 100, "vivo": l.vivo, "incapaz": l.incapaz, "guardia": l.guardia,
         "hojas": l.hojas if l.d.get("hojas") else None, "arena": l.arena if l.d.get("arena") else None, "arena_max": M.ARENA_MAX, "sombras": l.sombras if l.d.get("sombras") else None,
+        "linea": l.linea if l.d.get("linea") else None, "linea_max": M.LINEA_MAX,
         "forma": (l.d.get("forma_nombre", "Mahoraga") if l.forma else None), "forma_hp": l.forma_hp,
         "forma_turnos": l.forma_turnos,
         "efectos": [M.EFECTOS_TXT[e] for e in l.efectos] + [_txt_bono(l, b) for b in l.bonos],
@@ -221,7 +226,7 @@ def api_personajes(_, ses):
             movs.append({"nombre": x["nombre"], "coste": x["coste"], "pm": x.get("pm", 0), "sombras": x.get("sombras", 0),
                          "dmg": x.get("dmg"), "prec": x.get("prec"), "desc": x.get("desc", "")})
         u = d["ulti"]
-        ficha = {"vida": d["vida"], "recurso": (f"🌑 Sombras (máx. {M.SOMBRAS_MAX})" if d.get("sombras") else f"🍃 Hojas (máx. {M.HOJAS_MAX}, empieza con todas)" if d.get("hojas") else f"⏳ Reloj de arena (máx. {M.ARENA_MAX})" if d.get("arena") else f"🔵 PM (máx. {M.PM_MAX})"),
+        ficha = {"vida": d["vida"], "recurso": (f"🌑 Sombras (máx. {M.SOMBRAS_MAX})" if d.get("sombras") else f"🍃 Hojas (máx. {M.HOJAS_MAX}, empieza con todas)" if d.get("hojas") else f"⏳ Reloj de arena (máx. {M.ARENA_MAX})" if d.get("arena") else f"⬛ Línea negra (máx. {M.LINEA_MAX}) + 🔵 PM" if d.get("linea") else f"🔵 PM (máx. {M.PM_MAX})"),
                  "movs": movs, "ulti": {"nombre": u["nombre"], "coste": u["coste"], "desc": u.get("desc", "")}}
         if d.get("ulti_alt"):
             ficha["ulti_alt"] = {"nombre": d["ulti_alt"]["nombre"], "desc": d["ulti_alt"].get("desc", "")}
@@ -662,7 +667,8 @@ def _ejecutar_accion(c, b):
                     obj = None
         obj2 = None
         if b.get("objetivo2") is not None:
-            obj2 = c.rival.luchadores[int(b["objetivo2"])]
+            o2 = int(b["objetivo2"])
+            obj2 = o2 if o2 < 0 else c.rival.luchadores[o2]       # -1 = Conejos a todos, -2 = Conejos a uno
         c.ejecutar(a, k, obj, obj2)
     except (KeyError, ValueError, IndexError, TypeError):
         return {"error": "Acción inválida."}
