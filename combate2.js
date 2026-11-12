@@ -209,7 +209,8 @@
         ${l.vivo?CBT.chips(l):'<div class="efs"></div>'}</div></div>`;
   }
   function boton(a,x){
-    const ic={normal:'⚔️',hab1:'✨',hab2:'💢',hab3:'🌀',hab4:'🔱',defender:'🛡️',ulti:'💥'}[x.k]||'▪️';
+    const ic0={normal:'⚔️',hab1:'✨',hab2:'💢',hab3:'🌀',hab4:'🔱',defender:'🛡️',ulti:'💥'}[x.k]||'▪️';
+    const ic=x.emoji_url?`<img class="emo" src="${x.emoji_url}">`:(x.emoji||ic0);
     const nom=x.k==='ulti'&&!a.ulti_lista?`ÚLTI ${a.ulti}%`:x.nombre;
     const col=x.k==='defender'?'#6b7280':x.k==='ulti'?'var(--bad)':colorDe(a);
     const ex=(x.pm?` · ${x.pm}PM`:'')+(x.sombras?` · ${x.sombras}🌑`:'');
