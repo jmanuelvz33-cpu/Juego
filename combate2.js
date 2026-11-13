@@ -179,7 +179,7 @@
     return (typeof COL!=='undefined'&&COL[b.toLowerCase()])||hex||'var(--ac)';
   }
   /* personajes con movimiento: cu = por dónde se corta (cuello), en % de la altura de la imagen */
-  const VIVOS={mantis:{cu:40}};
+  const VIVOS={mantis:{cu:40},jolyne:{cu:33},reze:{cu:28},storm:{cu:33},ochako:{cu:38},yuki:{cu:33},yoruichi:{cu:40},megumi:{cu:33},josuke:{cu:30},denji:{cu:36},urahara:{cu:25}};
   function viva(l,lado,cl){
     const v=!l.forma&&VIVOS[l.key],sk=lado==0&&YO.skins&&YO.skins[l.key];
     if(!v||sk)return `<img ${cl||''} ${sprite(l,lado)}>`;
