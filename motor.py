@@ -498,17 +498,17 @@ PERSONAJES = {
     },
     "urahara": {
         "nombre": "Kisuke Urahara",
-        "emoji": "🎩",     # <- pon aquí tu emoji de Urahara: <:nombre:ID>
+        "emoji": "<:emoji_27:1569682511859294321>",     # <- pon aquí tu emoji de Urahara: <:nombre:ID>
         "emojis": {   # emoji de cada botón (Discord): "<:nombre:ID>". Vacío = emoji por defecto
-            "normal": "", "hab1": "", "hab2": "", "hab3": "", "hab4": "", "defender": "", "ulti": "",
+            "normal": "<:emoji_41:1570604789207932980>", "hab1": "<:emoji_44:1570605500008104038>", "hab2": "<:emoji_45:1570605595751350333>", "hab3": "<:emoji_42:1570605056951324672>", "hab4": "<:emoji_43:1570605450632634449>", "defender": "<:emoji_40:1570604768814956666>", "ulti": "<:emoji_46:1570605660100628660>",
         },
         "color": 0x2E8B6E,
         "boton": "30C57B",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": 125,
         "arena": True,      # usa el medidor ⏳ reloj de arena en vez de PM
         "desc": "Bleach. Apoyo táctico: su bastón llena el reloj y con él refuerza al equipo o debilita la defensa rival; su Bankai los vuelve difíciles de tocar.",
-        "gif": "",            # <- retrato de Urahara (o sube img/urahara_normal.png)
-        "crit_gif": "",
+        "gif": "https://i.imgur.com/flTYzPY.jpeg",            # <- retrato de Urahara (o sube img/urahara_normal.png)
+        "crit_gif": "https://i.imgur.com/kTBD5Pi.gif",
         "victoria_img": "",
         "mov": {
             "normal": {"nombre": "Golpe de bastón", "tipo": "normal", "coste": COSTE_NORMAL,
