@@ -2,7 +2,7 @@
 Arranque:  python servidor.py   (en Render: Start Command = python servidor.py)
 Variables de entorno: DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, SESSION_SECRET, PUBLIC_URL, DATABASE_URL, PORT
 Sin DISCORD_CLIENT_ID se puede jugar como invitado (no se guardan monedas)."""
-import base64, hashlib, hmac, json, os, random, re, secrets, time, uuid
+import traceback, base64, hashlib, hmac, json, os, random, re, secrets, time, uuid
 import urllib.parse, urllib.request
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from http.cookies import SimpleCookie
@@ -856,10 +856,10 @@ class H(BaseHTTPRequestHandler):
             if ruta == "/auth/logout":
                 return self._ir("/", [("sid", "", 0)])
         except Exception as e:
-            print("Error GET:", repr(e))
+            print("Error GET", ruta, ":", traceback.format_exc())
             if ruta.startswith("/auth/"):
                 return self._ir("/?error=login")
-            return self._json({"error": "Error del servidor."}, 500)
+            return self._json({"error": f"Error del servidor ({type(e).__name__}) en {ruta}."}, 500)
         self.send_error(404)
 
     def do_POST(self):
@@ -871,8 +871,9 @@ class H(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(min(n, 10000)) or b"{}")
             self._json(f(body, self._sesion()))
         except Exception as e:
-            print("Error POST:", repr(e))
-            self._json({"error": "Error del servidor."}, 500)
+            ruta = urllib.parse.urlparse(self.path).path
+            print("Error POST", ruta, ":", traceback.format_exc())
+            self._json({"error": f"Error del servidor ({type(e).__name__}) en {ruta}."}, 500)
 
     def log_message(self, *a):
         pass
