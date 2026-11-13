@@ -145,7 +145,7 @@ PERSONAJES = {
         "nombre": "Jolyne Kujo",
         "emoji": "<:emoji_15:1563289355601059991>",
         "emojis": {   # emoji de cada botón (Discord): "<:nombre:ID>". Vacío = emoji por defecto
-            "normal": "", "hab1": "", "hab2": "", "hab3": "", "hab4": "", "defender": "", "ulti": "",
+            "normal": "<:emoji_8:1570911004198707410>", "hab1": "<:emoji_9:1570911101623861278>", "hab2": "<:emoji_10:1570911129515991110>", "hab3": "<:emoji_12:1570912084231856199>", "hab4": "<:emoji_11:1570911194427166771>", "defender": "<:emoji_13:1570912111377252442>", "ulti": "<:emoji_14:1570912149503475763>",
         },
         "color": 0x3FA7D6,
         "boton": "9DDC55",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
@@ -179,7 +179,7 @@ PERSONAJES = {
         "nombre": "Reze",
         "emoji": "<:emoji_17:1563289420923146321>",
         "emojis": {   # emoji de cada botón (Discord): "<:nombre:ID>". Vacío = emoji por defecto
-            "normal": "", "hab1": "", "hab2": "", "hab3": "", "hab4": "", "defender": "", "ulti": "",
+            "normal": "<:emoji_22:1570921453522780302>", "hab1": "<:emoji_27:1570921594883145748>", "hab2": "<:emoji_28:1570922166764052562>", "hab3": "<:emoji_23:1570921490067624106>", "hab4": "<:emoji_24:1570921519318573126>", "defender": "<:emoji_26:1570921568970997761>", "ulti": "<:emoji_25:1570921546141405364>",
         },
         "color": 0xC0392B,
         "boton": "D2527F",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
@@ -394,7 +394,7 @@ PERSONAJES = {
         "nombre": "Josuke Higashikata",
         "emoji": "<:emoji_24:1565078822708060160>",     # <- pon aquí tu emoji de Josuke: <:nombre:ID>
         "emojis": {   # emoji de cada botón (Discord): "<:nombre:ID>". Vacío = emoji por defecto
-            "normal": "", "hab1": "", "hab2": "", "hab3": "", "hab4": "", "defender": "", "ulti": "",
+            "normal": "<:emoji_15:1570919601317875844>", "hab1": "<:emoji_16:1570919691185037443>", "hab2": "<:emoji_17:1570919717458153623>", "hab3": "<:emoji_18:1570919751046275123>", "hab4": "<:emoji_19:1570919772227502130>", "defender": "<:emoji_21:1570919814128472074>", "ulti": "<:emoji_20:1570919794168037536>",
         },
         "color": 0xFF8FB1,
         "boton": "D3127C",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
