@@ -61,6 +61,21 @@
   #c2 .barra.ult{height:.32em;margin-top:.15em}
   #c2 .efs{display:flex;flex-wrap:wrap;gap:.15em;min-height:0}
 
+
+  /* personajes "vivos": la cabeza/pelo se mueve aparte del cuerpo (misma imagen cortada en dos, sin gastar más archivos) */
+  #c2 .viv{position:relative;width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;
+    filter:drop-shadow(0 .3em .5em #000);animation:c2-resp 3.4s ease-in-out infinite;transform-origin:50% 100%}
+  #c2 .viv img.b,#c2 .viv img.h{width:auto;height:auto;max-width:100%;max-height:100%;aspect-ratio:auto;object-fit:contain;border-radius:0;background:none;filter:none;animation:none}
+  #c2 .viv img.b{clip-path:inset(var(--cu) 0 0 0)}
+  #c2 .viv img.h{position:absolute;left:0;right:0;bottom:0;margin:0 auto;transform-origin:50% var(--cu);
+    -webkit-mask-image:linear-gradient(to bottom,#000 var(--cu),transparent calc(var(--cu) + 5%));mask-image:linear-gradient(to bottom,#000 var(--cu),transparent calc(var(--cu) + 5%));
+    animation:c2-cab 4.6s ease-in-out infinite}
+  @keyframes c2-cab{0%,100%{transform:rotate(-1.1deg) translate(-.25%,.1%)}35%{transform:rotate(.9deg) translate(.3%,-.15%)}70%{transform:rotate(-.3deg) translate(.1%,.2%)}}
+  #c2 .c2-hero.off .viv{filter:brightness(.55) drop-shadow(0 0 .6em #0009);animation:none}
+  #c2 .c2-hero.off .viv img.h{animation:none}
+  #c2 .c2-e.obj .viv{filter:drop-shadow(0 0 .45em #ff4d4d) drop-shadow(0 0 .15em #ff4d4d)}
+  #c2 .c2-e.ya .viv{filter:drop-shadow(0 0 .45em var(--gold))}
+
   /* tu luchador activo, de frente, en primer plano */
   #c2 .c2-hero{position:absolute;left:19%;width:25%;bottom:9vh;height:53vh;display:flex;align-items:flex-end;justify-content:center;z-index:3;pointer-events:none}
   #c2 .c2-hero img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 .8em #0009);animation:c2-resp 3.4s ease-in-out infinite;transform-origin:50% 100%}
@@ -163,6 +178,13 @@
     const hex=/^#?[0-9a-f]{6}$/i.test(b)?'#'+b.replace('#',''):null;
     return (typeof COL!=='undefined'&&COL[b.toLowerCase()])||hex||'var(--ac)';
   }
+  /* personajes con movimiento: cu = por dónde se corta (cuello), en % de la altura de la imagen */
+  const VIVOS={mantis:{cu:40}};
+  function viva(l,lado,cl){
+    const v=!l.forma&&VIVOS[l.key],sk=lado==0&&YO.skins&&YO.skins[l.key];
+    if(!v||sk)return `<img ${cl||''} ${sprite(l,lado)}>`;
+    return `<span class="viv" style="--cu:${v.cu}%"><img class="b" ${sprite(l,lado)}><img class="h" ${sprite(l,lado)}></span>`;
+  }
   function sprite(l,lado){
     if(l.forma)return `src="${l.gif||''}"`;                               // forma especial: usa su imagen propia
     const sk=lado==0&&YO.skins&&YO.skins[l.key];
@@ -194,7 +216,7 @@
   function enemigo(l){
     const d=datos(l,1);
     return `<div class="${clases(l,1,'c2-e')}" style="--c:${colorDe(l)}" data-l="1" data-i="${l.i}" onclick="clic(1,${l.i})">
-      <div class="sp">${l.gif||!l.forma?`<img class="r" ${sprite(l,1)}>`:''}</div>
+      <div class="sp">${l.gif||!l.forma?`${viva(l,1,'class="r"')}`:''}</div>
       <div class="c2-pl"><div class="n">${d.nom}</div>${CBT.barra('hp',1,l.i,d.pct)}
         <div class="hn">${l.vivo?CBT.num(1,l.i,d.hp,d.mx):'💀'}</div>${CBT.barra('ult',1,l.i,Math.min(100,l.ulti))}
         ${l.vivo?CBT.chips(l):'<div class="efs"></div>'}</div></div>`;
@@ -235,7 +257,7 @@
       <div class="c2-hud"><span class="c2-turn ${miTurno?'yo':''}">${miTurno?'TU TURNO':'TURNO DE '+esc(e1.nombre).toUpperCase()}</span><span class="c2-ico">${ico1}${ico0}</span></div>
       <div class="c2-reg">${CBT.registro(S)}</div>
       <div class="c2-en">${e1.luchadores.map(enemigo).join('')}</div>
-      ${hero?`<div class="c2-hero ${miTurno?'':'off'}" style="--c:${colorDe(hero)}"><img ${sprite(hero,0)}><span class="nm">${emo(hero)} ${esc(hero.forma||hero.nombre)}</span></div>`:''}
+      ${hero?`<div class="c2-hero ${miTurno?'':'off'}" style="--c:${colorDe(hero)}">${viva(hero,0)}<span class="nm">${emo(hero)} ${esc(hero.forma||hero.nombre)}</span></div>`:''}
       ${YO.mascota_url?`<img class="c2-mas ${miTurno?'':'off'}" src="${esc(YO.mascota_url)}" alt="">`:''}
       <div class="c2-pt">${e0.luchadores.map(aliado).join('')}</div>`;
     if(miTurno&&a){
