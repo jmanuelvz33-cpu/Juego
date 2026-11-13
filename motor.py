@@ -339,7 +339,7 @@ PERSONAJES = {
         "nombre": "Megumi Fushiguro",
         "emoji": "<:emoji_26:1565487546916409364>",     # <- pon aquí tu emoji de Megumi: <:nombre:ID>
         "emojis": {   # emoji de cada botón (Discord): "<:nombre:ID>". Vacío = emoji por defecto
-            "normal": "", "hab1": "", "hab2": "", "hab3": "", "hab4": "", "defender": "", "ulti": "",
+            "normal": "<:emoji_2:1570617119035629628>", "hab1": "<:emoji_1:1570617093122957322>", "hab2": "<:emoji_5:1570617189717778585>", "hab3": "<:emoji_4:1570617166678720642>", "hab4": "<:emoji_3:1570617138580951122>", "defender": "<:emoji_6:1570617211859505292>", "ulti": "<:emoji_7:1570617236908019804>",
         },
         "color": 0x1C2833,
         "boton": "524C64",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
