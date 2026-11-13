@@ -305,7 +305,7 @@ PERSONAJES = {
         "nombre": "Yoruichi Shihōin",
         "emoji": "<:emoji_22:1563551448124362782>",
         "emojis": {   # emoji de cada botón (Discord): "<:nombre:ID>". Vacío = emoji por defecto
-            "normal": "", "hab1": "", "hab2": "", "hab3": "", "hab4": "", "defender": "", "ulti": "",
+            "normal": "<:emoji_34:1570598791512326216>", "hab1": "<:emoji_38:1570599005728145418>", "hab2": "<:emoji_35:1570598850182254602>", "hab3": "<:emoji_33:1570598727985528983>", "hab4": "<:emoji_37:1570598985494691931>", "defender": "<:emoji_39:1570599030151712778>", "ulti": "<:emoji_36:1570598867265912892>",
         },
         "color": 0xF39C12,
         "boton": "FFB54F",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
