@@ -171,6 +171,7 @@
     let d=document.getElementById('fondo');
     if(!d){d=document.createElement('div');d.id='fondo';document.body.prepend(d)}
     let img=FO[n]||'';if(!img&&n==='inicio')img=I.FONDO_IMG||'';
+    if(n==='seleccion'&&typeof EV!=='undefined'&&EV.activo&&EV.fondo)img=EV.fondo;   // evento: fondo dino
     if(!img&&n==='novela')img=FO.bazar||'';
     if(n==='combate'){if(typeof YO!=='undefined'&&YO.fondo_img)img=YO.fondo_img;else if(U.arena)img=U.arena}
     if(U.fondoHist&&(n==='novela'||n==='combate'))img=U.fondoHist;   // fondo propio del capítulo de la historia
@@ -226,7 +227,7 @@
       <div class="po-i">${I.BIENVENIDA_IMG?`<img class="bur" src="${esc(I.BIENVENIDA_IMG)}">`:`<div class="bur0">🔥</div>`}</div>
       <div class="po-d"><h1 class="po-t">PRESS TURN</h1>
       <div class="burnice" style="text-align:left"><b>🔥 Burnice:</b> ${fmt(frase)}</div>
-      ${I.AVISO?`<div class="dia">📣 ${fmt(I.AVISO)}</div>`:''}
+      ${typeof EV!=='undefined'&&EV.activo&&EV.aviso?`<div class="dia">${fmt(EV.aviso)}</div>`:''}${I.AVISO?`<div class="dia">📣 ${fmt(I.AVISO)}</div>`:''}
       <div class="grandes"><button onclick="dibujarEleccion()">⚔️ Jugar</button><button class="btn-burnice" onclick="bazar('inicio')">🔥 Bazar</button></div>
       <div id="extras"></div></div></div>`;
     UI.portadaFit&&UI.portadaFit();
