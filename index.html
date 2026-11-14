@@ -160,6 +160,7 @@ function fmt(t){
 const emo=(p)=>p.emoji_url?`<img class="emo" src="${p.emoji_url}">`:esc(p.emoji||'');
 const medios=m=>'🔷'.repeat(m>>1)+'🔹'.repeat(m&1)||'—';
 const COL={azul:'#4f7cff',verde:'#3fb56b',rojo:'#d9534f',gris:'#6b7280'};
+let EV={activo:false};
 let PJ=[],elegidos=[],nivel='normal',G=null,S=null,sel=0,tgt=null,tgtAli=null,pend2=null,lock=false,MODO='cpu',SEQ=0,SALA=null,reto=null,HIST=null;
 const LS={g:k=>{try{return localStorage.getItem(k)}catch(e){return null}},s:(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
 
@@ -197,8 +198,15 @@ function tarjetaTienda(cat,it,modo){
   if(!it.disponible)b=`<button disabled>Próximamente</button>`;
   else if(it.tiene)b=`<button class="${it.puesta?'sec':''}" onclick="equipar('${cat}','${it.key}',${it.puesta},'${it.pj||''}')">${it.puesta?'Quitar':'Ponerme'}</button>`;
   else b=`<button class="btn-burnice" ${YO.logueado?'':'disabled'} onclick="comprar('${cat}','${it.key}')">Comprar</button>`;
-  const ver=it.disponible?`<button class="ver" title="Vista previa" onclick="previa('${cat}','${it.key}')">👁️</button>`:'';
-  return `<div class="cartx ${modo==='bloq'&&!it.tiene?'bloq':''}">${bd}<div class="vis">${vis}</div><div class="nm">${esc(it.nombre)}</div>${sub}${precio}<div class="bt2">${b}${ver}</div></div>`;
+  const nk=(it.evento||(EV.activo&&EV.datos&&EV.datos[it.key]))&&cat==='mascotas'&&EV.activo?`<button class="ver" title="Niko te cuenta" onclick="nikoDi('${it.key}')">☀️</button>`:'';
+  const ver=nk+(it.disponible?`<button class="ver" title="Vista previa" onclick="previa('${cat}','${it.key}')">👁️</button>`:'');
+  const bd2=it.evento&&!it.tiene&&it.disponible?'<span class="bd" style="background:#2e9e5b">🦖 Evento</span>':bd;
+  return `<div class="cartx ${modo==='bloq'&&!it.tiene?'bloq':''}">${bd2}<div class="vis">${vis}</div><div class="nm">${esc(it.nombre)}</div>${sub}${precio}<div class="bt2">${b}${ver}</div></div>`;
+}
+function nikoDi(k){
+  const d=EV.datos||{},ks=Object.keys(d);if(!ks.length)return;
+  if(!k||!d[k])k=azar(ks.filter(x=>x!==nikoDi.u).length?ks.filter(x=>x!==nikoDi.u):ks);
+  nikoDi.u=k;const e=document.getElementById('nk-t');if(e)e.innerHTML=fmt(d[k]);
 }
 function buscarItem(cat,key){return (BZ.cats[cat]||[]).find(x=>x.key===key)}
 function previa(cat,key){
@@ -227,7 +235,7 @@ async function bazar(pantalla,datos){
   HIST=null;UI.fondoHist='';musica('bazar');
   if(pantalla==='historia'){UI.histMenu();return}
   if(pantalla==='personaje'){UI.novela(datos.k);return}   // la ficha se quitó: va directo a hablar
-  if(!BZ||pantalla==='inicio'){BZ=await api('/api/bazar');await cargarYo();BZ.animo=ANIMO()}
+  if(!BZ||pantalla==='inicio'){BZ=await api('/api/bazar');await cargarYo();BZ.animo=ANIMO();if(BZ.evento)EV=BZ.evento}
   const t=BZ.textos,im=BZ.imgs;
   const banner=u=>u?`<img class="banner" src="${esc(u)}">`:'';
   const volver=`<button class="sec" onclick="bazar('inicio')">⬅️ Bazar</button>`;
@@ -248,7 +256,8 @@ async function bazar(pantalla,datos){
     const tabs=`<div class="tabs">${Object.keys(CATN).map(c=>`<button class="${pantalla==='comprar'&&tab===c?'on':''}" onclick="bazar('comprar',{tab:'${c}'})">${CATN[c][0]} ${CATN[c][1]}</button>`).join('')}</div>`;
     if(pantalla==='comprar'){
       const bp=['/img/burnice_comprar.png','/img/burnice_comprar.webp','/img/burnice_novela_1.png','/img/burnice_novela_1.webp','/img/burnice_normal.png'];
-      h+=`<div class="cm"><div class="cm-l">${banner(im.comprar)}<h1>🛒 Comprar</h1><div class="burnice">${fmt(msg)}</div>
+      const nikoBox=(EV.activo&&tab==='mascotas'&&EV.intro)?`<div class="nk"><img src="/img/niko_normal.png" onerror="this.style.display='none'"><div><b>☀️ Niko</b><div id="nk-t">${fmt(azar(EV.intro))}</div><button class="sec" onclick="nikoDi()">🦖 Otro dato</button></div></div>`:'';
+      h+=`<div class="cm"><div class="cm-l">${banner(im.comprar)}<h1>🛒 Comprar</h1><div class="burnice">${fmt(msg)}</div>${nikoBox}
       ${YO.logueado?'':'<div class="info">Inicia sesión con Discord para comprar.</div>'}${bofer}${tabs}
       <div class="vit">${(BZ.cats[tab]||[]).map(it=>tarjetaTienda(tab,it)).join('')}</div>
       <div class="fila" style="margin-top:12px">${volver}</div></div>
@@ -289,7 +298,9 @@ async function equipar(cat,k,quitar,pj){
 
 /* ---------- elegir equipo ---------- */
 async function inicio(conPortada){
-  HIST=null;UI.fondoHist='';musica('menu');
+  HIST=null;UI.fondoHist='';
+  try{EV=await api('/api/evento')}catch(e){EV={activo:false}}
+  musica('menu');
   if(!PJ.length)PJ=(await api('/api/personajes')).personajes;
   await cargarYo();
   MODO='cpu';SEQ=0;SALA=null;
