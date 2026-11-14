@@ -10,6 +10,7 @@ from pathlib import Path
 import motor as M
 import contenido as C
 import tienda_extra as X
+import evento as EVT
 from db import Almacen
 
 AQUI = Path(__file__).parent
@@ -256,6 +257,8 @@ def api_voces(_, ses):
     return {"voces": out}
 
 
+C.COSMETICOS["mascotas"].update(EVT.MASCOTAS)     # mascotas del evento (solo se compran en las fechas)
+
 # categoría -> (catálogo, lista en la base de datos, clave de "equipado")
 CATS = {
     "mascotas": (C.COSMETICOS["mascotas"], "mascotas", "mascota"),
@@ -303,6 +306,8 @@ def _precio(cat, key):
 
 
 def _disponible(it):
+    if it.get("evento") and not EVT.activo():
+        return False
     return ("img" not in it) or bool(it["img"])
 
 
@@ -339,7 +344,9 @@ def api_bazar(_, ses):
     for cat, (cat_, lista, ceq) in CATS.items():
         out = []
         for k, it in cat_.items():
-            extra = {k2: it[k2] for k2 in ("css", "img", "pj") if k2 in it}
+            if it.get("evento") and not EVT.activo() and not (d and k in d.get(lista, [])):
+                continue          # fuera del evento solo la ve quien la compró
+            extra = {k2: it[k2] for k2 in ("css", "img", "pj", "evento") if k2 in it}
             if d is None:
                 puesta = False
             elif cat == "skins":
@@ -348,7 +355,7 @@ def api_bazar(_, ses):
                 puesta = d["equipado"].get(ceq) == k
             out.append({"key": k, "nombre": it["nombre"], "precio": _precio(cat, k), "precio_base": it["precio"],
                         "tiene": bool(d and k in d.get(lista, [])), "puesta": puesta,
-                        "disponible": _disponible(it), **extra})
+                        "disponible": _disponible(it) or bool(it.get("evento") and it.get("img") and d and k in d.get(lista, [])), **extra})
         cats[cat] = out
     return {
         "monedas": d["monedas"] if d else None, "mascotas": cats["mascotas"], "cats": cats,
@@ -357,6 +364,7 @@ def api_bazar(_, ses):
         "textos": {"saludos": C.BURNICE_SALUDOS, "comprar": C.BURNICE_COMPRAR, "mesa": C.BURNICE_MESA,
                    "salidas": C.BURNICE_SALIDAS, "niko": C.NIKO_OPINION},
         "charlas": C.CHARLAS,
+        "evento": EVT.info(),
     }
 
 
@@ -703,7 +711,7 @@ def api_pvp_rendirse(b, ses):
     return _vista(s, yo, int(b.get("desde", 0) or 0))
 
 
-GETS = {"/api/voces": api_voces, "/api/personajes": api_personajes, "/api/yo": api_yo, "/api/bazar": api_bazar,
+GETS = {"/api/evento": lambda _q, _s: EVT.info(), "/api/voces": api_voces, "/api/personajes": api_personajes, "/api/yo": api_yo, "/api/bazar": api_bazar,
         "/api/pvp/info": api_pvp_info, "/api/pvp/estado": api_pvp_estado}
 POSTS = {"/api/nueva": api_nueva, "/api/historia": api_historia, "/api/accion": api_accion, "/api/terminar": api_terminar,
          "/api/comprar": api_comprar, "/api/equipar": api_equipar, "/api/visto": api_visto,
@@ -728,6 +736,10 @@ class H(BaseHTTPRequestHandler):
     def _sesion(self):
         ck = SimpleCookie(self.headers.get("Cookie", ""))
         return _leer_firma(ck["sid"].value) if "sid" in ck else None
+
+    def _prueba(self):
+        ck = SimpleCookie(self.headers.get("Cookie", ""))
+        return "evt" in ck and ck["evt"].value == EVT.CLAVE
 
     def _cookie(self, nombre, valor, max_age):
         flags = f"{nombre}={valor}; Path=/; HttpOnly; SameSite=Lax; Max-Age={max_age}" + ("; Secure" if SEGURA else "")
@@ -755,7 +767,7 @@ class H(BaseHTTPRequestHandler):
                  ".m4a": "audio/mp4", ".wav": "audio/wav", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
                  ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif", ".avif": "image/avif",
                  ".css": "text/css; charset=utf-8", ".ttf": "font/ttf", ".woff2": "font/woff2", ".otf": "font/otf"}
-        if ruta.startswith(("/musica/", "/musica_historia/", "/img/", "/img_historia/", "/voces/", "/fuentes/")):
+        if ruta.startswith(("/musica/", "/musica_historia/", "/musica_evento/", "/img/", "/img_historia/", "/voces/", "/fuentes/")):
             carpeta = ruta.split("/")[1]
             nombre = urllib.parse.unquote(ruta.split("/", 2)[2])
             base = (AQUI / carpeta).resolve()
@@ -809,10 +821,16 @@ class H(BaseHTTPRequestHandler):
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)
         ruta, q = u.path, urllib.parse.parse_qs(u.query)
+        EVT.probar(self._prueba())
         try:
+            if ruta in ("/", "/index.html") and "evento" in q:      # activa/desactiva la vista privada de prueba
+                if q["evento"][0] == EVT.CLAVE:
+                    return self._ir("/", [("evt", EVT.CLAVE, 2592000)])
+                if q["evento"][0] == "off":
+                    return self._ir("/", [("evt", "x", 0)])
             if ruta in GETS:
                 return self._json(GETS[ruta]({k: v[0] for k, v in q.items()}, self._sesion()))
-            if ruta in ("/musica.js", "/reproductor.js", "/interfaz.js", "/pantallas.js", "/dialogos.js", "/novela.js", "/historia.js", "/combate2.js", "/estilo.css") or ruta.startswith(("/musica/", "/musica_historia/", "/img/", "/img_historia/", "/voces/", "/fuentes/")):
+            if ruta in ("/musica.js", "/reproductor.js", "/interfaz.js", "/pantallas.js", "/dialogos.js", "/novela.js", "/historia.js", "/combate2.js", "/estilo.css") or ruta.startswith(("/musica/", "/musica_historia/", "/musica_evento/", "/img/", "/img_historia/", "/voces/", "/fuentes/")):
                 return self._estatico(ruta)
             if ruta in ("/sw.js", "/manifest.webmanifest"):          # PWA: el service worker debe servirse desde la raíz
                 raw = (AQUI / ruta[1:]).read_bytes()
@@ -863,6 +881,7 @@ class H(BaseHTTPRequestHandler):
         self.send_error(404)
 
     def do_POST(self):
+        EVT.probar(self._prueba())
         f = POSTS.get(urllib.parse.urlparse(self.path).path)
         if not f:
             return self.send_error(404)
