@@ -108,7 +108,7 @@ def _luchador(c, eq, i, l, mio=True):
             if "ciego" in l.efectos and k != "defender":               # 🕶️ ciego: ve los botones, pero vacíos
                 d.update({"nombre": "", "desc": "", "ciego": True, "pm": 0, "sombras": 0})
             d["dual"] = k in M.CLAVES and bool(l.mov(k).get("sana") or l.mov(k).get("regen"))
-            d["apoyo"] = d["tipo"] in ("cura", "limpia", "barrera")
+            d["apoyo"] = d["tipo"] in ("cura", "limpia", "barrera", "ingravido")
             acc.append(d)
     return {
         "i": i, "key": l.key, "nombre": l.nombre, "emoji": l.d["emoji"], "emoji_url": _emoji_url(l.d["emoji"]),
@@ -662,7 +662,7 @@ def _ejecutar_accion(c, b):
         if k != "defender":
             m = a.mov(k)
             ali = b.get("aliado")
-            if m["tipo"] in ("cura", "limpia", "barrera") or (b.get("apoyo") and ali is not None):
+            if m["tipo"] in ("cura", "limpia", "barrera", "ingravido") or (b.get("apoyo") and ali is not None):
                 obj = c.actual.luchadores[int(ali)] if ali is not None else None
             elif b.get("objetivo") is not None:
                 obj = c.rival.luchadores[int(b["objetivo"])]
