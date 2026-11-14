@@ -195,7 +195,7 @@ PERSONAJES = {
         "victoria_img": "https://i.imgur.com/7UDScre.jpeg",
         "mov": {
             "normal": {"nombre": "Golpe rápido", "tipo": "normal", "coste": COSTE_NORMAL,
-                       "dmg": (9, 13), "prec": 0.95},
+                       "dmg": (10, 14), "prec": 0.95},
             "hab1": {"nombre": "Beso explosivo", "tipo": "estado", "coste": COSTE_HABILIDAD, "pm": 2,
                      "dmg": (5, 8), "prec": 0.90, "efecto": ("quemadura", 2, 0.85),
                      "desc": "Poco daño. Deja al rival ardiendo 2 turnos (85%)."},
@@ -203,7 +203,7 @@ PERSONAJES = {
                      "dmg": (19, 25), "prec": 0.90, "bono_prob": ("fuerza", 2, 0.30),
                      "desc": "Golpe medio. 30% de ganar 💪 Fuerza: +15% de daño durante 2 turnos."},
             "hab3": {"nombre": "Pirotecnia", "tipo": "estado", "coste": COSTE_HABILIDAD, "pm": 3,
-                     "dmg": (15, 20), "prec": 0.90, "chispas": CHISPAS,
+                     "dmg": (16, 20), "prec": 0.90, "chispas": CHISPAS,
                      "desc": "Ataca a un rival. Las chispas hacen 40% del daño a los otros rivales... y cada compañero tiene 15% de comérselas."},
             "hab4": {"nombre": "Apagón", "tipo": "apagon", "coste": COSTE_HABILIDAD, "pm": 4,
                      "desc": "Sin daño. Ningún rival puede usar su ataque normal en su próximo turno."},
@@ -254,7 +254,7 @@ PERSONAJES = {
         "boton": "E599C3",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": VIDA,
         "emojis": {   # emoji de cada botón (Discord): "<:nombre:ID>". Vacío = emoji por defecto
-            "normal": "", "hab1": "", "hab2": "", "hab3": "", "hab4": "", "defender": "", "ulti": "",
+            "normal": "<:emoji_38:1571180535332474982>", "hab1": "<:emoji_37:1571180455418658826>", "hab2": "<:emoji_42:1571180784692502592>", "hab3": "<:emoji_40:1571180637413711954>", "hab4": "<:emoji_39:1571180575031689226>", "defender": "<:emoji_36:1571180436141383700>", "ulti": "<:emoji_41:1571180677544681583>",
         },
         "desc": "Uravity (My Hero Academia). Utilidad: rompe guardias, ensucia la puntería rival, deja flotando a un enemigo y pone a salvo a un aliado.",
         "gif": "https://i.imgur.com/apmxpCV.jpeg",
