@@ -254,7 +254,7 @@ PERSONAJES = {
         "boton": "E599C3",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": VIDA,
         "emojis": {   # emoji de cada botón (Discord): "<:nombre:ID>". Vacío = emoji por defecto
-            "normal": "", "hab1": "", "hab2": "", "hab3": "", "hab4": "", "defender": "", "ulti": "",
+            "normal": "<:emoji_38:1571180535332474982>", "hab1": "<:emoji_37:1571180455418658826>", "hab2": "<:emoji_42:1571180784692502592>", "hab3": "<:emoji_40:1571180637413711954>", "hab4": "<:emoji_39:1571180575031689226>", "defender": "<:emoji_36:1571180436141383700>", "ulti": "<:emoji_41:1571180677544681583>",
         },
         "desc": "Uravity (My Hero Academia). Utilidad: rompe guardias, ensucia la puntería rival, deja flotando a un enemigo y pone a salvo a un aliado.",
         "gif": "https://i.imgur.com/apmxpCV.jpeg",
