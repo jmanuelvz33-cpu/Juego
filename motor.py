@@ -430,7 +430,7 @@ PERSONAJES = {
         "nombre": "Denji",
         "emoji": "<:emoji_25:1565152531364053062>",     # <- pon aquí tu emoji de Denji: <:nombre:ID>
         "emojis": {   # emoji de cada botón (Discord): "<:nombre:ID>". Vacío = emoji por defecto
-            "normal": "", "hab1": "", "hab2": "", "hab3": "", "hab4": "", "defender": "", "ulti": "",
+            "normal": "<:emoji_29:1571162348515754014>", "hab1": "<:emoji_32:1571162452010344509>", "hab2": "<:emoji_29:1571162393525092353>", "hab3": "<:emoji_31:1571162427616264242>", "hab4": "<:emoji_33:1571162485632012298>", "defender": "<:emoji_34:1571162522822905928>", "ulti": "<:emoji_35:1571162559548235786>",
         },
         "color": 0xD35400,
         "boton": "8E292C",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
