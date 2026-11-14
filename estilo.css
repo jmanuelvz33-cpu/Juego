@@ -87,3 +87,11 @@ html .vn .caja .nom{color:var(--ac-tx);border-radius:0;font-family:var(--f-titul
 
 /* ---- Celulares: que el navegador NO agrande el texto por su cuenta ---- */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+
+/* evento dinosaurios: Niko en la tienda */
+.nk{display:flex;gap:10px;align-items:flex-end;background:linear-gradient(135deg,#1c2a1a,#181b25);border:1px solid #ffd70066;border-radius:12px;padding:8px 10px;margin:8px 0}
+.nk img{height:84px;width:auto;object-fit:contain;flex:none}
+.nk b{color:#ffd24a}
+.nk #nk-t{font-size:.88rem;margin:3px 0 6px}
+.nk button{padding:4px 10px;font-size:.8rem}
+@media(max-width:700px){.nk img{height:60px}.nk #nk-t{font-size:.78rem}}
