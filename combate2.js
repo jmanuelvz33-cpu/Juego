@@ -52,6 +52,9 @@
   #c2 .c2-e.obj .sp img.r{filter:drop-shadow(0 0 .45em #ff4d4d) drop-shadow(0 0 .15em #ff4d4d)}
   #c2 .c2-e.obj:before{content:'▼';position:absolute;top:-.2em;left:50%;transform:translateX(-50%);color:#ff4d4d;font-size:1.5em;z-index:4;animation:cb-resp 1.2s ease-in-out infinite}
   #c2 .c2-e.nob{opacity:.5}
+  @keyframes c2-flota{0%,100%{transform:translateY(0)}50%{transform:translateY(-7%)}}
+  #c2 .c2-e.flota .sp,#c2 .c2-p.flota .fc{animation:c2-flota 2.6s ease-in-out infinite}
+  #c2 .c2-e.flota .sp img.r{filter:drop-shadow(0 .8em .25em rgba(0,0,0,.35)) drop-shadow(0 0 .35em #9be7ff)}
   #c2 .c2-e.muerto{opacity:.28;filter:grayscale(1)}
   #c2 .c2-e.ya .sp img.r{filter:drop-shadow(0 0 .45em var(--gold))}
   #c2 .c2-pl{width:100%;background:#000c;border:1px solid #fff3;border-left:.3em solid var(--c,#8ab4ff);border-radius:.3em;padding:.2em .45em .3em;position:relative;z-index:2}
@@ -199,6 +202,7 @@
     if(S.actor===l.i&&l.vivo&&((S.turno===0)===(lado==0)))cl.push('ya');
     const hp=l.forma?l.forma_hp:l.hp,mx=l.forma?90:l.max_hp;
     if(l.vivo&&hp/mx*100<30)cl.push('critico');
+    if(l.vivo&&(l.efectos||[]).some(e=>e.includes('🎈')))cl.push('flota');   // 🎈 flotando / ingrávido (Ochako)
     if(lado==1&&S.turno===0&&!S.terminado&&l.vivo&&!(S.blancos||[]).includes(l.i))cl.push('nob');
     return cl.join(' ');
   }
