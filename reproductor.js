@@ -69,6 +69,7 @@
   function setModo(m){
     if(m===modo)return;modo=m;
     let l=M[m];if(!l||!l.length)l=(m==='bazar'||m==='fin')?(M.menu||[]):[];
+    if(m==='pelea'&&typeof EV!=='undefined'&&EV.activo&&EV.musica&&EV.musica.length)l=EV.musica;   // evento: música propia en combate
     lista=l;
     if(!l.length){pista=null;au.pause();au.removeAttribute('src');return pinta()}
     if(pista&&l.includes(pista)){au.loop=l.length===1;return pinta()}   // ya suena una de este grupo
