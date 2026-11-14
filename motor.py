@@ -49,6 +49,9 @@ BOLAS_RELOJ = 3          # gajos que gana el reloj
 BOLAS_ULTI = 10          # % de ÚLTI que gana
 TRAMPA_GASTA = 2         # 🪤 Trampa (Urahara): gajos del reloj que gasta (no gasta todo)
 PUNTERIA_PREC = 0.15     # 🎯 Puntería: +15% de precisión a todo el equipo
+POLVO_PREC = 0.15        # 🌫️ Polvo (Lluvia de escombros, Ochako): el rival falla 15% más en su próximo turno
+FLOTA_DMG = (16, 22)     # 🎈 Suspensión (Ochako): daño de la caída al empezar el turno del rival flotando
+INGRAVIDO_CURA = 10      # 🎈 Rescate ingrávido (Ochako): vida que recupera el aliado rescatado
 CONTROL_MULT = 1.5      # 🧲 Control metal: el rival controlado golpea con su ataque normal a +50% de daño
 CONGELADO_MULT = 1.25   # ❄️ Congelado (Ororo): el luchador congelado recibe +25% de daño
 VIENTO_ESQUIVA = 0.15   # 🌬️ Viento a favor (Ororo): +15% de esquiva a su equipo
@@ -115,12 +118,14 @@ EFECTOS_TXT = {
     "sangrado": "🩸 Sangrado",    # solo lo causa Denji: daño al inicio de cada turno de su dueño
     "ciego": "🕶️ Ciego",           # solo lo causa Yuki: no ve el nombre ni el icono de sus habilidades
     "apagon": "🔌 Apagón",         # solo lo causa Reze: no puede usar su ataque normal en su próximo turno
+    "polvo": "🌫️ Polvo",           # solo lo causa Ochako: el luchador falla 15% más en su próximo turno
+    "flotando": "🎈 Flotando",     # solo lo causa Ochako: no puede actuar ni ser atacado; al empezar su turno cae y recibe daño
     "congelado": "❄️ Congelado",   # solo lo causa la Ventisca de Ororo: no puede actuar y recibe +25% de daño
     "sueno": "💤 Sueño",          # solo lo causa la ÚLTI de Mantis: no puede actuar su próximo turno
     "fusion": "🧵 Fusionado",      # solo lo causa Josuke: el luchador baja su precisión
     "regen": "💚 Regeneración",   # solo lo da Josuke a un compañero: se cura al inicio de su turno
 }
-BONOS_TXT = {"furia": "🔺 Furia (+25% daño)", "velocidad": "💨 Velocidad (+25% crítico)",
+BONOS_TXT = {"ingravido": "🎈 Ingrávido (no se le puede atacar)", "furia": "🔺 Furia (+25% daño)", "velocidad": "💨 Velocidad (+25% crítico)",
              "frenesi": "🩸 Frenesí (+20% daño y roba vida a los que sangran)",
              "reiatsu": "🔷 Reiatsu (+15% daño, -15% daño recibido, +10% esquiva)",
              "reiatsu_max": "🔷 Reiatsu máximo (+25% daño, -25% daño recibido, +20% esquiva)",
@@ -248,7 +253,10 @@ PERSONAJES = {
         "color": 0xF48FB1,
         "boton": "E599C3",   # color de sus botones: azul, verde, rojo o gris (Discord solo permite esos 4)
         "vida": VIDA,
-        "desc": "Uravity (My Hero Academia). Utilidad: quita la guardia del rival y lo deja flotando.",
+        "emojis": {   # emoji de cada botón (Discord): "<:nombre:ID>". Vacío = emoji por defecto
+            "normal": "", "hab1": "", "hab2": "", "hab3": "", "hab4": "", "defender": "", "ulti": "",
+        },
+        "desc": "Uravity (My Hero Academia). Utilidad: rompe guardias, ensucia la puntería rival, deja flotando a un enemigo y pone a salvo a un aliado.",
         "gif": "https://i.imgur.com/apmxpCV.jpeg",
         "crit_gif": "https://i.imgur.com/vpQ8RcL.gif",
         "victoria_img": "https://i.imgur.com/byhaqwv.jpeg",
@@ -259,7 +267,12 @@ PERSONAJES = {
                      "dmg": (5, 8), "prec": 0.90, "efecto": ("guardia_rota", 2, 0.85),
                      "desc": "Poco daño. El rival recibe 30% más de daño y su guardia no sirve (85%)."},
             "hab2": {"nombre": "Lluvia de escombros", "tipo": "fuerte", "coste": COSTE_HABILIDAD, "pm": 4,
-                     "dmg": (22, 30), "prec": 0.85},
+                     "dmg": (19, 26), "prec": 0.85, "efecto_rivales": ("polvo", 1, 1.0),
+                     "desc": "Golpe fuerte a un rival. La nube de polvo levantada cae sobre TODOS los rivales: 🌫️ fallan 15% más en su próximo turno."},
+            "hab3": {"nombre": "Suspensión", "tipo": "flotar", "coste": COSTE_HABILIDAD, "pm": 4, "prec": 0.90,
+                     "desc": "Un rival pierde su gravedad: 🎈 queda flotando, no puede actuar ni ser atacado (su equipo pierde su icono). Al empezar su turno cae y recibe 16–22 de daño (+30% si tiene la guardia rota)."},
+            "hab4": {"nombre": "Rescate ingrávido", "tipo": "ingravido", "coste": COSTE_HABILIDAD, "pm": 3, "cura": INGRAVIDO_CURA,
+                     "desc": "Un aliado a tu elección (o ella misma) flota a salvo: no se le puede atacar durante el próximo turno rival, ni siquiera con daño en área. Puede seguir actuando y recupera 10 de vida."},
         },
         "ulti": {"nombre": "Meteoros", "tipo": "area", "coste": COSTE_ULTI,
                  "dmg": (11, 15), "flota": True,
@@ -353,7 +366,7 @@ PERSONAJES = {
         "forma_gif": "https://i.imgur.com/sQXcM5U.jpeg",      # <- retrato de Mahoraga (se ve mientras está invocado)
         "mov": {
             "normal": {"nombre": "Mordisco del lobo", "tipo": "normal", "coste": COSTE_NORMAL,
-                       "dmg": (9, 13), "prec": 0.95, "sombra": 1,
+                       "dmg": (10, 14), "prec": 0.95, "sombra": 1,
                        "crit_gif": "https://i.imgur.com/GLfKCFL.gif",       # <- animación de crítico del Mordisco del lobo
                        "desc": "Su lobo muerde. Si acierta, gana 1 🌑 sombra."},
             "hab1": {"nombre": "Sapo", "tipo": "estado", "coste": COSTE_HABILIDAD, "sombras": 1,
@@ -361,7 +374,7 @@ PERSONAJES = {
                      "crit_gif": "https://i.imgur.com/X51P9Rp.gif",         # <- animación de crítico del Sapo
                      "desc": "Cuesta 1 🌑. Poco daño. La lengua del sapo deja al rival 🪢 Enredado: no puede actuar su próximo turno y después queda debilitado 2 turnos (80%)."},
             "hab2": {"nombre": "Nue", "tipo": "fuerte", "coste": COSTE_HABILIDAD, "sombras": 2,
-                     "dmg": (19, 26), "prec": 0.88, "extra": 5,
+                     "dmg": (21, 28), "prec": 0.88, "extra": 5,
                      "crit_gif": "https://i.imgur.com/24h6twV.gif",         # <- animación de crítico de Nue
                      "desc": "Cuesta 2 🌑. El pájaro eléctrico golpea fuerte y suma 5 de daño eléctrico que la guardia no reduce."},
             "hab3": {"nombre": "Conejos", "tipo": "conejos", "coste": COSTE_HABILIDAD, "sombras": 1,
@@ -369,7 +382,7 @@ PERSONAJES = {
                      "dmg_todos": (5, 8), "efecto_todos": ("debilidad", 1, 0.35), "doble_txt": "Conejos…",
                      "desc": "Cuesta 1 🌑. Eliges: solo a un rival (3 mordiscos seguidos) o a todos (1 mordisco a cada uno, con 35% de debilitarlos)."},
             "hab4": {"nombre": "Serpiente", "tipo": "estado", "coste": COSTE_HABILIDAD, "sombras": 1,
-                     "dmg": (8, 12), "prec": 0.90, "efecto": ("veneno", 3, 0.90),
+                     "dmg": (9, 13), "prec": 0.90, "efecto": ("veneno", 3, 0.90),
                      "desc": "Cuesta 1 🌑. La serpiente muerde y deja ☠️ veneno 3 turnos (90%)."},
         },
         "ulti": {"nombre": "Elefante máximo", "tipo": "area", "coste": COSTE_ULTI,
@@ -411,15 +424,15 @@ PERSONAJES = {
             "hab1": {"nombre": "¡Dora, dora, dora!", "tipo": "estado", "coste": 3, "pm": 2,
                      "dmg": (2, 4), "golpes": 3, "prec": 0.95, "efecto": ("fusion", 2, 0.90), "regen": ("regen", 3),
                      "desc": "Rival: 3 golpes que lo dejan 🧵 Fusionado con su ropa (falla 15% más, 2 turnos). Compañero: 💚 Regeneración (cura 5 al inicio de su turno, 2 turnos)."},
-            "hab2": {"nombre": "Puño restaurador", "tipo": "fuerte", "coste": 4, "pm": 4,
+            "hab2": {"nombre": "Puño restaurador", "tipo": "fuerte", "coste": 3, "pm": 4,   # 1 icono y medio (antes 2)
                      "dmg": (18, 25), "prec": 0.85, "sana": 26,
-                     "desc": "Rival: golpe fuerte, sin efecto. Compañero: lo cura 26, mucho más que los otros."},
+                     "desc": "Cuesta 1 icono y medio. Rival: golpe fuerte, sin efecto. Compañero: lo cura 26, mucho más que los otros."},
             "hab3": {"nombre": "Peinarse el pelo", "tipo": "potencia", "coste": COSTE_NORMAL, "pm": 2,
                      "bono": ("peinado", 3),
                      "desc": "Cuesta medio icono. Durante 3 turnos todas sus curas valen +50%."},
-            "hab4": {"nombre": "¿Qué dijiste de mi cabello?", "tipo": "potencia", "coste": COSTE_HABILIDAD, "pm": 3,
+            "hab4": {"nombre": "¿Qué dijiste de mi cabello?", "tipo": "potencia", "coste": COSTE_NORMAL, "pm": 3,   # medio icono (antes 1)
                      "bono": ("contra", 2),
-                     "desc": "Se prepara: el próximo golpe que reciba le hace la mitad de daño, se lo devuelve entero al atacante y cura 15 a un compañero al azar."},
+                     "desc": "Cuesta medio icono. Se prepara: el próximo golpe que reciba le hace la mitad de daño, se lo devuelve entero al atacante y cura 15 a un compañero al azar."},
         },
         "ulti": {"nombre": "Crazy Diamond: ¡DORARARARA!", "tipo": "crazy", "coste": COSTE_ULTI,
                  "dmg": (4, 6), "golpes": 3, "cura": (4, 6), "curas": 3,
@@ -627,7 +640,7 @@ class Luchador:
     @property
     def incapaz(self):
         """No puede actuar: paralizado, dormido, enredado o congelado."""
-        return any(e in self.efectos for e in ("paralisis", "sueno", "enredado", "congelado"))
+        return any(e in self.efectos for e in ("paralisis", "sueno", "enredado", "congelado", "flotando"))
 
     @property
     def gif(self):
@@ -676,7 +689,10 @@ class Equipo:
     def blancos(self):
         """A quién se puede atacar: si hay un Mahoraga, solo a él (es el muro)."""
         muro = [l for l in self.vivos if l.forma]
-        return muro or self.vivos
+        if muro:
+            return muro
+        libres = [l for l in self.vivos if "flotando" not in l.efectos and "ingravido" not in l.bonos]   # 🎈 los que flotan no se pueden atacar
+        return libres or self.vivos
 
 
 class Combate:
@@ -747,7 +763,7 @@ class Combate:
                 if lineas:
                     self.log += "\n" + "\n".join(lineas)
                 return
-            eq.medios = MEDIOS_POR_LUCHADOR * len(eq.vivos)
+            eq.medios = MEDIOS_POR_LUCHADOR * len([l for l in eq.vivos if "flotando" not in l.efectos])   # 🎈 el que flota no aporta su icono
             for l in eq.vivos:
                 l.pm = min(PM_MAX, l.pm + PM_REGEN)
             if not self.arranque_hecho:
@@ -766,6 +782,16 @@ class Combate:
         for l in eq.vivos:
             if l.forma:
                 continue            # Mahoraga no sufre daño por efectos
+            if "flotando" in l.efectos:       # 🎈 Suspensión: al empezar su turno se cae (y este turno no puede actuar)
+                a = getattr(l, "flotador", None) or l
+                dmg = random.randint(*FLOTA_DMG) * (self._mult_ataque(a) if a is not l and a.vivo else 1.0)
+                if "guardia_rota" in l.efectos:
+                    dmg *= ROTA_MULT
+                real = self._golpear(l, dmg, a)
+                out.append(f"🎈 **{l.tag}** deja de flotar y se estrella contra el suelo: **-{real}**.")
+                if l.hp <= 0:
+                    out.append(f"💀 **{l.tag}** cae.")
+                    continue
             if "regen" in l.efectos and l.hp < l.max_hp:
                 antes = l.hp
                 l.hp = min(l.max_hp, l.hp + REGEN_CURA)
@@ -875,6 +901,10 @@ class Combate:
             return False
         if m["tipo"] == "barrera" and self._a_barrera() is None:
             return False
+        if m["tipo"] == "flotar" and len(self.rival.blancos) < 2:
+            return False                                  # 🎈 Suspensión: tiene que quedar alguien más al que atacar
+        if m["tipo"] == "ingravido" and self._a_ingravido() is None:
+            return False
         if k == "ulti" and l.ulti < 100:
             return False
         return True
@@ -898,6 +928,13 @@ class Combate:
     def _a_barrera(self):
         """Compañero que más necesita una Barrera de hilos (el que no tiene una y está más herido), o None."""
         cand = [x for x in self.actual.vivos if not x.forma and "barrera" not in x.bonos]
+        return min(cand, key=lambda x: x.hp / x.max_hp) if cand else None
+
+    def _a_ingravido(self):
+        """Compañero que más necesita el Rescate ingrávido (el más herido que no flote ya), o None."""
+        if len(self.actual.vivos) < 2:
+            return None                                   # si es el último en pie, flotar no sirve de nada
+        cand = [x for x in self.actual.vivos if not x.forma and "ingravido" not in x.bonos]
         return min(cand, key=lambda x: x.hp / x.max_hp) if cand else None
 
     def _mult_cura(self, l):
@@ -934,6 +971,16 @@ class Combate:
             t.barrera = m["barrera"]
             t.bonos["barrera"] = max(BARRERA_DUR, t.bonos.get("barrera", 0))
             self.log = f"{cab} sobre **{t.tag}**.\n🕸️ Barrera de hilos: absorbe hasta {t.barrera} de daño (máx. {BARRERA_DUR} turnos)."
+            return
+        if m["tipo"] == "ingravido":         # 🎈 Rescate ingrávido: un compañero flota fuera del alcance
+            t = objetivo if (objetivo is not None and objetivo in self.actual.vivos and not objetivo.forma
+                             and "ingravido" not in objetivo.bonos) else self._a_ingravido()
+            t.bonos["ingravido"] = 2                       # cubre todo el siguiente turno del rival
+            curado = min(m["cura"], t.max_hp - t.hp)
+            t.hp += curado
+            self._cargar_cura(l, curado)
+            self.log = (f"{cab} sobre **{t.tag}**.\n🎈 **{t.tag}** flota fuera de peligro: no se le puede atacar durante el próximo turno rival."
+                        + (f"\n💚 +{curado} de vida." if curado else ""))
             return
         if m["tipo"] == "reserva":
             lleno = l.arena >= ARENA_MAX
@@ -1021,10 +1068,14 @@ class Combate:
             l.guardia = True
             self.log = (f"🌀 **{l.tag}** se adapta: recibirá la mitad del daño, quien lo golpee perderá 1 icono "
                         f"y absorberá el primer efecto que le lancen.")
-        elif l.mov(k)["tipo"] in ("cura", "limpia", "reserva", "potencia", "barrera", "linea"):
+        elif l.mov(k)["tipo"] in ("cura", "limpia", "reserva", "potencia", "barrera", "linea", "ingravido"):
             eq.medios -= l.mov(k)["coste"]
             l.pm -= l.mov(k).get("pm", 0)
             self._apoyo(l, k, objetivo)
+        elif l.mov(k)["tipo"] == "flotar":
+            eq.medios -= l.mov(k)["coste"]
+            l.pm -= l.mov(k).get("pm", 0)
+            self._flotar(l, k, objetivo)
         elif l.mov(k)["tipo"] == "clones":
             eq.medios -= l.mov(k)["coste"]
             l.pm -= l.mov(k).get("pm", 0)
@@ -1071,7 +1122,7 @@ class Combate:
     def _prec(self, a, m, t=None):
         """Precisión real del movimiento (🧵 Fusionado y la esquiva del objetivo la bajan)."""
         return min(1.0, max(0.05, m["prec"] + (PUNTERIA_PREC if "punteria" in a.bonos else 0)
-                            - (FUSION_PREC if "fusion" in a.efectos else 0) - self._esquiva(t)))
+                            - (FUSION_PREC if "fusion" in a.efectos else 0) - (POLVO_PREC if "polvo" in a.efectos else 0) - self._esquiva(t)))
 
     def _mult_sangre(self, a, t):
         """🩸 Frenesí: más daño contra rivales que sangran."""
@@ -1276,6 +1327,12 @@ class Combate:
             notas.append(f"{BONOS_TXT[m['bono_equipo'][0]]} para todo el equipo durante {m['bono_equipo'][1]} turnos.")
         if t.hp <= 0 and not t.forma:
             notas.append(f"💀 **{t.tag}** cae.")
+        if m.get("efecto_rivales"):                       # 🌫️ Lluvia de escombros: el polvo alcanza a todos los rivales
+            hubo = [x.tag for x in self.rival.vivos if not x.forma and self._aplicar_efecto(x, m["efecto_rivales"])]
+            if hubo:
+                notas.append(f"{EFECTOS_TXT[m['efecto_rivales'][0]]} sobre todos los rivales: fallarán más en su próximo turno.")
+        if t.hp <= 0 and not t.forma:
+            pass
         elif t.hp > 0 and not (era_forma and not t.forma):
             if m.get("efecto"):
                 notas.append(self._aplicar_efecto(t, m["efecto"]))
@@ -1378,6 +1435,22 @@ class Combate:
         notas = [n for n in notas if n]
         if notas:
             self.log += "\n" + "\n".join(notas)
+
+    def _flotar(self, a, k, t):
+        """🎈 Suspensión (Ochako): el rival pierde su gravedad. Flota (no actúa ni se le puede atacar) y al empezar su turno cae y recibe daño."""
+        m = a.mov(k)
+        rv = self.rival.blancos
+        t = t if (t is not None and t.vivo and t in rv) else self.objetivo_por_defecto()
+        cab = f"{a.d['emoji']} **{a.tag}** usa **{m['nombre']}** sobre **{t.tag}**"
+        if random.random() > self._prec(a, m, t):
+            self.actual.medios = 0
+            self.log = f"{cab}... ¡pero falla! 💨 **{self.actual.nombre} pierde todos sus turnos.**"
+            return
+        t.efectos["flotando"] = max(1, t.efectos.get("flotando", 0))
+        t.flotador = a
+        self.log = (f"{cab}.\n🎈 **{t.tag}** pierde su gravedad y queda flotando: no puede actuar ni ser atacado. "
+                    f"Al empezar su turno caerá y recibirá daño.")
+        a.ulti = min(100.0, a.ulti + 8)
 
     def _clones(self, a, k, t1):
         """💨 Paso de clones (Yoruichi): golpea a un rival, luego a otro y por último a todos. Después gana Velocidad."""
@@ -1574,352 +1647,4 @@ class Combate:
             a.ulti = 0.0
             return
         if u["tipo"] == "unico":
-            t = objetivo if (objetivo is not None and objetivo.vivo and objetivo in rv.blancos) \
-                else self.objetivo_por_defecto()
-            dmg = sum(random.randint(*u["dmg"]) for _ in range(u.get("golpes", 1))) * self._mult_ataque(a) * self._mult_sangre(a, t)
-            if "guardia_rota" in t.efectos:
-                dmg *= ROTA_MULT
-            real = self._golpear(t, dmg, a)
-            self.log = f"{cab}\n💢 **{t.tag}** recibe **{real}** de daño."
-            if t.hp <= 0:
-                self.log += f"\n💀 **{t.tag}** cae."
-            a.ulti = 0.0
-            return
-        if u["tipo"] == "crazy":
-            lineas, notas = [], []
-            for t in list(rv.blancos):
-                dmg = sum(random.randint(*u["dmg"]) for _ in range(u["golpes"])) * self._mult_ataque(a)
-                rota = "guardia_rota" in t.efectos
-                if rota:
-                    dmg *= ROTA_MULT
-                elif t.guardia:
-                    dmg *= GUARDIA_MULT
-                real = self._golpear(t, dmg, a)
-                lineas.append(f"{t.tag} -{real}")
-                if t.hp <= 0:
-                    notas.append(f"💀 **{t.tag}** cae.")
-            curas, total = [], 0
-            for t in eq.vivos:
-                antes = t.hp
-                t.hp = min(t.max_hp, t.hp + round(sum(random.randint(*u["cura"]) for _ in range(u["curas"])) * self._mult_cura(a)))
-                total += t.hp - antes
-                curas.append(f"{t.tag} +{t.hp - antes}")
-            self._cargar_cura(a, total)
-            self.log = f"{cab}\n💢 " + ", ".join(lineas) + ".\n💚 Cura: " + ", ".join(curas) + "."
-            if notas:
-                self.log += "\n" + "\n".join(notas)
-            a.ulti = 0.0
-            return
-        if u["tipo"] == "bankai":
-            for l in eq.vivos:
-                l.bonos["bankai"] = BANKAI_TURNOS
-            self.log = f"{cab}\n{BONOS_TXT['bankai']} para todo el equipo durante {BANKAI_TURNOS} turnos."
-            a.ulti = 0.0
-            return
-        if u["tipo"] == "sueno":
-            notas = [self._aplicar_efecto(t, u["efecto"]) for t in rv.blancos]
-            self.log = f"{cab}\n" + "\n".join(n for n in notas if n)
-            a.ulti = 0.0
-            return
-        # ÚLTI de área: golpea a todo el equipo rival, siempre acierta y no hace crítico
-        lineas, notas = [], []
-        for n, t in enumerate(list(rv.blancos)):
-            dmg = sum(random.randint(*u["dmg"]) for _ in range(u.get("golpes", 1))) * self._mult_ataque(a) * self._mult_sangre(a, t)
-            rota = "guardia_rota" in t.efectos
-            if rota:
-                dmg *= ROTA_MULT
-            elif t.guardia:
-                dmg *= GUARDIA_MULT
-            crit = u.get("primer_crit") and n == 0
-            if crit:
-                dmg *= CRIT_MULT
-            real = self._golpear(t, dmg, a)
-            lineas.append(f"{t.tag} -{real}" + (" 💥" if crit else ""))
-            if t.hp <= 0:
-                notas.append(f"💀 **{t.tag}** cae.")
-            elif u.get("efecto"):
-                notas.append(self._aplicar_efecto(t, u["efecto"]))
-        if u.get("flota") and objetivo is not None and objetivo.vivo and objetivo in rv.blancos and not objetivo.forma:
-            objetivo.efectos["paralisis"] = max(1, objetivo.efectos.get("paralisis", 0))
-            notas.append(f"⚡ **{objetivo.tag}** queda flotando y perderá su próximo turno.")
-        self.log = f"{cab}\n💢 " + ", ".join(lineas) + "."
-        if u.get("bono"):
-            a.bonos[u["bono"][0]] = max(u["bono"][1], a.bonos.get(u["bono"][0], 0))
-            notas.append(f"{BONOS_TXT[u['bono'][0]].split(' (')[0]} durante {u['bono'][1]} turnos.")
-        if u.get("devuelve"):
-            eq.medios += u["devuelve"]
-            notas.append("💥 ¡Primer golpe crítico! Recupera 1 icono.")
-        notas = [n for n in notas if n]
-        if notas:
-            self.log += "\n" + "\n".join(notas)
-        a.ulti = 0.0
-
-    # ----- CPU -----
-    def opciones(self):
-        """Todas las jugadas posibles del equipo actual: lista de (luchador, clave, objetivo)."""
-        rv = self.rival
-        res = []
-        for l in self.disponibles():
-            for k in CLAVES + ("defender", "ulti"):
-                if not self.puede(l, k):
-                    continue
-                if k == "defender" or (k != "ulti" and l.mov(k)["tipo"] in ("cura", "limpia", "adapta", "reserva", "potencia", "ventisca", "apagon", "barrera", "trampa")):
-                    res.append((l, k, None))
-                elif k != "ulti" and (l.mov(k).get("sana") or l.mov(k).get("regen")):
-                    res += [(l, k, t) for t in rv.blancos]
-                    res += [(l, k, x) for x in self.actual.vivos
-                            if (l.mov(k).get("sana") and x.hp < x.max_hp)
-                            or (l.mov(k).get("regen") and "regen" not in x.efectos and x.hp < x.max_hp)]
-                elif k == "ulti":
-                    if l.mov("ulti").get("flota") or l.mov("ulti")["tipo"] == "unico":
-                        res += [(l, k, t) for t in rv.blancos]
-                    else:
-                        res.append((l, k, None))
-                else:
-                    res += [(l, k, t) for t in rv.blancos]
-        return res
-
-    def valor(self, l, k, t):
-        eq, rv = self.actual, self.rival
-        if k == "defender":
-            v = 3.0
-            if l.hp < l.max_hp * 0.4:
-                v += 8
-            if any(e.ulti >= 100 for e in rv.vivos):
-                v += 4
-            return v / (COSTE_DEFENDER ** 0.8)
-        m = l.mov(k)
-        mult = self._mult_ataque(l)
-        if k != "ulti" and t is not None and t in eq.luchadores:        # Josuke curando a un compañero
-            falta = t.max_hp - t.hp
-            real = min(m["sana"], falta) if m.get("sana") else min(REGEN_CURA * (m["regen"][1] - 1), falta) * 0.8
-            v = real + (6 if t.hp < t.max_hp * 0.4 else 0)
-            if m.get("pm"):
-                v -= m["pm"] * 0.9
-            if k == "normal" and l.pm < PM_MAX:
-                v += 2
-            return v / (m["coste"] ** 0.8)
-        if m["tipo"] == "adapta":
-            return (4 + (4 if l.forma_hp < MAHO_HP * 0.5 else 0)) / (m["coste"] ** 0.8)
-        if m["tipo"] == "forma":
-            return 40 / (m["coste"] ** 0.8)
-        if m["tipo"] == "crazy":
-            prom = sum(m["dmg"]) / 2 * m["golpes"] * mult
-            v = sum(prom * (ROTA_MULT if "guardia_rota" in x.efectos else 1) + (20 if prom >= x.hp else 0) for x in rv.blancos)
-            v += min(sum(m["cura"]) / 2 * m["curas"] * len(eq.vivos), sum(x.max_hp - x.hp for x in eq.vivos))
-            return v / (m["coste"] ** 0.8)
-        if m["tipo"] == "clones":            # Paso de clones: un golpe a cada uno de los dos elegidos y otro a todos
-            prom = sum(m["dmg"]) / 2 * mult
-            golpes = [t] + [x for x in rv.blancos if x is not t][:1] + list(rv.blancos)
-            v = sum(prom * self._prec(l, m, x) * (ROTA_MULT if "guardia_rota" in x.efectos else (GUARDIA_MULT if x.guardia else 1)) for x in golpes)
-            v += 8 * (1 - t.hp / t.max_hp) * 0.5 + (5 if "velocidad" not in l.bonos else 0)
-            if "rajin" in l.bonos:
-                v += 2.5 * len(golpes) * RAJIN_PARALISIS
-            v -= m["pm"] * 0.9
-            return v / (m["coste"] ** 0.8)
-        if m["tipo"] == "bolas":             # Bolas de reiatsu: pega poco, cura al equipo y carga el reloj
-            prom = sum(m["dmg"]) / 2 * mult * self._prec(l, m, t)
-            cura = sum(min(m["cura"], x.max_hp - x.hp) for x in eq.vivos)
-            v = prom + cura * 0.9 + (3.5 if l.arena < ARENA_MAX else 0) + 2 + 8 * (1 - t.hp / t.max_hp) * 0.5
-            return v / (m["coste"] ** 0.8)
-        if m["tipo"] == "trampa":            # Trampa: daño a todos y Puntería al equipo
-            v = sum(sum(m["dmg_todos"]) / 2 * mult * self._prec(l, m, x) for x in rv.blancos)
-            v += (14 + 4 * len(eq.vivos)) if "punteria" not in l.bonos else 0.5
-            v -= 2
-            return v / (m["coste"] ** 0.8)
-        if m["tipo"] == "reserva":
-            lleno = l.arena >= ARENA_MAX
-            return ((20 if lleno else 12) + 3 * len(eq.vivos)) / (m["coste"] ** 0.8)
-        if m["tipo"] == "potencia":          # preparar un bono: vale si no lo tiene ya
-            if m["bono"][0] in l.bonos:
-                return 0.5
-            if m.get("hojas") and l.hojas - m["hojas"] < 2:
-                return 0.5              # las hojas valen más para curar o controlar: solo la prepara si le sobran
-            if m["bono"][0] == "rajin":
-                return (10 + 3 * len(rv.blancos)) / (m["coste"] ** 0.8)
-            if m["bono"][0] == "peinado":
-                heridos = sum(1 for x in eq.vivos if x.hp < x.max_hp)
-                return (2 + 4 * heridos) / (m["coste"] ** 0.8)
-            if m["bono"][0] == "contra":
-                amenaza = sum(sum(y.d["mov"]["normal"]["dmg"]) / 2 * y.d["mov"]["normal"].get("golpes", 1) for y in rv.blancos)
-                return (2 + amenaza * CPU_CONTRA + 2 * sum(1 for x in eq.vivos if x.hp < x.max_hp)) / (m["coste"] ** 0.8)
-            if m["bono"][0] == "rabia":
-                faltan = l.max_hp - l.hp
-                sangran = sum("sangrado" in x.efectos for x in rv.vivos)
-                return (5 + min(m["cura_propia"], faltan) * 0.7 + 3 * sangran) / (m["coste"] ** 0.8)
-            nm = l.d["mov"]["normal"]
-            base = sum(nm["dmg"]) / 2 * self._mult_ataque(l) * nm["prec"]       # lo que pega un normal
-            activos = max(0, m["bono"][1] - 1)                                   # turnos completos que aprovecha
-            if m["bono"][0] == "diosa":
-                extra = base * (2 * DIOSA_MULT - 1) * 2 * activos                # el doble de golpes y +25% (~2 normales por turno)
-            else:                                                                # antenas: +50% y 1 hoja extra
-                extra = (base * (ANTENAS_MULT - 1) + 2.5 * ANTENAS_HOJA) * 2 * activos
-            return (extra * CPU_POTENCIA) / (m["coste"] ** 0.8)
-        if m["tipo"] == "barrera":
-            x = self._a_barrera()
-            if x is None:
-                return 0
-            amenaza = sum(sum(y.d["mov"]["normal"]["dmg"]) / 2 for y in rv.blancos)
-            return (m["barrera"] * CPU_BARRERA + 8 * (1 - x.hp / x.max_hp) + amenaza * 0.4) / (m["coste"] ** 0.8)
-        if m["tipo"] == "linea":
-            if l.linea >= LINEA_MAX:
-                return 0.5
-            return (3 + 2.5 * l.linea) / (m["coste"] ** 0.8)       # cuanto más llena, más cerca de la triple patada
-        if m["tipo"] == "apagon":           # quita el ataque normal de los rivales (la CPU se ve obligada a gastar PM)
-            v = 0
-            for x in rv.blancos:
-                if x.forma or "apagon" in x.efectos:
-                    continue
-                nx = x.d["mov"]["normal"]
-                v += sum(nx["dmg"]) / 2 * nx.get("golpes", 1) * 0.8 + 2
-            return v / (m["coste"] ** 0.8)
-        if m["tipo"] == "ventisca":
-            prom = sum(m["dmg"]) / 2 * mult
-            v = 0
-            for x in rv.blancos:
-                d = prom * self._prec(l, m, x) * (ROTA_MULT if "guardia_rota" in x.efectos else (GUARDIA_MULT if x.guardia else 1))
-                v += d + (20 * self._prec(l, m, x) if d >= x.hp else 0) + 8 * (1 - x.hp / x.max_hp) * 0.5
-            v += 22 * m["congela"] * (1 + 0.15 * (len(rv.blancos) - 1))
-            return v / (m["coste"] ** 0.8)
-        if m["tipo"] == "cura":
-            n = min(l.hojas, HOJAS_MAX)
-            objetivos = eq.vivos if n >= 3 else [min(self._heridos(), key=lambda x: x.hp / x.max_hp)]
-            real = sum(min(CURA_HOJAS[n], x.max_hp - x.hp) for x in objetivos)
-            v = real + (6 if any(x.hp < x.max_hp * 0.4 for x in objetivos) else 0)
-            if n < 3 and real < CURA_HOJAS[n] * 0.8:
-                v -= 4                  # no malgasta hojas en curar poco
-            return v / (m["coste"] ** 0.8)
-        if m["tipo"] == "limpia":
-            t = self._a_limpiar()
-            v = 5 + (12 if ("paralisis" in t.efectos or "congelado" in t.efectos) else 0) + 5 * sum(e in t.efectos for e in ("quemadura", "veneno", "sangrado"))
-            return v / (m["coste"] ** 0.8)
-        if k == "ulti":
-            if m["tipo"] == "bankai":
-                v = 9 * len(eq.vivos) + 6
-                return v / (m["coste"] ** 0.8)
-            if m["tipo"] == "sueno":
-                v = 14 * sum(1 for x in rv.vivos if not x.incapaz)
-                return v / (m["coste"] ** 0.8)
-            if m["tipo"] == "equipo":
-                falta = sum(e.max_hp - e.hp for e in eq.vivos)
-                v = min(m["cura"] * len(eq.vivos), falta) + 12 + 6 * sum(len(e.efectos) for e in eq.vivos)
-            elif m["tipo"] == "unico":
-                prom = (m["dmg"][0] + m["dmg"][1]) / 2 * mult * (ROTA_MULT if "guardia_rota" in t.efectos else 1)
-                v = prom + (25 if prom >= t.hp else 0) + 8 * (1 - t.hp / t.max_hp)
-            else:
-                prom = (m["dmg"][0] + m["dmg"][1]) / 2 * mult * m.get("golpes", 1)
-                v = 0
-                for x in rv.blancos:
-                    d = prom * (ROTA_MULT if "guardia_rota" in x.efectos else 1) * self._mult_sangre(l, x)
-                    v += d + (20 if d >= x.hp else 0) + (6 if m.get("efecto") else 0)
-                if m.get("flota") and t is not None:
-                    v += 8
-            return v / (m["coste"] ** 0.8)
-        prom = (m["dmg"][0] + m["dmg"][1]) / 2 * mult * self._golpes(l, m, k) * self._mult_sangre(l, t)
-        if k == "normal":
-            prom *= self._mult_normal(l)
-        if "congelado" in t.efectos:
-            prom *= CONGELADO_MULT
-        if "contra" in t.bonos and not t.forma:
-            prom *= -0.6                  # cuidado: golpear a quien tiene Contraataque se vuelve en tu contra
-        rota = "guardia_rota" in t.efectos
-        guard = t.guardia and not rota
-        if rota:
-            prom *= ROTA_MULT
-        v = prom * self._prec(l, m, t) * (GUARDIA_MULT if guard else 1)
-        if guard:
-            v -= 6
-        if prom >= t.hp:
-            v += 25 * self._prec(l, m)
-        ef = m.get("efecto")
-        ex = m.get("efecto_extra")
-        if ex and ex[0] not in t.efectos:
-            v += 5 * ex[2]              # bajar la defensa ayuda a los demás
-        if ef and ef[0] not in t.efectos:
-            v += {"paralisis": 10, "quemadura": 8, "debilidad": 7, "guardia_rota": 9, "veneno": 8, "sueno": 10, "fusion": 8, "sangrado": 10, "enredado": 11}[ef[0]] * ef[2] * CPU_EFECTO_MULT
-        v += 8 * (1 - t.hp / t.max_hp)
-        v -= (1 - self._prec(l, m)) * max(0, eq.medios - m["coste"]) * 3
-        if m.get("pm") and prom < t.hp:
-            v -= m["pm"] * 0.9          # gastar PM tiene un precio: la CPU no los malgasta
-        if m.get("sombras") and l.ulti >= 70:
-            v -= 4 * m["sombras"]       # con la ÚLTI casi lista, guarda las sombras para Mahoraga
-        if m.get("sombra") and l.sombras < SOMBRAS_MAX:
-            v += 2                      # el normal de Megumi junta sombras
-        if k == "normal" and l.pm < PM_MAX:
-            v += 2                      # el normal recupera PM
-        if m.get("reloj") and l.arena < ARENA_MAX:
-            v += 4                      # el normal de Urahara llena el reloj
-        if m.get("arena") and l.arena >= ARENA_MAX and m.get("efecto"):
-            v += 6 * max(0, len(rv.blancos) - 1)    # reloj lleno: la guardia rota llega a todos
-        if m.get("hoja") and l.hojas < HOJAS_MAX:
-            v += 2                      # el normal de Mantis junta hojas
-        if m.get("control"):            # Control metal: el rival golpea a los suyos (o se golpea / cura a Mantis si está solo)
-            nm = t.d["mov"]["normal"]
-            golpe = sum(nm["dmg"]) / 2 * nm.get("golpes", 1) * self._mult_ataque(t) * CONTROL_MULT * 0.9
-            otros = [x for x in rv.blancos if x is not t]
-            curas = max((mv.get("sana", 0) for mv in t.d["mov"].values()), default=0)
-            if otros:
-                v += golpe * len(otros)
-            elif curas:
-                v -= 2                  # un curandero solo cura a mi equipo: no conviene
-            else:
-                v += golpe
-        if m.get("chispas"):            # chispas a los demás rivales, con riesgo para los compañeros
-            otros = [x for x in rv.blancos if x is not t]
-            v += prom * m["chispas"][0] * len(otros) - prom * m["chispas"][0] * m["chispas"][1] * (len(eq.vivos) - 1)
-        if m.get("roba_ulti"):          # robar ÚLTI vale lo que le quitas al rival y lo que ganas
-            robo = min(t.ulti, m["roba_ulti"][0])
-            v += (robo + robo * m["roba_ulti"][1] / m["roba_ulti"][0]) * CPU_ROBO
-        if m.get("desteje"):
-            v += 4 * len(t.bonos) + (3 if t.guardia else 0)
-        if m.get("linea") and l.linea < LINEA_MAX:
-            v += 2.5 * (l.linea + 1)    # cuanto más llena la línea, más cerca de la triple patada
-        if m.get("patadas"):
-            v += {2: 6, 3: 10}.get(l.linea, 0)    # con la línea a la mitad deja ciego; llena, son tres patadas
-        if m.get("dmg_todos") and len(rv.blancos) >= 2:     # Conejos: ¿mejor a todos que a uno?
-            area = sum(sum(m["dmg_todos"]) / 2 * self._prec(l, m, x) + 4 * 0.35 for x in rv.blancos)
-            v = max(v, area)
-        if m.get("estampa"):            # el segundo golpe de la estampida / rebote
-            if len([x for x in rv.blancos if x is not t]):
-                v += prom * 0.9 * (m["estampa"] if isinstance(m["estampa"], float) else 1.0)
-        if m.get("bono_prob") and m["bono_prob"][0] not in l.bonos:
-            v += 2
-        if m.get("bono_equipo") and m["bono_equipo"][0] not in l.bonos:
-            v += 4 + 1.5 * len(eq.vivos)      # el Viento a favor protege a todo el equipo
-        if m.get("hojas") and l.hojas - m["hojas"] < 1 and any(x.hp < x.max_hp * 0.5 for x in eq.vivos):
-            v -= 6                      # guarda hojas para curar si el equipo está mal
-        if m.get("bono") and m["bono"][0] not in l.bonos:
-            v += {"furia": 10, "velocidad": 5, "frenesi": 7}.get(m["bono"][0], 5)   # preparar vale la pena
-            r4 = l.d["mov"].get("hab4", {})
-            if m["bono"][0] == "velocidad" and r4.get("requiere_bono") == "velocidad" and l.pm - m.get("pm", 0) >= r4.get("pm", 0) \
-                    and eq.medios >= m["coste"] + r4["coste"]:
-                v += 8                  # Shunpo abre la puerta a Rajin Sekein
-        return v / (m["coste"] ** 0.8)
-
-    def jugada_cpu(self):
-        ops = self.opciones()
-        if not ops:
-            return None
-        if random.random() > self.inteligencia:
-            return random.choice(ops)
-        ult = getattr(self, "_ult_cpu", None)
-        if ult is None:
-            ult = self._ult_cpu = {}
-        pts = []
-        for o in ops:
-            p = max(0.1, self.valor(*o))
-            if o[1] == "ulti":
-                p *= CPU_ULTI_MULT
-            elif o[1] in CLAVES[1:]:
-                p += CPU_HAB_BONO
-            if ult.get(o[0].key) == o[1] and o[1] != "defender":
-                p *= CPU_REPITE
-            pts.append(p)
-        if self.inteligencia >= 1.0:
-            j = ops[pts.index(max(pts))]
-        else:
-            j = random.choices(ops, [p ** 3 for p in pts])[0]
-        ult[j[0].key] = j[1]
-        return j
-
-
+            t = objetivo if (objetivo is not None and objetivo
