@@ -9,7 +9,7 @@ from pathlib import Path
 
 AQUI = Path(__file__).parent
 BOL = timezone(timedelta(hours=-4))                       # hora de Bolivia
-INICIO = datetime(2026, 11, 16, 0, 0, 0, tzinfo=BOL)      # lunes 16, desde las 00:00
+INICIO = datetime(2026, 11, 14, 0, 0, 0, tzinfo=BOL)      # sábado 14, desde las 00:00 (adelantado)
 FIN = datetime(2026, 11, 23, 23, 59, 59, tzinfo=BOL)      # lunes 23, hasta las 23:59
 
 NOMBRE = "🦖 Evento de dinosaurios"
