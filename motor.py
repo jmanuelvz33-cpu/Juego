@@ -1647,4 +1647,4 @@ class Combate:
             a.ulti = 0.0
             return
         if u["tipo"] == "unico":
-            t = objetivo if (objetivo is not None and objetivo
+            t = objetivo if (objetivo is not None and objetivo)
