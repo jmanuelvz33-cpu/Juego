@@ -7,15 +7,15 @@ window.INTERFAZ = {
 
   // Fondos a pantalla completa (uno por pantalla). Vacío "" = sin fondo. Si "inicio" está vacío usa FONDO_IMG.
   FONDOS: {
-    inicio: "https://i.imgur.com/SZvt2Fk.jpeg",
+    inicio: "https://i.imgur.com/nnFUqmK.jpeg",
     seleccion: "https://i.imgur.com/f9Sw6wL.jpeg",
     combate: "https://i.imgur.com/DHdNjDE.jpeg",
-    bazar: "https://i.imgur.com/Q0HOKWw.jpeg",
+    bazar: "https://i.imgur.com/7wUZCLR.jpeg",
   },
   // Qué tan oscuro se pone el fondo para que se lea (0 = nada, 0.9 = muy oscuro)
   FONDO_OSCURO: 0.55,
   // Arenas de combate
-  ARENAS: ["https://i.imgur.com/B6J5VBR.gif", "https://i.imgur.com/KkATmyK.gif", "https://i.imgur.com/rt3Zyee.jpeg"],
+  ARENAS: ["https://i.imgur.com/3pmWzQe.jpeg", "https://i.imgur.com/iQTUOv1.jpeg", "https://i.imgur.com/hSkVsRO.jpeg"],
   // Imagen de Burnice dándote la bienvenida (pantalla de inicio)
   BIENVENIDA_IMG: "https://i.imgur.com/6mv1T6q.jpeg",
   // Fondo opcional de la pantalla de inicio
@@ -30,7 +30,7 @@ window.INTERFAZ = {
   ],
 
   // Aviso del día (un cartel debajo de Burnice). Déjalo "" para ocultarlo.
-  AVISO: "Se acerca navidad",
+  AVISO: "dinosaurio",
 
   // Los bloques de rol. img = imagen del bloque (opcional), icono = lo que se ve si no hay imagen
   ROLES: {
